@@ -371,32 +371,116 @@ async function startDiscovery(){
   const dom=$('discDomain').value.trim();if(!dom)return;
   $('discScanBtn').disabled=true;$('discScanBtn').innerHTML='<span class="animate-spin" style="display:inline-block">◌</span> Scanning...';$('discProgress').classList.remove('hidden');$('discEmpty').classList.add('hidden');$('discResults').innerHTML='';$('discExBtns').classList.add('hidden');
   DD={domain:dom,ts:new Date().toISOString()};const live=A.ok();
-  const secs=[{k:'organization',l:'Organisation'},{k:'domains',l:'Domains'},{k:'users',l:'Users'},{k:'groups',l:'Groups'},{k:'admins',l:'Admin Roles'},{k:'conditionalAccess',l:'Conditional Access'},{k:'authMethods',l:'Auth Methods'},{k:'deviceCompliance',l:'Device Compliance'},{k:'deviceConfig',l:'Device Configs'},{k:'appRegistrations',l:'App Registrations'},{k:'sharepoint',l:'SharePoint Settings'},{k:'securityDefaults',l:'Security Defaults'}];
-  for(let i=0;i<secs.length;i++){const s=secs[i],pct=Math.round((i+1)/secs.length*100);$('discStatus').textContent='Scanning: '+s.l+'...';$('discPercent').textContent=pct+'%';$('discBar').style.width=pct+'%';
-    if(live){try{const fns={organization:()=>G.call('/organization'),domains:()=>G.call('/domains'),users:()=>G.call('/users?$select=displayName,userPrincipalName,accountEnabled,assignedLicenses,userType&$top=999'),groups:()=>G.call('/groups?$select=displayName,groupTypes,membershipRule,securityEnabled,mailEnabled&$top=999'),admins:()=>G.call('/directoryRoles?$expand=members($select=displayName,userPrincipalName)'),conditionalAccess:()=>G.call('/identity/conditionalAccess/policies'),authMethods:()=>G.call('/policies/authenticationMethodsPolicy'),deviceCompliance:()=>G.call('/deviceManagement/deviceCompliancePolicies'),deviceConfig:()=>G.call('/deviceManagement/deviceConfigurations'),appRegistrations:()=>G.call('/applications?$select=displayName,appId,signInAudience&$top=999'),sharepoint:()=>G.call('/admin/sharepoint/settings','GET',null,true),securityDefaults:()=>G.call('/policies/identitySecurityDefaultsEnforcementPolicy')};const r=await fns[s.k]();DD[s.k]=r?.value||r}catch(e){DD[s.k]={_error:e.message}}}
-    else{await delay(200+Math.random()*400);DD[s.k]=mockD(s.k,dom)}}
+  const secs=[
+    {k:'organization',l:'Organisation'},
+    {k:'subscribedSkus',l:'License Inventory'},
+    {k:'domains',l:'Verified Domains'},
+    {k:'users',l:'Users & Mailboxes'},
+    {k:'groups',l:'Groups & Distribution Lists'},
+    {k:'admins',l:'Admin Roles'},
+    {k:'conditionalAccess',l:'Conditional Access'},
+    {k:'authMethods',l:'Authentication Methods'},
+    {k:'securityDefaults',l:'Security Defaults'},
+    {k:'authzPolicy',l:'Authorization Policy'},
+    {k:'namedLocations',l:'Named Locations'},
+    {k:'spSettings',l:'SharePoint Settings'},
+    {k:'spSites',l:'SharePoint Sites'},
+    {k:'appRegistrations',l:'App Registrations'},
+    {k:'enterpriseApps',l:'Enterprise Apps'},
+    {k:'oauthGrants',l:'OAuth Consent Grants'},
+    {k:'deviceCompliance',l:'Intune Compliance Policies'},
+    {k:'deviceConfig',l:'Intune Config Profiles'},
+    {k:'endpointSecurity',l:'Endpoint Security Policies'},
+    {k:'appProtection',l:'App Protection Policies'},
+    {k:'enrollmentConfig',l:'Enrollment Configurations'},
+    {k:'autopilot',l:'Autopilot Profiles'},
+    {k:'groupPolicyConfig',l:'Group Policy (Imported GPOs)'},
+    {k:'managedDevices',l:'Managed Devices'},
+    {k:'intuneApps',l:'Intune Apps'},
+    {k:'sensitivityLabels',l:'Sensitivity Labels'},
+    {k:'retentionLabels',l:'Retention Labels'},
+    {k:'dlpPolicies',l:'DLP Policies'},
+    {k:'mailboxes',l:'Exchange Mailboxes'},
+    {k:'transportRules',l:'Mail Flow Rules'},
+    {k:'acceptedDomains',l:'Exchange Domains'},
+    {k:'connectors',l:'Exchange Connectors'},
+    {k:'secureScore',l:'Secure Score'}
+  ];
+  for(let i=0;i<secs.length;i++){
+    const s=secs[i],pct=Math.round((i+1)/secs.length*100);
+    $('discStatus').textContent='Scanning: '+s.l+'...';$('discPercent').textContent=pct+'%';$('discBar').style.width=pct+'%';
+    if(live){try{const fns={
+      organization:()=>G.call('/organization'),
+      subscribedSkus:()=>G.call('/subscribedSkus?$select=skuPartNumber,prepaidUnits,consumedUnits,appliesTo,skuId'),
+      domains:()=>G.call('/domains'),
+      users:()=>G.call('/users?$select=displayName,userPrincipalName,mail,accountEnabled,assignedLicenses,userType,createdDateTime,jobTitle,department,signInActivity,proxyAddresses&$top=999'),
+      groups:()=>G.call('/groups?$select=displayName,groupTypes,securityEnabled,mailEnabled,mailNickname,mail,membershipRule,description,createdDateTime,proxyAddresses,resourceProvisioningOptions&$top=999&$count=true'),
+      admins:()=>G.call('/directoryRoles?$expand=members($select=displayName,userPrincipalName)'),
+      conditionalAccess:()=>G.call('/identity/conditionalAccess/policies'),
+      authMethods:()=>G.call('/policies/authenticationMethodsPolicy'),
+      securityDefaults:()=>G.call('/policies/identitySecurityDefaultsEnforcementPolicy'),
+      authzPolicy:()=>G.call('/policies/authorizationPolicy'),
+      namedLocations:()=>G.call('/identity/conditionalAccess/namedLocations'),
+      spSettings:()=>G.call('/admin/sharepoint/settings','GET',null,true),
+      spSites:()=>G.call('/sites?search=*&$select=displayName,webUrl,createdDateTime,lastModifiedDateTime&$top=200'),
+      appRegistrations:()=>G.call('/applications?$select=displayName,appId,signInAudience,passwordCredentials,keyCredentials,createdDateTime&$top=999'),
+      enterpriseApps:()=>G.call("/servicePrincipals?$select=displayName,appId,servicePrincipalType,accountEnabled,appOwnerOrganizationId,tags,createdDateTime&$filter=tags/any(t:t eq 'WindowsAzureActiveDirectoryIntegratedApp')&$top=999"),
+      oauthGrants:()=>G.call('/oauth2PermissionGrants?$top=200'),
+      deviceCompliance:()=>G.call('/deviceManagement/deviceCompliancePolicies'),
+      deviceConfig:()=>G.call('/deviceManagement/deviceConfigurations'),
+      endpointSecurity:async()=>{try{return await G.call('/deviceManagement/intents?$select=displayName,description,templateId,isAssigned,lastModifiedDateTime')}catch{return{_note:'Endpoint security policies require Intune licence and DeviceManagementConfiguration.Read.All'}}},
+      appProtection:async()=>{try{return await G.call('/deviceAppManagement/managedAppPolicies?$select=displayName,createdDateTime,lastModifiedDateTime,version')}catch{return{_note:'App protection policies require DeviceManagementApps.Read.All'}}},
+      enrollmentConfig:async()=>{try{return await G.call('/deviceManagement/deviceEnrollmentConfigurations?$select=displayName,deviceEnrollmentConfigurationType,createdDateTime,priority')}catch{return{_note:'Enrollment configs require DeviceManagementServiceConfig.Read.All'}}},
+      autopilot:async()=>{try{return await G.call('/deviceManagement/windowsAutopilotDeploymentProfiles?$select=displayName,description,language,createdDateTime,lastModifiedDateTime')}catch{return{_note:'Autopilot profiles require DeviceManagementServiceConfig.Read.All'}}},
+      groupPolicyConfig:async()=>{try{return await G.call('/deviceManagement/groupPolicyConfigurations?$select=displayName,description,createdDateTime,lastModifiedDateTime')}catch{return{_note:'Group Policy configs require DeviceManagementConfiguration.Read.All'}}},
+      managedDevices:()=>G.call('/deviceManagement/managedDevices?$select=deviceName,operatingSystem,osVersion,complianceState,managementAgent,enrolledDateTime,lastSyncDateTime,userPrincipalName,model,manufacturer,serialNumber,isEncrypted&$top=999'),
+      intuneApps:()=>G.call('/deviceAppManagement/mobileApps?$select=displayName,publisher,createdDateTime,isAssigned&$filter=isAssigned eq true&$top=200'),
+      sensitivityLabels:async()=>{try{return await G.call('/security/informationProtection/sensitivityLabels?$select=name,description,isActive,priority,color')}catch{try{return await G.call('/informationProtection/policy/labels')}catch{return{_note:'Sensitivity labels require InformationProtection.Read.All or equivalent. May require Microsoft 365 E3/E5 licence.'}}}},
+      retentionLabels:async()=>{try{return await G.call('/security/labels/retentionLabels?$select=displayName,description,isInUse,createdDateTime,retentionDuration,actionAfterRetentionPeriod')}catch{return{_note:'Retention labels require Records.Read.All. May require compliance licence.'}}},
+      dlpPolicies:async()=>{try{return await G.call('/security/informationProtection/policy')}catch{try{return await G.call('/informationProtection/policy')}catch{return{_note:'DLP policies are not fully available via Graph API. Use Security & Compliance PowerShell: Get-DlpCompliancePolicy'}}}},
+      mailboxes:()=>G.call("/users?$select=displayName,userPrincipalName,mail,assignedLicenses,proxyAddresses&$filter=assignedLicenses/any()&$top=999"),
+      transportRules:async()=>{try{return await G.call('/admin/exchange/transportRules',null,null,true)}catch{return{_note:'Transport rules require Exchange admin role or beta endpoint'}}},
+      acceptedDomains:async()=>{try{return await G.call('/admin/exchange/acceptedDomains',null,null,true)}catch{return{_note:'Accepted domains requires Exchange admin permissions'}}},
+      connectors:async()=>{try{return await G.call('/admin/exchange/inboundConnectors',null,null,true)}catch{return{_note:'Connectors require Exchange admin permissions'}}},
+      secureScore:()=>G.call('/security/secureScores?$top=1')
+    };const r=await fns[s.k]();DD[s.k]=r?.value||r}catch(e){DD[s.k]={_error:e.message}}}
+    else{await delay(80+Math.random()*150);DD[s.k]=mockD(s.k,dom)}}
   $('discProgress').classList.add('hidden');$('discScanBtn').disabled=false;$('discScanBtn').innerHTML='🔍 Run Discovery';$('discExBtns').classList.remove('hidden');
   renderDisc()}
 
 function renderDisc(){
   if(!DD)return;const d=DD,c=$('discResults');
-  const u=Array.isArray(d.users)?d.users:[],g=Array.isArray(d.groups)?d.groups:[],ca=Array.isArray(d.conditionalAccess)?d.conditionalAccess:[],ar=Array.isArray(d.admins)?d.admins:[];
-  const licU=u.filter(x=>x.lic||x.assignedLicenses?.length>0).length,mfaU=u.filter(x=>x.mfa!==undefined?x.mfa:true).length,onU=u.filter(x=>x.on!==undefined?x.on:x.accountEnabled!==false).length;
+  const arr=k=>Array.isArray(d[k])?d[k]:[];
+  const errN=k=>d[k]?._error?`<div style="font-size:.76rem;color:var(--accent-amber);padding:5px 10px;background:rgba(245,158,11,.04);border-radius:4px;margin-bottom:6px">⚠ ${esc(d[k]._error)}</div>`:'';
+  const u=arr('users'),g=arr('groups'),ca=arr('conditionalAccess'),ar=arr('admins'),sites=arr('spSites'),apps=arr('appRegistrations'),eapps=arr('enterpriseApps'),skus=arr('subscribedSkus'),devs=arr('managedDevices'),iapps=arr('intuneApps'),dcomp=arr('deviceCompliance'),dconf=arr('deviceConfig'),nlocs=arr('namedLocations'),oag=arr('oauthGrants'),mbox=arr('mailboxes'),esec=arr('endpointSecurity'),aprot=arr('appProtection'),enrcfg=arr('enrollmentConfig'),apilot=arr('autopilot'),gpcfg=arr('groupPolicyConfig'),slabels=arr('sensitivityLabels'),rlabels=arr('retentionLabels');
+  const noteN=k=>d[k]?._note?`<div style="font-size:.76rem;color:var(--text-muted);padding:5px 10px;background:rgba(100,116,139,.04);border-radius:4px;margin-bottom:6px">ℹ ${esc(d[k]._note)}</div>`:'';
   const colors=['#3b82f6','#8b5cf6','#06b6d4','#ec4899','#f59e0b','#10b981','#ef4444','#6366f1','#14b8a6','#f97316','#a855f7','#64748b'];
 
-  let h=`<div class="stagger">`;
-  // Summary
-  h+=`<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:20px">
-    <div class="card" style="text-align:center;padding:18px"><div style="font-family:var(--font-display);font-size:2rem;font-weight:800;color:var(--accent-blue)">${u.length}</div><div class="stat-label">Total Users</div></div>
-    <div class="card" style="text-align:center;padding:18px"><div style="font-family:var(--font-display);font-size:2rem;font-weight:800;color:var(--accent-green)">${licU}</div><div class="stat-label">Licensed</div></div>
-    <div class="card" style="text-align:center;padding:18px"><div style="font-family:var(--font-display);font-size:2rem;font-weight:800;color:var(--accent-violet)">${g.length}</div><div class="stat-label">Groups</div></div>
-    <div class="card" style="text-align:center;padding:18px"><div style="font-family:var(--font-display);font-size:2rem;font-weight:800;color:var(--accent-cyan)">${ca.length}</div><div class="stat-label">CA Policies</div></div>
-    <div class="card" style="text-align:center;padding:18px"><div style="font-family:var(--font-display);font-size:2rem;font-weight:800;color:var(--accent-amber)">${ar.length}</div><div class="stat-label">Admin Roles</div></div>
+  // Group categorisation
+  const m365g=g.filter(x=>(x.groupTypes||[]).includes('Unified'));
+  const secg=g.filter(x=>x.securityEnabled&&!x.mailEnabled&&!(x.groupTypes||[]).includes('Unified'));
+  const distg=g.filter(x=>!x.securityEnabled&&x.mailEnabled);
+  const mailsecg=g.filter(x=>x.securityEnabled&&x.mailEnabled&&!(x.groupTypes||[]).includes('Unified'));
+  const dyng=g.filter(x=>x.membershipRule);
+  const teamsg=g.filter(x=>(x.resourceProvisioningOptions||[]).includes('Team'));
+  // User categorisation
+  const licU=u.filter(x=>x.assignedLicenses?.length>0||x.lic);
+  const guests=u.filter(x=>(x.userType||'').toLowerCase()==='guest');
+  const members=u.filter(x=>(x.userType||'').toLowerCase()!=='guest');
+  const disabled=u.filter(x=>x.accountEnabled===false);
+  // Mailbox categorisation from proxy addresses
+  const sharedMbox=mbox.filter(x=>(x.proxyAddresses||[]).some(p=>/^smtp:/i.test(p))&&(x.userType||'').toLowerCase()!=='guest');
+
+  let h='<div class="stagger">';
+
+  // ───── SUMMARY DASHBOARD ─────
+  h+=`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin-bottom:18px">
+    ${[{n:members.length,l:'Members',c:'var(--accent-blue)'},{n:guests.length,l:'Guests',c:'var(--accent-cyan)'},{n:licU.length,l:'Licensed',c:'var(--accent-green)'},{n:g.length,l:'Groups',c:'var(--accent-violet)'},{n:ca.length,l:'CA Policies',c:'var(--accent-amber)'},{n:apps.length,l:'App Regs',c:'var(--accent-orange)'},{n:eapps.length,l:'Enterprise Apps',c:'#818cf8'},{n:devs.length,l:'Devices',c:'var(--accent-cyan)'},{n:sites.length,l:'SP Sites',c:'var(--accent-green)'},{n:skus.length,l:'License SKUs',c:'var(--accent-blue)'}].map(s=>`<div class="card" style="text-align:center;padding:14px"><div style="font-family:var(--font-display);font-size:1.6rem;font-weight:800;color:${s.c}">${s.n}</div><div class="stat-label">${s.l}</div></div>`).join('')}
   </div>`;
 
-  // Organisation
-  if(d.organization){const o=d.organization;
-    h+=`<div class="disc-section"><div class="disc-section-head"><div class="sec-icon" style="background:rgba(59,130,246,.1);color:var(--accent-blue)">🏢</div>Organisation Details</div>
+  // ───── ORGANISATION ─────
+  if(d.organization&&!d.organization._error){const o=d.organization;
+    h+=`<div class="disc-section"><div class="disc-section-head"><div class="sec-icon" style="background:rgba(59,130,246,.1);color:var(--accent-blue)">🏢</div>Organisation</div>
     <div class="disc-grid disc-grid-3">
       <div class="disc-kv"><div class="kv-label">Name</div><div class="kv-value">${esc(o.name||o.displayName||'—')}</div></div>
       <div class="disc-kv"><div class="kv-label">Country</div><div class="kv-value">${esc(o.country||o.countryLetterCode||'—')}</div></div>
@@ -404,64 +488,252 @@ function renderDisc(){
       <div class="disc-kv"><div class="kv-label">Admin Contact</div><div class="kv-value mono">${esc(o.mail||o.technicalNotificationMails?.[0]||'—')}</div></div>
       <div class="disc-kv"><div class="kv-label">Tenant Domain</div><div class="kv-value mono">${esc(d.domain)}</div></div>
       <div class="disc-kv"><div class="kv-label">Scan Date</div><div class="kv-value">${new Date(d.ts).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})}</div></div>
-    </div></div>`;
-  }
+    </div></div>`}
 
-  // Domains
-  if(d.domains){h+=`<div class="disc-section"><div class="disc-section-head"><div class="sec-icon" style="background:rgba(6,182,212,.1);color:var(--accent-cyan)">🌐</div>Verified Domains</div>
-    <table class="disc-table"><thead><tr><th>Domain</th><th>Default</th><th>Verified</th><th>Auth Type</th></tr></thead><tbody>
-    ${(Array.isArray(d.domains)?d.domains:[]).map(dm=>`<tr><td style="font-family:var(--font-mono);font-weight:500">${esc(dm.id||dm.name||'')}</td><td>${(dm.def||dm.isDefault)?'<span class="badge badge-green">Default</span>':'—'}</td><td>${(dm.v||dm.isVerified)?'<span class="status-dot on"></span> Yes':'<span class="status-dot off"></span> No'}</td><td>${esc(dm.authenticationType||'Managed')}</td></tr>`).join('')}
+  // ───── LICENSE INVENTORY ─────
+  if(skus.length){h+=`<div class="disc-section">${errN('subscribedSkus')}<div class="disc-section-head"><div class="sec-icon" style="background:rgba(16,185,129,.1);color:var(--accent-green)">📜</div>License Inventory <span class="badge badge-muted" style="margin-left:auto">${skus.length} SKUs</span></div>
+    <table class="disc-table"><thead><tr><th>License SKU</th><th>Total</th><th>Consumed</th><th>Available</th><th>Usage</th></tr></thead><tbody>
+    ${skus.map(s=>{const tot=s.prepaidUnits?.enabled||s.total||0;const used=s.consumedUnits||s.used||0;const pct=tot?Math.round(used/tot*100):0;const col=pct>90?'var(--accent-red)':pct>70?'var(--accent-amber)':'var(--accent-green)';
+      return`<tr><td style="font-weight:500">${esc(s.skuPartNumber||'')}</td><td>${tot}</td><td>${used}</td><td>${tot-used}</td><td><div style="display:flex;align-items:center;gap:8px"><div class="mini-bar" style="width:70px"><div class="mini-bar-fill" style="width:${pct}%;background:${col}"></div></div><span style="font-size:.76rem;color:${col};font-weight:600">${pct}%</span></div></td></tr>`}).join('')}
     </tbody></table></div>`}
 
-  // Users
-  h+=`<div class="disc-section"><div class="disc-section-head"><div class="sec-icon" style="background:rgba(139,92,246,.1);color:var(--accent-violet)">👥</div>Users &amp; Licensing <span class="badge badge-muted" style="margin-left:auto">${u.length} users</span></div>
-    <table class="disc-table"><thead><tr><th></th><th>Display Name</th><th>UPN</th><th>Enabled</th><th>Licensed</th><th>MFA</th></tr></thead><tbody>
-    ${u.map((usr,i)=>{const nm=usr.dn||usr.displayName||'';const ini=nm.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();const enabled=usr.on!==undefined?usr.on:usr.accountEnabled!==false;const lic=usr.lic||usr.assignedLicenses?.length>0;const mfa=usr.mfa!==undefined?usr.mfa:null;
-      return`<tr><td><div class="avatar" style="background:${colors[i%colors.length]}">${ini}</div></td><td style="font-weight:500">${esc(nm)}</td><td style="font-family:var(--font-mono);font-size:.78rem;color:var(--text-secondary)">${esc(usr.upn||usr.userPrincipalName||'')}</td><td>${enabled?'<span class="status-dot on"></span>':'<span class="status-dot off"></span>'}</td><td>${lic?'<span class="badge badge-green">Licensed</span>':'<span class="badge badge-muted">None</span>'}</td><td>${mfa===null?'<span class="badge badge-muted">Unknown</span>':mfa?'<span class="badge badge-green">Registered</span>':'<span class="badge badge-red">Not Set</span>'}</td></tr>`}).join('')}
+  // ───── DOMAINS ─────
+  if(d.domains&&!d.domains._error){h+=`<div class="disc-section">${errN('domains')}<div class="disc-section-head"><div class="sec-icon" style="background:rgba(6,182,212,.1);color:var(--accent-cyan)">🌐</div>Verified Domains</div>
+    <table class="disc-table"><thead><tr><th>Domain</th><th>Default</th><th>Verified</th><th>Auth Type</th></tr></thead><tbody>
+    ${arr('domains').map(dm=>`<tr><td class="mono" style="font-weight:500">${esc(dm.id||dm.name||'')}</td><td>${(dm.def||dm.isDefault)?'<span class="badge badge-green">Default</span>':'—'}</td><td>${(dm.v||dm.isVerified)?'<span class="status-dot on"></span> Yes':'<span class="status-dot off"></span> No'}</td><td>${esc(dm.authenticationType||'Managed')}</td></tr>`).join('')}
+    </tbody></table></div>`}
+
+  // ───── USERS ─────
+  h+=`<div class="disc-section">${errN('users')}<div class="disc-section-head"><div class="sec-icon" style="background:rgba(139,92,246,.1);color:var(--accent-violet)">👥</div>Users <span class="badge badge-muted" style="margin-left:auto">${members.length} members · ${guests.length} guests · ${disabled.length} disabled</span></div>
+    <table class="disc-table"><thead><tr><th></th><th>Display Name</th><th>UPN</th><th>Type</th><th>Dept / Title</th><th>Enabled</th><th>Licensed</th></tr></thead><tbody>
+    ${u.slice(0,200).map((usr,i)=>{const nm=usr.dn||usr.displayName||'';const ini=nm.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();const en=usr.on!==undefined?usr.on:usr.accountEnabled!==false;const lic=usr.lic||usr.assignedLicenses?.length>0;const ut=usr.userType||'Member';
+      return`<tr><td><div class="avatar" style="background:${colors[i%colors.length]}">${ini}</div></td><td style="font-weight:500">${esc(nm)}</td><td class="mono" style="font-size:.74rem;color:var(--text-secondary)">${esc(usr.upn||usr.userPrincipalName||'')}</td><td><span class="badge ${ut.toLowerCase()==='guest'?'badge-cyan':'badge-muted'}">${esc(ut)}</span></td><td style="font-size:.78rem;color:var(--text-secondary)">${esc(usr.department||usr.dept||'')}${usr.department&&usr.jobTitle?' · ':''}${esc(usr.jobTitle||usr.title||'')}</td><td>${en?'<span class="status-dot on"></span>':'<span class="status-dot off"></span>'}</td><td>${lic?'<span class="badge badge-green">Yes</span>':'<span class="badge badge-muted">No</span>'}</td></tr>`}).join('')}
+    ${u.length>200?`<tr><td colspan="7" style="text-align:center;color:var(--text-muted);font-style:italic">… ${u.length-200} more (see JSON export)</td></tr>`:''}
     </tbody></table></div>`;
 
-  // Admin Roles
-  h+=`<div class="disc-section"><div class="disc-section-head"><div class="sec-icon" style="background:rgba(245,158,11,.1);color:var(--accent-amber)">🔑</div>Admin Role Assignments</div>
+  // ───── ADMIN ROLES ─────
+  const activeRoles=ar.filter(r=>(r.members||[]).length>0);
+  h+=`<div class="disc-section">${errN('admins')}<div class="disc-section-head"><div class="sec-icon" style="background:rgba(245,158,11,.1);color:var(--accent-amber)">🔑</div>Admin Roles <span class="badge badge-muted" style="margin-left:auto">${activeRoles.length} active roles</span></div>
     <div class="disc-grid disc-grid-2">
-    ${ar.map(r=>{const mem=r.members||[];return`<div class="disc-kv" style="border-left:3px solid var(--accent-amber)"><div class="kv-label">${esc(r.role||r.displayName||'')}</div><div class="kv-value" style="font-size:.82rem">${mem.length?mem.map(m=>'<span style="display:inline-flex;align-items:center;gap:4px;margin-right:10px"><span style="color:var(--accent-amber)">●</span> '+(typeof m==='string'?esc(m):esc(m.displayName||m.dn||''))+'</span>').join(''):'<span style="color:var(--text-dim)">No members</span>'}</div></div>`}).join('')}
+    ${activeRoles.map(r=>{const mem=r.members||[];return`<div class="disc-kv" style="border-left:3px solid var(--accent-amber)"><div class="kv-label">${esc(r.role||r.displayName||'')} <span class="badge badge-muted">${mem.length}</span></div><div class="kv-value" style="font-size:.82rem">${mem.map(m=>`<span style="display:inline-flex;align-items:center;gap:4px;margin-right:10px"><span style="color:var(--accent-amber)">●</span> ${typeof m==='string'?esc(m):esc(m.displayName||'')}</span>`).join('')}</div></div>`}).join('')}
     </div></div>`;
 
-  // Conditional Access
-  h+=`<div class="disc-section"><div class="disc-section-head"><div class="sec-icon" style="background:rgba(16,185,129,.1);color:var(--accent-green)">🔒</div>Conditional Access Policies <span class="badge badge-muted" style="margin-left:auto">${ca.length} policies</span></div>
-    <table class="disc-table"><thead><tr><th>Policy Name</th><th>Status</th><th>Target</th><th>Controls</th></tr></thead><tbody>
-    ${ca.map(p=>{const st=p.state||'';const stBadge=st==='enabled'?'badge-green':st.includes('report')?'badge-amber':'badge-muted';return`<tr><td style="font-weight:500">${esc(p.name||p.displayName||'')}</td><td><span class="badge ${stBadge}">${esc(st)}</span></td><td style="font-size:.8rem;color:var(--text-secondary)">${esc(p.target||p.conditions?.users?.includeUsers?.join(', ')||'—')}</td><td style="font-size:.8rem;color:var(--text-secondary)">${esc(p.controls||p.grantControls?.builtInControls?.join(', ')||'—')}</td></tr>`}).join('')}
+  // ───── GROUPS (categorised) ─────
+  const grpTbl=(title,icon,bgCol,col,list)=>{if(!list.length)return'';
+    return`<div class="disc-section"><div class="disc-section-head"><div class="sec-icon" style="background:${bgCol};color:${col}">${icon}</div>${title} <span class="badge badge-muted" style="margin-left:auto">${list.length}</span></div>
+    <table class="disc-table"><thead><tr><th>Name</th><th>Email</th><th>Description</th></tr></thead><tbody>
+    ${list.slice(0,80).map(gr=>`<tr><td style="font-weight:500">${esc(gr.displayName||gr.name||'')}</td><td class="mono" style="font-size:.74rem;color:var(--text-secondary)">${esc(gr.mail||gr.mailNickname||'—')}</td><td style="font-size:.78rem;color:var(--text-secondary);max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(gr.description||'—')}</td></tr>`).join('')}
+    ${list.length>80?`<tr><td colspan="3" style="text-align:center;color:var(--text-muted);font-style:italic">… ${list.length-80} more</td></tr>`:''}
+    </tbody></table></div>`};
+  h+=grpTbl('Microsoft 365 Groups'+(teamsg.length?' <span class="badge badge-cyan" style="margin-left:6px">'+teamsg.length+' Teams-enabled</span>':''),'📬','rgba(59,130,246,.1)','var(--accent-blue)',m365g);
+  h+=grpTbl('Security Groups','🔐','rgba(139,92,246,.1)','var(--accent-violet)',secg);
+  h+=grpTbl('Distribution Lists','📨','rgba(236,91,44,.1)','var(--accent-orange)',distg);
+  h+=grpTbl('Mail-Enabled Security Groups','📧','rgba(6,182,212,.1)','var(--accent-cyan)',mailsecg);
+  if(dyng.length){h+=`<div class="disc-section"><div class="disc-section-head"><div class="sec-icon" style="background:rgba(245,158,11,.1);color:var(--accent-amber)">⚡</div>Dynamic Groups <span class="badge badge-muted" style="margin-left:auto">${dyng.length}</span></div>
+    <table class="disc-table"><thead><tr><th>Name</th><th>Rule</th></tr></thead><tbody>
+    ${dyng.map(gr=>`<tr><td style="font-weight:500">${esc(gr.displayName||'')}</td><td class="mono" style="font-size:.72rem;color:var(--text-secondary);max-width:400px;word-break:break-all">${esc(gr.membershipRule||'—')}</td></tr>`).join('')}
+    </tbody></table></div>`}
+
+  // ───── EXCHANGE / MAILBOXES ─────
+  if(mbox.length||d.mailboxes){
+    h+=`<div class="disc-section">${errN('mailboxes')}<div class="disc-section-head"><div class="sec-icon" style="background:rgba(59,130,246,.1);color:var(--accent-blue)">📧</div>Exchange Mailboxes <span class="badge badge-muted" style="margin-left:auto">${mbox.length} licensed mailbox users</span></div>
+    <p style="font-size:.78rem;color:var(--text-muted);margin-bottom:10px">Note: Shared mailbox detection via Graph API is limited. Shared mailboxes are typically unlicensed users with Exchange permissions assigned via PowerShell.</p>
+    <table class="disc-table"><thead><tr><th>Name</th><th>Primary Email</th><th>Aliases</th></tr></thead><tbody>
+    ${mbox.slice(0,150).map(m=>{const aliases=(m.proxyAddresses||[]).filter(p=>p.startsWith('smtp:')).map(p=>p.replace('smtp:',''));
+      return`<tr><td style="font-weight:500">${esc(m.displayName||'')}</td><td class="mono" style="font-size:.74rem;color:var(--text-secondary)">${esc(m.mail||m.userPrincipalName||'')}</td><td style="font-size:.72rem;color:var(--text-muted)">${aliases.length?aliases.map(a=>esc(a)).join(', '):'—'}</td></tr>`}).join('')}
+    ${mbox.length>150?`<tr><td colspan="3" style="text-align:center;color:var(--text-muted);font-style:italic">… ${mbox.length-150} more</td></tr>`:''}
+    </tbody></table></div>`}
+
+  // Exchange domains + transport rules + connectors
+  if(d.acceptedDomains&&!d.acceptedDomains._error&&!d.acceptedDomains._note){
+    h+=`<div class="disc-section"><div class="disc-section-head"><div class="sec-icon" style="background:rgba(59,130,246,.1);color:var(--accent-blue)">📮</div>Exchange Accepted Domains</div>
+    <table class="disc-table"><thead><tr><th>Domain</th><th>Type</th></tr></thead><tbody>
+    ${arr('acceptedDomains').map(dm=>`<tr><td class="mono" style="font-weight:500">${esc(dm.domainName||dm.name||dm.id||'')}</td><td>${esc(dm.domainType||'—')}</td></tr>`).join('')}
+    </tbody></table></div>`}
+  if(d.transportRules&&!d.transportRules._error&&!d.transportRules._note&&arr('transportRules').length){
+    h+=`<div class="disc-section"><div class="disc-section-head"><div class="sec-icon" style="background:rgba(236,91,44,.1);color:var(--accent-orange)">📬</div>Mail Flow / Transport Rules <span class="badge badge-muted" style="margin-left:auto">${arr('transportRules').length}</span></div>
+    <table class="disc-table"><thead><tr><th>Rule Name</th><th>State</th><th>Priority</th></tr></thead><tbody>
+    ${arr('transportRules').map(r=>`<tr><td style="font-weight:500">${esc(r.name||r.displayName||'')}</td><td><span class="badge ${r.state==='Enabled'?'badge-green':'badge-muted'}">${esc(r.state||'—')}</span></td><td>${r.priority||'—'}</td></tr>`).join('')}
+    </tbody></table></div>`}
+  if(d.connectors&&!d.connectors._error&&!d.connectors._note&&arr('connectors').length){
+    h+=`<div class="disc-section"><div class="disc-section-head"><div class="sec-icon" style="background:rgba(6,182,212,.1);color:var(--accent-cyan)">🔌</div>Exchange Connectors <span class="badge badge-muted" style="margin-left:auto">${arr('connectors').length}</span></div>
+    <table class="disc-table"><thead><tr><th>Name</th><th>Type</th><th>Enabled</th></tr></thead><tbody>
+    ${arr('connectors').map(cn=>`<tr><td style="font-weight:500">${esc(cn.name||cn.displayName||'')}</td><td>${esc(cn.connectorType||'Inbound')}</td><td>${cn.enabled!==false?'<span class="status-dot on"></span>':'<span class="status-dot off"></span>'}</td></tr>`).join('')}
+    </tbody></table></div>`}
+
+  // ───── CONDITIONAL ACCESS ─────
+  h+=`<div class="disc-section">${errN('conditionalAccess')}<div class="disc-section-head"><div class="sec-icon" style="background:rgba(16,185,129,.1);color:var(--accent-green)">🔒</div>Conditional Access <span class="badge badge-muted" style="margin-left:auto">${ca.length}</span></div>
+    <table class="disc-table"><thead><tr><th>Policy</th><th>Status</th><th>Target</th><th>Grant Controls</th></tr></thead><tbody>
+    ${ca.map(p=>{const st=p.state||'';const stB=st==='enabled'?'badge-green':st.includes('report')?'badge-amber':'badge-muted';const tgt=p.target||p.conditions?.users?.includeUsers?.join(', ')||'—';const ctrl=p.controls||p.grantControls?.builtInControls?.join(', ')||'—';
+      return`<tr><td style="font-weight:500">${esc(p.name||p.displayName||'')}</td><td><span class="badge ${stB}">${esc(st)}</span></td><td style="font-size:.78rem;color:var(--text-secondary)">${esc(tgt)}</td><td style="font-size:.78rem;color:var(--text-secondary)">${esc(ctrl)}</td></tr>`}).join('')}
     </tbody></table></div>`;
 
-  // Groups
-  h+=`<div class="disc-section"><div class="disc-section-head"><div class="sec-icon" style="background:rgba(236,91,44,.1);color:var(--accent-orange)">📁</div>Groups</div>
-    <table class="disc-table"><thead><tr><th>Group Name</th><th>Type</th><th>Members</th></tr></thead><tbody>
-    ${g.map(gr=>{const tp=gr.type||gr.groupTypes?.join(', ')||'Security';return`<tr><td style="font-weight:500">${esc(gr.name||gr.displayName||'')}</td><td><span class="badge badge-cyan">${esc(tp)}</span></td><td>${gr.ct||gr.memberCount||'—'}</td></tr>`}).join('')}
-    </tbody></table></div>`;
+  // ───── NAMED LOCATIONS ─────
+  if(nlocs.length){h+=`<div class="disc-section"><div class="disc-section-head"><div class="sec-icon" style="background:rgba(245,158,11,.1);color:var(--accent-amber)">📍</div>Named Locations <span class="badge badge-muted" style="margin-left:auto">${nlocs.length}</span></div>
+    <table class="disc-table"><thead><tr><th>Name</th><th>Type</th><th>Trusted</th><th>Details</th></tr></thead><tbody>
+    ${nlocs.map(n=>{const ip=n.ipRanges||n['@odata.type']?.includes('ip');return`<tr><td style="font-weight:500">${esc(n.displayName||'')}</td><td><span class="badge ${ip?'badge-cyan':'badge-violet'}">${ip?'IP':'Country'}</span></td><td>${n.isTrusted?'<span class="status-dot on"></span>':'<span class="status-dot off"></span>'}</td><td style="font-size:.74rem;color:var(--text-secondary)">${ip&&n.ipRanges?n.ipRanges.map(r=>esc(r.cidrAddress||r)).join(', '):(n.countriesAndRegions||[]).map(c=>esc(c)).join(', ')||'—'}</td></tr>`}).join('')}
+    </tbody></table></div>`}
 
-  // Auth Methods
-  if(d.authMethods){const am=d.authMethods;const methods=am.methods||am.authenticationMethodConfigurations||[];
+  // ───── AUTH METHODS ─────
+  if(d.authMethods&&!d.authMethods._error){const methods=d.authMethods.methods||d.authMethods.authenticationMethodConfigurations||[];
     h+=`<div class="disc-section"><div class="disc-section-head"><div class="sec-icon" style="background:rgba(99,102,241,.1);color:#818cf8">📱</div>Authentication Methods</div>
     <div class="disc-grid disc-grid-3">
     ${(Array.isArray(methods)?methods:[]).map(m=>{const on=m.on!==undefined?m.on:m.state==='enabled';return`<div class="disc-kv"><div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:.84rem;font-weight:500">${esc(m.id||m.name||'')}</span><span class="status-dot ${on?'on':'off'}"></span></div></div>`}).join('')}
     </div></div>`}
 
-  // SharePoint
-  if(d.sharepoint){const sp=d.sharepoint;
-    h+=`<div class="disc-section"><div class="disc-section-head"><div class="sec-icon" style="background:rgba(16,185,129,.1);color:var(--accent-green)">📄</div>SharePoint &amp; OneDrive Settings</div>
+  // ───── SECURITY DEFAULTS + AUTHZ POLICY ─────
+  if(d.securityDefaults&&!d.securityDefaults._error){const on=d.securityDefaults.on||d.securityDefaults.isEnabled;
+    h+=`<div class="disc-section"><div class="disc-section-head"><div class="sec-icon" style="background:rgba(${on?'16,185,129':'239,68,68'},.1);color:${on?'var(--accent-green)':'var(--accent-red)'}">🛡️</div>Security Defaults</div>
+    <div class="disc-kv" style="display:inline-flex;gap:10px;align-items:center"><span class="status-dot ${on?'on':'off'}"></span><span style="font-size:.88rem;font-weight:500">${on?'Enabled':'Disabled'}${!on?' — Conditional Access policies should be in use':''}</span></div></div>`}
+  if(d.authzPolicy&&!d.authzPolicy._error){const ap=d.authzPolicy;
+    h+=`<div class="disc-section"><div class="disc-section-head"><div class="sec-icon" style="background:rgba(139,92,246,.1);color:var(--accent-violet)">📋</div>Authorization Policy</div>
     <div class="disc-grid disc-grid-3">
-      <div class="disc-kv"><div class="kv-label">External Sharing</div><div class="kv-value">${esc(sp.sharing||sp.sharingCapability||'—')}</div></div>
-      <div class="disc-kv"><div class="kv-label">Re-sharing Allowed</div><div class="kv-value">${(sp.reshare||sp.isResharingByExternalUsersEnabled)?'<span class="badge badge-red">Yes</span>':'<span class="badge badge-green">No</span>'}</div></div>
-      <div class="disc-kv"><div class="kv-label">Sync Restricted</div><div class="kv-value">${(sp.syncRestricted||sp.isUnmanagedSyncAppForTenantRestricted)?'<span class="badge badge-green">Yes</span>':'<span class="badge badge-amber">No</span>'}</div></div>
+      <div class="disc-kv"><div class="kv-label">Users Read Directory</div><div class="kv-value">${ap.defaultUserRolePermissions?.allowedToReadOtherUsers!==false||ap.readDir?'<span class="badge badge-amber">Yes</span>':'<span class="badge badge-green">Restricted</span>'}</div></div>
+      <div class="disc-kv"><div class="kv-label">User App Consent</div><div class="kv-value">${(ap.defaultUserRolePermissions?.permissionGrantPoliciesAssigned||[]).length>0||ap.consent?'<span class="badge badge-red">Allowed</span>':'<span class="badge badge-green">Blocked</span>'}</div></div>
+      <div class="disc-kv"><div class="kv-label">Guest Invites</div><div class="kv-value">${esc(ap.allowInvitesFrom||ap.guestInvite||'—')}</div></div>
     </div></div>`}
 
-  // Security Defaults
-  if(d.securityDefaults){const sd=d.securityDefaults;const on=sd.on||sd.isEnabled;
-    h+=`<div class="disc-section"><div class="disc-section-head"><div class="sec-icon" style="background:rgba(${on?'16,185,129':'239,68,68'},.1);color:${on?'var(--accent-green)':'var(--accent-red)'}">🛡️</div>Security Defaults</div>
-    <div class="disc-kv" style="display:inline-flex;gap:10px;align-items:center"><span class="status-dot ${on?'on':'off'}"></span><span style="font-size:.88rem;font-weight:500">${on?'Enabled':'Disabled'}${!on?' — Conditional Access policies should be configured instead':''}</span></div></div>`}
+  // ───── SHAREPOINT + SITES ─────
+  if(d.spSettings&&!d.spSettings._error){const sp=d.spSettings;
+    h+=`<div class="disc-section"><div class="disc-section-head"><div class="sec-icon" style="background:rgba(16,185,129,.1);color:var(--accent-green)">📄</div>SharePoint &amp; OneDrive</div>
+    <div class="disc-grid disc-grid-3">
+      <div class="disc-kv"><div class="kv-label">External Sharing</div><div class="kv-value">${esc(sp.sharing||sp.sharingCapability||'—')}</div></div>
+      <div class="disc-kv"><div class="kv-label">Re-sharing by Externals</div><div class="kv-value">${(sp.reshare||sp.isResharingByExternalUsersEnabled)?'<span class="badge badge-red">Allowed</span>':'<span class="badge badge-green">Blocked</span>'}</div></div>
+      <div class="disc-kv"><div class="kv-label">Unmanaged Sync Blocked</div><div class="kv-value">${(sp.syncRestricted||sp.isUnmanagedSyncAppForTenantRestricted)?'<span class="badge badge-green">Yes</span>':'<span class="badge badge-amber">No</span>'}</div></div>
+    </div></div>`}
+  if(sites.length){h+=`<div class="disc-section">${errN('spSites')}<div class="disc-section-head"><div class="sec-icon" style="background:rgba(16,185,129,.1);color:var(--accent-green)">🌍</div>SharePoint Sites <span class="badge badge-muted" style="margin-left:auto">${sites.length}</span></div>
+    <table class="disc-table"><thead><tr><th>Site</th><th>URL</th><th>Last Modified</th></tr></thead><tbody>
+    ${sites.slice(0,80).map(s=>`<tr><td style="font-weight:500">${esc(s.displayName||s.name||'')}</td><td class="mono" style="font-size:.72rem;color:var(--accent-cyan);max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(s.webUrl||'')}</td><td style="font-size:.78rem;color:var(--text-secondary)">${s.lastModifiedDateTime?new Date(s.lastModifiedDateTime).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'—'}</td></tr>`).join('')}
+    ${sites.length>80?`<tr><td colspan="3" style="text-align:center;color:var(--text-muted);font-style:italic">… ${sites.length-80} more</td></tr>`:''}
+    </tbody></table></div>`}
 
-  h+=`</div>`;
-  c.innerHTML=h;
-}
+  // ───── APP REGISTRATIONS ─────
+  if(apps.length){const now=Date.now(),soon=30*24*3600000;
+    h+=`<div class="disc-section">${errN('appRegistrations')}<div class="disc-section-head"><div class="sec-icon" style="background:rgba(236,91,44,.1);color:var(--accent-orange)">📝</div>App Registrations <span class="badge badge-muted" style="margin-left:auto">${apps.length}</span></div>
+    <table class="disc-table"><thead><tr><th>Name</th><th>App ID</th><th>Audience</th><th>Secrets/Certs</th><th>Expiry</th></tr></thead><tbody>
+    ${apps.map(a=>{const secs=(a.passwordCredentials||[]).length;const certs=(a.keyCredentials||[]).length;
+      const allC=[...(a.passwordCredentials||[]),...(a.keyCredentials||[])];
+      const expired=allC.filter(c=>c.endDateTime&&new Date(c.endDateTime)<now);
+      const expiring=allC.filter(c=>c.endDateTime&&new Date(c.endDateTime)>now&&new Date(c.endDateTime)<now+soon);
+      const expB=expired.length?'badge-red':expiring.length?'badge-amber':allC.length?'badge-green':'badge-muted';
+      const expT=expired.length?expired.length+' expired':expiring.length?expiring.length+' soon':allC.length?'OK':'None';
+      return`<tr><td style="font-weight:500">${esc(a.displayName||a.name||'')}</td><td class="mono" style="font-size:.72rem;color:var(--text-secondary)">${esc(a.appId||'')}</td><td style="font-size:.78rem">${esc(a.signInAudience||a.aud||'—')}</td><td>${secs}s / ${certs}c</td><td><span class="badge ${expB}">${expT}</span></td></tr>`}).join('')}
+    </tbody></table></div>`}
+
+  // ───── ENTERPRISE APPS ─────
+  if(eapps.length){h+=`<div class="disc-section">${errN('enterpriseApps')}<div class="disc-section-head"><div class="sec-icon" style="background:rgba(99,102,241,.1);color:#818cf8">🏗️</div>Enterprise Apps (Third-Party) <span class="badge badge-muted" style="margin-left:auto">${eapps.length}</span></div>
+    <table class="disc-table"><thead><tr><th>Name</th><th>Type</th><th>Enabled</th><th>Created</th></tr></thead><tbody>
+    ${eapps.slice(0,120).map(a=>`<tr><td style="font-weight:500">${esc(a.displayName||'')}</td><td><span class="badge badge-muted">${esc(a.servicePrincipalType||'App')}</span></td><td>${a.accountEnabled!==false?'<span class="status-dot on"></span>':'<span class="status-dot off"></span>'}</td><td style="font-size:.78rem;color:var(--text-secondary)">${a.createdDateTime?new Date(a.createdDateTime).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'—'}</td></tr>`).join('')}
+    ${eapps.length>120?`<tr><td colspan="4" style="text-align:center;color:var(--text-muted);font-style:italic">… ${eapps.length-120} more</td></tr>`:''}
+    </tbody></table></div>`}
+
+  // ───── OAUTH CONSENT GRANTS ─────
+  if(oag.length){h+=`<div class="disc-section">${errN('oauthGrants')}<div class="disc-section-head"><div class="sec-icon" style="background:rgba(239,68,68,.1);color:var(--accent-red)">⚠️</div>OAuth Consent Grants <span class="badge badge-amber" style="margin-left:auto">${oag.length} grants — review for risky permissions</span></div>
+    <table class="disc-table"><thead><tr><th>Client App ID</th><th>Consent Type</th><th>Scope</th></tr></thead><tbody>
+    ${oag.slice(0,60).map(o=>`<tr><td class="mono" style="font-size:.72rem">${esc(o.clientId||'')}</td><td><span class="badge ${o.consentType==='AllPrincipals'?'badge-red':'badge-muted'}">${esc(o.consentType||'—')}</span></td><td style="font-size:.72rem;color:var(--text-secondary);max-width:300px;word-break:break-all">${esc(o.scope||'—')}</td></tr>`).join('')}
+    </tbody></table></div>`}
+
+  // ───── INTUNE: COMPLIANCE ─────
+  if(dcomp.length){h+=`<div class="disc-section">${errN('deviceCompliance')}<div class="disc-section-head"><div class="sec-icon" style="background:rgba(59,130,246,.1);color:var(--accent-blue)">✅</div>Intune Compliance Policies <span class="badge badge-muted" style="margin-left:auto">${dcomp.length}</span></div>
+    <table class="disc-table"><thead><tr><th>Policy</th><th>Platform</th><th>Created</th></tr></thead><tbody>
+    ${dcomp.map(p=>{const pl=(p['@odata.type']||'').replace('#microsoft.graph.','').replace('CompliancePolicy','');
+      return`<tr><td style="font-weight:500">${esc(p.displayName||'')}</td><td><span class="badge badge-cyan">${esc(pl||'—')}</span></td><td style="font-size:.78rem;color:var(--text-secondary)">${p.createdDateTime?new Date(p.createdDateTime).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'—'}</td></tr>`}).join('')}
+    </tbody></table></div>`}
+
+  // ───── INTUNE: CONFIG PROFILES ─────
+  if(dconf.length){h+=`<div class="disc-section">${errN('deviceConfig')}<div class="disc-section-head"><div class="sec-icon" style="background:rgba(59,130,246,.1);color:var(--accent-blue)">⚙️</div>Intune Config Profiles <span class="badge badge-muted" style="margin-left:auto">${dconf.length}</span></div>
+    <table class="disc-table"><thead><tr><th>Profile</th><th>Type</th></tr></thead><tbody>
+    ${dconf.map(p=>{const tp=(p['@odata.type']||'').replace('#microsoft.graph.','');
+      return`<tr><td style="font-weight:500">${esc(p.displayName||p.name||'')}</td><td style="font-size:.76rem;color:var(--text-secondary)">${esc(tp||'—')}</td></tr>`}).join('')}
+    </tbody></table></div>`}
+
+  // ───── INTUNE: ENDPOINT SECURITY ─────
+  if(esec.length||d.endpointSecurity?._note){h+=`<div class="disc-section">${errN('endpointSecurity')}${noteN('endpointSecurity')}<div class="disc-section-head"><div class="sec-icon" style="background:rgba(239,68,68,.1);color:var(--accent-red)">🛡️</div>Endpoint Security Policies <span class="badge badge-muted" style="margin-left:auto">${esec.length}</span></div>`;
+    if(esec.length){h+=`<table class="disc-table"><thead><tr><th>Policy</th><th>Description</th><th>Assigned</th><th>Modified</th></tr></thead><tbody>
+    ${esec.map(p=>`<tr><td style="font-weight:500">${esc(p.displayName||'')}</td><td style="font-size:.78rem;color:var(--text-secondary);max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(p.description||'—')}</td><td>${p.isAssigned?'<span class="status-dot on"></span>':'<span class="status-dot off"></span>'}</td><td style="font-size:.78rem;color:var(--text-secondary)">${p.lastModifiedDateTime?new Date(p.lastModifiedDateTime).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'—'}</td></tr>`).join('')}
+    </tbody></table>`}
+    h+=`</div>`}
+
+  // ───── INTUNE: APP PROTECTION (MAM) ─────
+  if(aprot.length||d.appProtection?._note){h+=`<div class="disc-section">${errN('appProtection')}${noteN('appProtection')}<div class="disc-section-head"><div class="sec-icon" style="background:rgba(16,185,129,.1);color:var(--accent-green)">📱</div>App Protection Policies (MAM) <span class="badge badge-muted" style="margin-left:auto">${aprot.length}</span></div>`;
+    if(aprot.length){h+=`<table class="disc-table"><thead><tr><th>Policy</th><th>Platform</th><th>Version</th><th>Modified</th></tr></thead><tbody>
+    ${aprot.map(p=>{const plat=(p['@odata.type']||'').includes('android')?'Android':(p['@odata.type']||'').includes('ios')?'iOS':(p['@odata.type']||'').includes('windows')?'Windows':'Other';
+      return`<tr><td style="font-weight:500">${esc(p.displayName||'')}</td><td><span class="badge badge-cyan">${plat}</span></td><td>${esc(p.version||'—')}</td><td style="font-size:.78rem;color:var(--text-secondary)">${p.lastModifiedDateTime?new Date(p.lastModifiedDateTime).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'—'}</td></tr>`}).join('')}
+    </tbody></table>`}
+    h+=`</div>`}
+
+  // ───── INTUNE: ENROLLMENT ─────
+  if(enrcfg.length||d.enrollmentConfig?._note){h+=`<div class="disc-section">${errN('enrollmentConfig')}${noteN('enrollmentConfig')}<div class="disc-section-head"><div class="sec-icon" style="background:rgba(245,158,11,.1);color:var(--accent-amber)">📋</div>Enrollment Configurations <span class="badge badge-muted" style="margin-left:auto">${enrcfg.length}</span></div>`;
+    if(enrcfg.length){h+=`<table class="disc-table"><thead><tr><th>Name</th><th>Type</th><th>Priority</th></tr></thead><tbody>
+    ${enrcfg.map(e=>{const tp=(e.deviceEnrollmentConfigurationType||e['@odata.type']||'').replace('#microsoft.graph.','').replace('deviceEnrollment','');
+      return`<tr><td style="font-weight:500">${esc(e.displayName||'')}</td><td style="font-size:.78rem;color:var(--text-secondary)">${esc(tp||'—')}</td><td>${e.priority!==undefined?e.priority:'—'}</td></tr>`}).join('')}
+    </tbody></table>`}
+    h+=`</div>`}
+
+  // ───── INTUNE: AUTOPILOT ─────
+  if(apilot.length||d.autopilot?._note){h+=`<div class="disc-section">${errN('autopilot')}${noteN('autopilot')}<div class="disc-section-head"><div class="sec-icon" style="background:rgba(59,130,246,.1);color:var(--accent-blue)">🚀</div>Autopilot Deployment Profiles <span class="badge badge-muted" style="margin-left:auto">${apilot.length}</span></div>`;
+    if(apilot.length){h+=`<table class="disc-table"><thead><tr><th>Profile</th><th>Description</th><th>Language</th><th>Modified</th></tr></thead><tbody>
+    ${apilot.map(p=>`<tr><td style="font-weight:500">${esc(p.displayName||'')}</td><td style="font-size:.78rem;color:var(--text-secondary)">${esc(p.description||'—')}</td><td>${esc(p.language||'—')}</td><td style="font-size:.78rem;color:var(--text-secondary)">${p.lastModifiedDateTime?new Date(p.lastModifiedDateTime).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'—'}</td></tr>`).join('')}
+    </tbody></table>`}
+    h+=`</div>`}
+
+  // ───── INTUNE: GROUP POLICY (IMPORTED GPOs) ─────
+  if(gpcfg.length||d.groupPolicyConfig?._note){h+=`<div class="disc-section">${errN('groupPolicyConfig')}${noteN('groupPolicyConfig')}<div class="disc-section-head"><div class="sec-icon" style="background:rgba(139,92,246,.1);color:var(--accent-violet)">📂</div>Group Policy Configurations <span class="badge badge-muted" style="margin-left:auto">${gpcfg.length}</span></div>`;
+    if(gpcfg.length){h+=`<table class="disc-table"><thead><tr><th>Name</th><th>Description</th><th>Modified</th></tr></thead><tbody>
+    ${gpcfg.map(p=>`<tr><td style="font-weight:500">${esc(p.displayName||'')}</td><td style="font-size:.78rem;color:var(--text-secondary);max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(p.description||'—')}</td><td style="font-size:.78rem;color:var(--text-secondary)">${p.lastModifiedDateTime?new Date(p.lastModifiedDateTime).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'—'}</td></tr>`).join('')}
+    </tbody></table>`}
+    h+=`</div>`}
+
+  // ───── INTUNE: DEVICES ─────
+  if(devs.length){const comp=devs.filter(d=>d.complianceState==='compliant').length;const nonc=devs.filter(d=>d.complianceState==='noncompliant').length;
+    h+=`<div class="disc-section">${errN('managedDevices')}<div class="disc-section-head"><div class="sec-icon" style="background:rgba(139,92,246,.1);color:var(--accent-violet)">💻</div>Managed Devices <span class="badge badge-muted" style="margin-left:auto">${devs.length} · ${comp} compliant · ${nonc} non-compliant</span></div>
+    <table class="disc-table"><thead><tr><th>Device</th><th>OS</th><th>Version</th><th>Model</th><th>User</th><th>Compliance</th><th>Last Sync</th></tr></thead><tbody>
+    ${devs.slice(0,100).map(dv=>{const cs=dv.complianceState||'unknown';const cB=cs==='compliant'?'badge-green':cs==='noncompliant'?'badge-red':'badge-muted';
+      return`<tr><td style="font-weight:500">${esc(dv.deviceName||'')}</td><td>${esc(dv.operatingSystem||'')}</td><td class="mono" style="font-size:.72rem;color:var(--text-secondary)">${esc(dv.osVersion||'')}</td><td style="font-size:.78rem;color:var(--text-secondary)">${esc((dv.manufacturer||'')+' '+(dv.model||'')).trim()||'—'}</td><td style="font-size:.74rem;color:var(--text-secondary)">${esc(dv.userPrincipalName||'—')}</td><td><span class="badge ${cB}">${esc(cs)}</span></td><td style="font-size:.76rem;color:var(--text-secondary)">${dv.lastSyncDateTime?new Date(dv.lastSyncDateTime).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'—'}</td></tr>`}).join('')}
+    ${devs.length>100?`<tr><td colspan="7" style="text-align:center;color:var(--text-muted);font-style:italic">… ${devs.length-100} more</td></tr>`:''}
+    </tbody></table></div>`}
+
+  // ───── INTUNE: APPS ─────
+  if(iapps.length){h+=`<div class="disc-section">${errN('intuneApps')}<div class="disc-section-head"><div class="sec-icon" style="background:rgba(16,185,129,.1);color:var(--accent-green)">📦</div>Intune Assigned Apps <span class="badge badge-muted" style="margin-left:auto">${iapps.length}</span></div>
+    <table class="disc-table"><thead><tr><th>App</th><th>Publisher</th></tr></thead><tbody>
+    ${iapps.slice(0,60).map(a=>`<tr><td style="font-weight:500">${esc(a.displayName||'')}</td><td style="font-size:.78rem;color:var(--text-secondary)">${esc(a.publisher||'—')}</td></tr>`).join('')}
+    ${iapps.length>60?`<tr><td colspan="2" style="text-align:center;color:var(--text-muted);font-style:italic">… ${iapps.length-60} more</td></tr>`:''}
+    </tbody></table></div>`}
+
+  // ───── PURVIEW: SENSITIVITY LABELS ─────
+  if(slabels.length||d.sensitivityLabels?._note){h+=`<div class="disc-section">${errN('sensitivityLabels')}${noteN('sensitivityLabels')}<div class="disc-section-head"><div class="sec-icon" style="background:rgba(139,92,246,.1);color:var(--accent-violet)">🏷️</div>Sensitivity Labels <span class="badge badge-muted" style="margin-left:auto">${slabels.length}</span></div>`;
+    if(slabels.length){h+=`<table class="disc-table"><thead><tr><th>Label</th><th>Description</th><th>Active</th><th>Priority</th></tr></thead><tbody>
+    ${slabels.map(l=>`<tr><td style="font-weight:500">${l.color?`<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${esc(l.color)};margin-right:6px;vertical-align:middle"></span>`:''}${esc(l.name||l.displayName||'')}</td><td style="font-size:.78rem;color:var(--text-secondary);max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(l.description||l.tooltip||'—')}</td><td>${l.isActive!==false?'<span class="status-dot on"></span>':'<span class="status-dot off"></span>'}</td><td>${l.priority!==undefined?l.priority:'—'}</td></tr>`).join('')}
+    </tbody></table>`}
+    h+=`</div>`}
+
+  // ───── PURVIEW: RETENTION LABELS ─────
+  if(rlabels.length||d.retentionLabels?._note){h+=`<div class="disc-section">${errN('retentionLabels')}${noteN('retentionLabels')}<div class="disc-section-head"><div class="sec-icon" style="background:rgba(236,91,44,.1);color:var(--accent-orange)">📅</div>Retention Labels <span class="badge badge-muted" style="margin-left:auto">${rlabels.length}</span></div>`;
+    if(rlabels.length){h+=`<table class="disc-table"><thead><tr><th>Label</th><th>Description</th><th>Retention</th><th>After Expiry</th><th>In Use</th></tr></thead><tbody>
+    ${rlabels.map(l=>{const dur=l.retentionDuration||'—';const act=l.actionAfterRetentionPeriod||l.retentionAction||'—';
+      return`<tr><td style="font-weight:500">${esc(l.displayName||l.name||'')}</td><td style="font-size:.78rem;color:var(--text-secondary)">${esc(l.description||'—')}</td><td>${esc(typeof dur==='object'?JSON.stringify(dur):dur)}</td><td>${esc(act)}</td><td>${l.isInUse?'<span class="status-dot on"></span>':'<span class="status-dot off"></span>'}</td></tr>`}).join('')}
+    </tbody></table>`}
+    h+=`</div>`}
+
+  // ───── PURVIEW: DLP POLICIES ─────
+  if(d.dlpPolicies&&!d.dlpPolicies._note&&!d.dlpPolicies._error){const dlp=Array.isArray(d.dlpPolicies)?d.dlpPolicies:d.dlpPolicies?.value||[];
+    if(dlp.length){h+=`<div class="disc-section">${errN('dlpPolicies')}<div class="disc-section-head"><div class="sec-icon" style="background:rgba(239,68,68,.1);color:var(--accent-red)">🔐</div>DLP Policies <span class="badge badge-muted" style="margin-left:auto">${dlp.length}</span></div>
+    <table class="disc-table"><thead><tr><th>Policy</th><th>Mode</th><th>Created</th></tr></thead><tbody>
+    ${dlp.map(p=>`<tr><td style="font-weight:500">${esc(p.displayName||p.name||'')}</td><td><span class="badge ${p.mode==='Enable'||p.isEnabled?'badge-green':'badge-muted'}">${esc(p.mode||p.state||(p.isEnabled?'Enabled':'—'))}</span></td><td style="font-size:.78rem;color:var(--text-secondary)">${p.createdDateTime?new Date(p.createdDateTime).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'—'}</td></tr>`).join('')}
+    </tbody></table></div>`}
+  } else if(d.dlpPolicies?._note){h+=`<div class="disc-section">${noteN('dlpPolicies')}<div class="disc-section-head"><div class="sec-icon" style="background:rgba(239,68,68,.1);color:var(--accent-red)">🔐</div>DLP Policies</div></div>`}
+
+  // ───── SECURE SCORE ─────
+  if(d.secureScore&&!d.secureScore._error){const ss=Array.isArray(d.secureScore)?d.secureScore[0]:d.secureScore;
+    if(ss){const cur=ss.currentScore||ss.score||0;const mx=ss.maxScore||ss.max||100;const pct=mx?Math.round(cur/mx*100):0;const col=pct>=60?'var(--accent-green)':pct>=40?'var(--accent-amber)':'var(--accent-red)';
+    h+=`<div class="disc-section"><div class="disc-section-head"><div class="sec-icon" style="background:rgba(59,130,246,.1);color:var(--accent-blue)">📊</div>Microsoft Secure Score</div>
+    <div class="disc-grid disc-grid-3">
+      <div class="disc-kv" style="text-align:center"><div class="kv-label">Current</div><div class="kv-value" style="font-size:1.4rem;font-weight:800;color:${col}">${cur}</div></div>
+      <div class="disc-kv" style="text-align:center"><div class="kv-label">Max</div><div class="kv-value" style="font-size:1.4rem;font-weight:800">${mx}</div></div>
+      <div class="disc-kv" style="text-align:center"><div class="kv-label">Percentage</div><div class="kv-value" style="font-size:1.4rem;font-weight:800;color:${col}">${pct}%</div></div>
+    </div></div>`}}
+
+  h+='</div>';c.innerHTML=h}
 
 /* ============================================================
    DISCOVERY EXPORTS
@@ -469,83 +741,81 @@ function renderDisc(){
 function exDiscJSON(){if(!DD)return;dl(JSON.stringify(DD,null,2),`M365_Discovery_${DD.domain.split('.')[0]}_${new Date().toISOString().split('T')[0]}.json`,'application/json')}
 
 function exDiscHTML(){if(!DD)return;const d=DD;
-  const u=Array.isArray(d.users)?d.users:[],g=Array.isArray(d.groups)?d.groups:[],ca=Array.isArray(d.conditionalAccess)?d.conditionalAccess:[],ar=Array.isArray(d.admins)?d.admins:[];
+  const arr=k=>Array.isArray(d[k])?d[k]:[];
+  const u=arr('users'),g=arr('groups'),ca=arr('conditionalAccess'),ar=arr('admins'),skus=arr('subscribedSkus'),apps=arr('appRegistrations'),eapps=arr('enterpriseApps'),devs=arr('managedDevices'),sites=arr('spSites');
+  const licU=u.filter(x=>x.assignedLicenses?.length>0||x.lic);
+  const guests=u.filter(x=>(x.userType||'').toLowerCase()==='guest');
+  const m365g=g.filter(x=>(x.groupTypes||[]).includes('Unified'));
+  const secg=g.filter(x=>x.securityEnabled&&!x.mailEnabled&&!(x.groupTypes||[]).includes('Unified'));
+  const distg=g.filter(x=>!x.securityEnabled&&x.mailEnabled);
   let h=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>M365 Discovery — ${esc(d.domain)}</title><style>
-body{font-family:Segoe UI,sans-serif;max-width:900px;margin:30px auto;color:#1a1a2e;line-height:1.6;padding:0 20px}
-h1{font-size:22px;border-bottom:3px solid #0078d4;padding-bottom:10px;margin-bottom:20px}
-h2{font-size:16px;margin:24px 0 10px;color:#0078d4;border-bottom:1px solid #e0e0e0;padding-bottom:6px}
-table{width:100%;border-collapse:collapse;margin:10px 0 20px;font-size:13px}
-th{background:#f4f4f4;text-align:left;padding:8px 10px;font-weight:600;border:1px solid #ddd}
-td{padding:7px 10px;border:1px solid #ddd}
-tr:nth-child(even){background:#fafafa}
-.meta{font-size:13px;color:#666;margin-bottom:20px}
-.stat-row{display:flex;gap:20px;margin:16px 0}
-.stat-box{background:#f4f6f9;border-radius:6px;padding:14px 20px;text-align:center;flex:1}
-.stat-num{font-size:28px;font-weight:700;color:#0078d4}
-.stat-lab{font-size:11px;color:#666;text-transform:uppercase;letter-spacing:1px}
-.pass{color:#107c41}.fail{color:#d13438}.warn{color:#ffb900}
-.badge{display:inline-block;padding:1px 8px;border-radius:10px;font-size:11px;font-weight:600}
-.badge-on{background:#dff6dd;color:#107c41}.badge-off{background:#fde7e9;color:#d13438}.badge-rpt{background:#fff4ce;color:#6d5700}
-footer{margin-top:40px;padding-top:14px;border-top:1px solid #eee;font-size:11px;color:#999}
+body{font-family:Segoe UI,sans-serif;max-width:960px;margin:30px auto;color:#1a1a2e;line-height:1.6;padding:0 20px}
+h1{font-size:22px;border-bottom:3px solid #0078d4;padding-bottom:10px}h2{font-size:15px;margin:28px 0 8px;color:#0078d4;border-bottom:1px solid #e0e0e0;padding-bottom:5px}
+table{width:100%;border-collapse:collapse;margin:8px 0 18px;font-size:12px}th{background:#f4f4f4;text-align:left;padding:7px 9px;font-weight:600;border:1px solid #ddd}td{padding:6px 9px;border:1px solid #ddd}tr:nth-child(even){background:#fafafa}
+.meta{font-size:13px;color:#666;margin-bottom:20px}.stat-row{display:flex;gap:14px;margin:14px 0;flex-wrap:wrap}.stat-box{background:#f4f6f9;border-radius:6px;padding:12px 16px;text-align:center;min-width:100px;flex:1}.stat-num{font-size:24px;font-weight:700;color:#0078d4}.stat-lab{font-size:10px;color:#666;text-transform:uppercase;letter-spacing:.5px}
+.pass{color:#107c41}.fail{color:#d13438}.warn{color:#bf8900}
+.badge{display:inline-block;padding:1px 7px;border-radius:10px;font-size:10px;font-weight:600}.b-on{background:#dff6dd;color:#107c41}.b-off{background:#fde7e9;color:#d13438}.b-rpt{background:#fff4ce;color:#6d5700}.b-m{background:#f0f0f0;color:#666}
+footer{margin-top:40px;padding-top:14px;border-top:1px solid #eee;font-size:10px;color:#999}
 </style></head><body>
 <h1>Microsoft 365 Tenant Discovery Report</h1>
 <div class="meta">Tenant: <strong>${esc(d.domain)}</strong> | Generated: ${new Date(d.ts).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'})}</div>
-<div class="stat-row"><div class="stat-box"><div class="stat-num">${u.length}</div><div class="stat-lab">Users</div></div><div class="stat-box"><div class="stat-num">${g.length}</div><div class="stat-lab">Groups</div></div><div class="stat-box"><div class="stat-num">${ca.length}</div><div class="stat-lab">CA Policies</div></div><div class="stat-box"><div class="stat-num">${ar.length}</div><div class="stat-lab">Admin Roles</div></div></div>`;
-
-  h+=`<h2>Users &amp; Licensing</h2><table><tr><th>Name</th><th>UPN</th><th>Enabled</th><th>Licensed</th><th>MFA</th></tr>`;
-  u.forEach(usr=>{const nm=usr.dn||usr.displayName||'',en=usr.on!==undefined?usr.on:usr.accountEnabled!==false,li=usr.lic||usr.assignedLicenses?.length>0,mf=usr.mfa;
-    h+=`<tr><td>${esc(nm)}</td><td>${esc(usr.upn||usr.userPrincipalName||'')}</td><td class="${en?'pass':'fail'}">${en?'Yes':'No'}</td><td>${li?'<span class="badge badge-on">Licensed</span>':'—'}</td><td>${mf===undefined||mf===null?'—':mf?'<span class="badge badge-on">Yes</span>':'<span class="badge badge-off">No</span>'}</td></tr>`});
-  h+=`</table>`;
-
-  h+=`<h2>Admin Role Assignments</h2><table><tr><th>Role</th><th>Members</th></tr>`;
-  ar.forEach(r=>{const mem=r.members||[];h+=`<tr><td><strong>${esc(r.role||r.displayName||'')}</strong></td><td>${mem.map(m=>typeof m==='string'?esc(m):esc(m.displayName||m.dn||'')).join(', ')||'None'}</td></tr>`});
-  h+=`</table>`;
-
-  h+=`<h2>Conditional Access Policies</h2><table><tr><th>Policy</th><th>Status</th></tr>`;
-  ca.forEach(p=>{const st=p.state||'';h+=`<tr><td>${esc(p.name||p.displayName||'')}</td><td><span class="badge ${st==='enabled'?'badge-on':st.includes('report')?'badge-rpt':'badge-off'}">${esc(st)}</span></td></tr>`});
-  h+=`</table>`;
-
-  if(d.sharepoint){const sp=d.sharepoint;h+=`<h2>SharePoint Settings</h2><table><tr><th>Setting</th><th>Value</th></tr><tr><td>External Sharing</td><td>${esc(sp.sharing||sp.sharingCapability||'—')}</td></tr><tr><td>Re-sharing by External Users</td><td class="${(sp.reshare||sp.isResharingByExternalUsersEnabled)?'fail':'pass'}">${(sp.reshare||sp.isResharingByExternalUsersEnabled)?'Enabled':'Disabled'}</td></tr><tr><td>Unmanaged Sync Blocked</td><td class="${(sp.syncRestricted||sp.isUnmanagedSyncAppForTenantRestricted)?'pass':'warn'}">${(sp.syncRestricted||sp.isUnmanagedSyncAppForTenantRestricted)?'Yes':'No'}</td></tr></table>`}
-
-  h+=`<footer>Generated by M365 Tenant Automation — MSP Edition</footer></body></html>`;
-  dl(h,`M365_Discovery_${d.domain.split('.')[0]}.html`,'text/html')}
+<div class="stat-row">${[{n:u.length,l:'Users'},{n:licU.length,l:'Licensed'},{n:guests.length,l:'Guests'},{n:g.length,l:'Groups'},{n:ca.length,l:'CA Policies'},{n:apps.length,l:'App Regs'},{n:devs.length,l:'Devices'},{n:sites.length,l:'SP Sites'}].map(s=>`<div class="stat-box"><div class="stat-num">${s.n}</div><div class="stat-lab">${s.l}</div></div>`).join('')}</div>`;
+  // Licenses
+  if(skus.length){h+=`<h2>License Inventory</h2><table><tr><th>SKU</th><th>Total</th><th>Consumed</th><th>Available</th></tr>`;
+    skus.forEach(s=>{const t=s.prepaidUnits?.enabled||s.total||0;h+=`<tr><td>${esc(s.skuPartNumber||'')}</td><td>${t}</td><td>${s.consumedUnits||s.used||0}</td><td>${t-(s.consumedUnits||s.used||0)}</td></tr>`});h+=`</table>`}
+  // Users
+  h+=`<h2>Users (${u.length})</h2><table><tr><th>Name</th><th>UPN</th><th>Type</th><th>Dept</th><th>Enabled</th><th>Licensed</th></tr>`;
+  u.forEach(usr=>{const en=usr.on!==undefined?usr.on:usr.accountEnabled!==false;const li=usr.lic||usr.assignedLicenses?.length>0;
+    h+=`<tr><td>${esc(usr.dn||usr.displayName||'')}</td><td style="font-size:11px">${esc(usr.upn||usr.userPrincipalName||'')}</td><td>${esc(usr.userType||'Member')}</td><td>${esc(usr.department||usr.dept||'—')}</td><td class="${en?'pass':'fail'}">${en?'Yes':'No'}</td><td>${li?'<span class="badge b-on">Yes</span>':'—'}</td></tr>`});h+=`</table>`;
+  // Admins
+  h+=`<h2>Admin Roles</h2><table><tr><th>Role</th><th>Members</th></tr>`;
+  ar.filter(r=>(r.members||[]).length).forEach(r=>{h+=`<tr><td><strong>${esc(r.role||r.displayName||'')}</strong></td><td>${(r.members||[]).map(m=>typeof m==='string'?esc(m):esc(m.displayName||'')).join(', ')}</td></tr>`});h+=`</table>`;
+  // Groups
+  const grpH=(title,list)=>{if(!list.length)return;h+=`<h2>${title} (${list.length})</h2><table><tr><th>Name</th><th>Email</th></tr>`;list.forEach(g=>{h+=`<tr><td>${esc(g.displayName||g.name||'')}</td><td style="font-size:11px">${esc(g.mail||g.mailNickname||'—')}</td></tr>`});h+=`</table>`};
+  grpH('M365 Groups',m365g);grpH('Security Groups',secg);grpH('Distribution Lists',distg);
+  // CA
+  h+=`<h2>Conditional Access (${ca.length})</h2><table><tr><th>Policy</th><th>Status</th></tr>`;
+  ca.forEach(p=>{const st=p.state||'';h+=`<tr><td>${esc(p.name||p.displayName||'')}</td><td><span class="badge ${st==='enabled'?'b-on':st.includes('report')?'b-rpt':'b-off'}">${esc(st)}</span></td></tr>`});h+=`</table>`;
+  // Apps
+  if(apps.length){h+=`<h2>App Registrations (${apps.length})</h2><table><tr><th>Name</th><th>App ID</th><th>Audience</th></tr>`;apps.forEach(a=>{h+=`<tr><td>${esc(a.displayName||a.name||'')}</td><td style="font-size:11px">${esc(a.appId||'')}</td><td>${esc(a.signInAudience||a.aud||'—')}</td></tr>`});h+=`</table>`}
+  // Devices
+  if(devs.length){h+=`<h2>Managed Devices (${devs.length})</h2><table><tr><th>Device</th><th>OS</th><th>Version</th><th>User</th><th>Compliance</th></tr>`;
+    devs.forEach(dv=>{const cs=dv.complianceState||'unknown';h+=`<tr><td>${esc(dv.deviceName||'')}</td><td>${esc(dv.operatingSystem||'')}</td><td style="font-size:11px">${esc(dv.osVersion||'')}</td><td style="font-size:11px">${esc(dv.userPrincipalName||'—')}</td><td class="${cs==='compliant'?'pass':cs==='noncompliant'?'fail':'warn'}">${esc(cs)}</td></tr>`});h+=`</table>`}
+  // SharePoint
+  if(d.spSettings&&!d.spSettings._error){const sp=d.spSettings;h+=`<h2>SharePoint Settings</h2><table><tr><th>Setting</th><th>Value</th></tr><tr><td>External Sharing</td><td>${esc(sp.sharing||sp.sharingCapability||'—')}</td></tr><tr><td>Re-sharing</td><td class="${(sp.reshare||sp.isResharingByExternalUsersEnabled)?'fail':'pass'}">${(sp.reshare||sp.isResharingByExternalUsersEnabled)?'Enabled':'Disabled'}</td></tr><tr><td>Unmanaged Sync Blocked</td><td class="${(sp.syncRestricted||sp.isUnmanagedSyncAppForTenantRestricted)?'pass':'warn'}">${(sp.syncRestricted||sp.isUnmanagedSyncAppForTenantRestricted)?'Yes':'No'}</td></tr></table>`}
+  if(sites.length){h+=`<h2>SharePoint Sites (${sites.length})</h2><table><tr><th>Site</th><th>URL</th></tr>`;sites.forEach(s=>{h+=`<tr><td>${esc(s.displayName||s.name||'')}</td><td style="font-size:11px">${esc(s.webUrl||'')}</td></tr>`});h+=`</table>`}
+  h+=`<footer>Generated by M365 Tenant Automation — MSP Edition | ${new Date().toISOString()}</footer></body></html>`;
+  dl(h,`M365_Discovery_${d.domain.split('.')[0]}_${new Date().toISOString().split('T')[0]}.html`,'text/html')}
 
 function exITGlue(){if(!DD)return;const d=DD;
-  const u=Array.isArray(d.users)?d.users:[],g=Array.isArray(d.groups)?d.groups:[],ca=Array.isArray(d.conditionalAccess)?d.conditionalAccess:[],ar=Array.isArray(d.admins)?d.admins:[];
-  // ITGlue uses simple HTML pasted into flexible assets — clean tables, no external CSS
+  const arr=k=>Array.isArray(d[k])?d[k]:[];
+  const u=arr('users'),g=arr('groups'),ca=arr('conditionalAccess'),ar=arr('admins'),skus=arr('subscribedSkus'),apps=arr('appRegistrations'),devs=arr('managedDevices');
+  const licU=u.filter(x=>x.assignedLicenses?.length>0||x.lic);
+  const guests=u.filter(x=>(x.userType||'').toLowerCase()==='guest');
+  const tS='padding:5px 8px;border:1px solid #d0d5dd',hS='padding:6px 8px;text-align:left;border:1px solid #005a9e',kS='padding:6px 10px;background:#f0f4f8;border:1px solid #d0d5dd;font-weight:600;width:30%',vS='padding:6px 10px;border:1px solid #d0d5dd';
   let h=`<div style="font-family:Segoe UI,Helvetica,Arial,sans-serif;font-size:13px;color:#333;line-height:1.5">
 <h2 style="color:#0078d4;border-bottom:2px solid #0078d4;padding-bottom:6px;font-size:18px">M365 Tenant: ${esc(d.domain)}</h2>
 <p style="color:#666;font-size:12px">Scanned: ${new Date(d.ts).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})}</p>
-
-<h3 style="color:#0078d4;margin-top:20px">Summary</h3>
+<h3 style="color:#0078d4;margin-top:18px">Summary</h3>
 <table style="width:100%;border-collapse:collapse;margin:8px 0">
-<tr><td style="padding:6px 10px;background:#f0f4f8;border:1px solid #d0d5dd;font-weight:600;width:30%">Total Users</td><td style="padding:6px 10px;border:1px solid #d0d5dd">${u.length}</td></tr>
-<tr><td style="padding:6px 10px;background:#f0f4f8;border:1px solid #d0d5dd;font-weight:600">Licensed Users</td><td style="padding:6px 10px;border:1px solid #d0d5dd">${u.filter(x=>x.lic||x.assignedLicenses?.length>0).length}</td></tr>
-<tr><td style="padding:6px 10px;background:#f0f4f8;border:1px solid #d0d5dd;font-weight:600">Groups</td><td style="padding:6px 10px;border:1px solid #d0d5dd">${g.length}</td></tr>
-<tr><td style="padding:6px 10px;background:#f0f4f8;border:1px solid #d0d5dd;font-weight:600">CA Policies</td><td style="padding:6px 10px;border:1px solid #d0d5dd">${ca.length}</td></tr>
-<tr><td style="padding:6px 10px;background:#f0f4f8;border:1px solid #d0d5dd;font-weight:600">Security Defaults</td><td style="padding:6px 10px;border:1px solid #d0d5dd">${(d.securityDefaults?.on||d.securityDefaults?.isEnabled)?'<span style="color:#107c41;font-weight:600">Enabled</span>':'<span style="color:#666">Disabled (CA policies active)</span>'}</td></tr>
-</table>
-
-<h3 style="color:#0078d4;margin-top:20px">Users</h3>
-<table style="width:100%;border-collapse:collapse;margin:8px 0;font-size:12px">
-<tr style="background:#0078d4;color:#fff"><th style="padding:6px 8px;text-align:left;border:1px solid #005a9e">Name</th><th style="padding:6px 8px;text-align:left;border:1px solid #005a9e">UPN</th><th style="padding:6px 8px;text-align:left;border:1px solid #005a9e">Licensed</th><th style="padding:6px 8px;text-align:left;border:1px solid #005a9e">MFA</th></tr>
-${u.map((usr,i)=>{const bg=i%2?'#fff':'#f8f9fa';return`<tr style="background:${bg}"><td style="padding:5px 8px;border:1px solid #d0d5dd">${esc(usr.dn||usr.displayName||'')}</td><td style="padding:5px 8px;border:1px solid #d0d5dd;font-size:11px">${esc(usr.upn||usr.userPrincipalName||'')}</td><td style="padding:5px 8px;border:1px solid #d0d5dd">${(usr.lic||usr.assignedLicenses?.length>0)?'✅':'—'}</td><td style="padding:5px 8px;border:1px solid #d0d5dd">${usr.mfa===undefined||usr.mfa===null?'—':usr.mfa?'✅':'❌'}</td></tr>`}).join('')}
-</table>
-
-<h3 style="color:#0078d4;margin-top:20px">Admin Roles</h3>
-<table style="width:100%;border-collapse:collapse;margin:8px 0;font-size:12px">
-<tr style="background:#0078d4;color:#fff"><th style="padding:6px 8px;text-align:left;border:1px solid #005a9e">Role</th><th style="padding:6px 8px;text-align:left;border:1px solid #005a9e">Members</th></tr>
-${ar.map((r,i)=>{const mem=r.members||[];return`<tr style="background:${i%2?'#fff':'#f8f9fa'}"><td style="padding:5px 8px;border:1px solid #d0d5dd;font-weight:600">${esc(r.role||r.displayName||'')}</td><td style="padding:5px 8px;border:1px solid #d0d5dd">${mem.map(m=>typeof m==='string'?esc(m):esc(m.displayName||m.dn||'')).join(', ')||'—'}</td></tr>`}).join('')}
-</table>
-
-<h3 style="color:#0078d4;margin-top:20px">Conditional Access</h3>
-<table style="width:100%;border-collapse:collapse;margin:8px 0;font-size:12px">
-<tr style="background:#0078d4;color:#fff"><th style="padding:6px 8px;text-align:left;border:1px solid #005a9e">Policy</th><th style="padding:6px 8px;text-align:left;border:1px solid #005a9e">Status</th></tr>
-${ca.map((p,i)=>{const st=p.state||'';return`<tr style="background:${i%2?'#fff':'#f8f9fa'}"><td style="padding:5px 8px;border:1px solid #d0d5dd">${esc(p.name||p.displayName||'')}</td><td style="padding:5px 8px;border:1px solid #d0d5dd"><span style="color:${st==='enabled'?'#107c41':st.includes('report')?'#6d5700':'#d13438'};font-weight:600">${esc(st)}</span></td></tr>`}).join('')}
-</table>
-
-<p style="color:#999;font-size:10px;margin-top:24px;border-top:1px solid #eee;padding-top:8px">Generated by M365 Tenant Automation — MSP Edition | ${new Date().toISOString()}</p>
-</div>`;
+${[['Users',u.length],['Licensed',licU.length],['Guests',guests.length],['Groups',g.length],['CA Policies',ca.length],['App Registrations',apps.length],['Managed Devices',devs.length],['Security Defaults',(d.securityDefaults?.on||d.securityDefaults?.isEnabled)?'✅ Enabled':'Disabled (CA active)']].map(([k,v])=>`<tr><td style="${kS}">${k}</td><td style="${vS}">${v}</td></tr>`).join('')}
+</table>`;
+  // Licenses
+  if(skus.length){h+=`<h3 style="color:#0078d4;margin-top:18px">Licenses</h3><table style="width:100%;border-collapse:collapse;font-size:12px"><tr style="background:#0078d4;color:#fff"><th style="${hS}">SKU</th><th style="${hS}">Total</th><th style="${hS}">Used</th><th style="${hS}">Free</th></tr>`;
+    skus.forEach((s,i)=>{const t=s.prepaidUnits?.enabled||s.total||0;const u=s.consumedUnits||s.used||0;h+=`<tr style="background:${i%2?'#fff':'#f8f9fa'}"><td style="${tS}">${esc(s.skuPartNumber||'')}</td><td style="${tS}">${t}</td><td style="${tS}">${u}</td><td style="${tS}">${t-u}</td></tr>`});h+=`</table>`}
+  // Users
+  h+=`<h3 style="color:#0078d4;margin-top:18px">Users</h3><table style="width:100%;border-collapse:collapse;font-size:12px"><tr style="background:#0078d4;color:#fff"><th style="${hS}">Name</th><th style="${hS}">UPN</th><th style="${hS}">Type</th><th style="${hS}">Licensed</th></tr>`;
+  u.forEach((usr,i)=>{h+=`<tr style="background:${i%2?'#fff':'#f8f9fa'}"><td style="${tS}">${esc(usr.dn||usr.displayName||'')}</td><td style="${tS};font-size:11px">${esc(usr.upn||usr.userPrincipalName||'')}</td><td style="${tS}">${esc(usr.userType||'Member')}</td><td style="${tS}">${(usr.lic||usr.assignedLicenses?.length>0)?'✅':'—'}</td></tr>`});h+=`</table>`;
+  // Admins
+  h+=`<h3 style="color:#0078d4;margin-top:18px">Admin Roles</h3><table style="width:100%;border-collapse:collapse;font-size:12px"><tr style="background:#0078d4;color:#fff"><th style="${hS}">Role</th><th style="${hS}">Members</th></tr>`;
+  ar.filter(r=>(r.members||[]).length).forEach((r,i)=>{h+=`<tr style="background:${i%2?'#fff':'#f8f9fa'}"><td style="${tS};font-weight:600">${esc(r.role||r.displayName||'')}</td><td style="${tS}">${(r.members||[]).map(m=>typeof m==='string'?esc(m):esc(m.displayName||'')).join(', ')}</td></tr>`});h+=`</table>`;
+  // CA
+  h+=`<h3 style="color:#0078d4;margin-top:18px">Conditional Access</h3><table style="width:100%;border-collapse:collapse;font-size:12px"><tr style="background:#0078d4;color:#fff"><th style="${hS}">Policy</th><th style="${hS}">Status</th></tr>`;
+  ca.forEach((p,i)=>{const st=p.state||'';h+=`<tr style="background:${i%2?'#fff':'#f8f9fa'}"><td style="${tS}">${esc(p.name||p.displayName||'')}</td><td style="${tS}"><span style="color:${st==='enabled'?'#107c41':st.includes('report')?'#6d5700':'#d13438'};font-weight:600">${esc(st)}</span></td></tr>`});h+=`</table>`;
+  // Devices
+  if(devs.length){h+=`<h3 style="color:#0078d4;margin-top:18px">Managed Devices (${devs.length})</h3><table style="width:100%;border-collapse:collapse;font-size:12px"><tr style="background:#0078d4;color:#fff"><th style="${hS}">Device</th><th style="${hS}">OS</th><th style="${hS}">User</th><th style="${hS}">Compliance</th></tr>`;
+    devs.forEach((dv,i)=>{h+=`<tr style="background:${i%2?'#fff':'#f8f9fa'}"><td style="${tS}">${esc(dv.deviceName||'')}</td><td style="${tS}">${esc(dv.operatingSystem||'')} ${esc(dv.osVersion||'')}</td><td style="${tS};font-size:11px">${esc(dv.userPrincipalName||'—')}</td><td style="${tS}">${dv.complianceState==='compliant'?'✅':'❌'} ${esc(dv.complianceState||'')}</td></tr>`});h+=`</table>`}
+  h+=`<p style="color:#999;font-size:10px;margin-top:24px;border-top:1px solid #eee;padding-top:8px">M365 Tenant Automation — MSP Edition | ${new Date().toISOString()}</p></div>`;
   dl(h,`ITGlue_M365_${d.domain.split('.')[0]}.html`,'text/html')}
 
 /* ============================================================
@@ -895,20 +1165,40 @@ async function bootstrap(){
 /* ============================================================
    MOCK DATA
    ============================================================ */
-function mockD(k,dom){const o=dom.split('.')[0],N=o[0].toUpperCase()+o.slice(1);return{
-organization:{name:N+' Ltd',country:'GB',created:'2024-01-15T10:30:00Z',mail:'admin@'+o+'.com'},
-domains:[{id:o+'.com',def:1,v:1,authenticationType:'Managed'},{id:dom,def:0,v:1,authenticationType:'Managed'}],
-users:['John Smith','Jane Doe','Bob Wilson','Alice Brown','Charlie Davis','Diana Evans','Edward Foster','Fiona Grant','George Hill','Hannah Irving','BreakGlass1','BreakGlass2'].map((n,i)=>({dn:n,upn:n.toLowerCase().replace(' ','.')+'@'+o+'.com',on:1,lic:i<10,mfa:i<8})),
-groups:[{name:'All Staff',type:'M365 Group',ct:10},{name:'IT Team',type:'Security',ct:3},{name:'Management',type:'M365 Group',ct:4},{name:'Dynamic — Licensed Users',type:'Dynamic',ct:10}],
-admins:[{role:'Global Administrator',members:['John Smith','BreakGlass1']},{role:'Exchange Administrator',members:['Jane Doe']},{role:'Security Administrator',members:['Bob Wilson']},{role:'Intune Administrator',members:['Bob Wilson']}],
-conditionalAccess:[{name:'Require MFA - All Users',state:'enabled',target:'All Users',controls:'MFA'},{name:'Block Legacy Auth',state:'reportOnly',target:'All Users',controls:'Block'},{name:'Require Compliant Device',state:'enabled',target:'All Users',controls:'Compliant Device'}],
-authMethods:{methods:[{id:'Microsoft Authenticator',on:1},{id:'FIDO2 Security Key',on:0},{id:'SMS',on:1},{id:'Temporary Access Pass',on:1},{id:'Email OTP',on:0}],camp:1},
-deviceCompliance:[{name:'Windows 10 Compliance',os:'10.0.19041',fw:0,av:1}],
-deviceConfig:[{name:'Windows Update Ring'},{name:'BitLocker Encryption'},{name:'Endpoint Protection'}],
-appRegistrations:[{name:'MSP Monitoring',appId:uid(),aud:'AzureADMyOrg'},{name:'Custom Reporting',appId:uid(),aud:'AzureADMyOrg'}],
-sharepoint:{sharing:'ExternalUserAndGuestSharing',reshare:1,syncRestricted:0},
-securityDefaults:{on:0},
-authzPolicy:{readDir:1,consent:null}
+function mockD(k,dom){const o=dom.split('.')[0],N=o[0].toUpperCase()+o.slice(1),uid2=()=>crypto.randomUUID?.()?.split('-')[0]||Math.random().toString(36).slice(2,10);return{
+organization:{name:N+' Ltd',country:'GB',created:'2024-01-15T10:30:00Z',mail:'admin@'+o+'.com',displayName:N+' Ltd',countryLetterCode:'GB',createdDateTime:'2024-01-15T10:30:00Z',technicalNotificationMails:['admin@'+o+'.com']},
+subscribedSkus:[{skuPartNumber:'ENTERPRISEPREMIUM',prepaidUnits:{enabled:25},consumedUnits:18},{skuPartNumber:'EMSPREMIUM',prepaidUnits:{enabled:25},consumedUnits:12},{skuPartNumber:'FLOW_FREE',prepaidUnits:{enabled:10000},consumedUnits:8},{skuPartNumber:'POWER_BI_STANDARD',prepaidUnits:{enabled:10000},consumedUnits:5},{skuPartNumber:'AAD_PREMIUM_P2',prepaidUnits:{enabled:10},consumedUnits:3}],
+domains:[{id:o+'.com',def:1,v:1,isDefault:true,isVerified:true,authenticationType:'Managed'},{id:dom,def:0,v:1,isDefault:false,isVerified:true,authenticationType:'Managed'},{id:o+'.co.uk',def:0,v:1,isDefault:false,isVerified:true,authenticationType:'Managed'}],
+users:['John Smith|IT|IT Manager','Jane Doe|Finance|CFO','Bob Wilson|IT|Sysadmin','Alice Brown|HR|HR Director','Charlie Davis|Sales|Account Exec','Diana Evans|Marketing|Marketing Lead','Edward Foster|Operations|Ops Manager','Fiona Grant|Legal|Legal Counsel','George Hill|Sales|Sales Director','Hannah Irving|IT|Helpdesk','BreakGlass1||Emergency','BreakGlass2||Emergency','Sarah Jones|Finance|Accountant','Tom Watson|Sales|BDM','External Contractor||Consultant'].map((n,i)=>{const[nm,dept,title]=n.split('|');return{displayName:nm,userPrincipalName:nm.toLowerCase().replace(' ','.')+'@'+o+'.com',accountEnabled:i<13,assignedLicenses:i<10?[{skuId:'x'}]:[],userType:i===14?'Guest':'Member',department:dept,jobTitle:title,proxyAddresses:i<10?['SMTP:'+nm.toLowerCase().replace(' ','.')+'@'+o+'.com','smtp:'+nm.toLowerCase().replace(' ','.')+'@'+o+'.co.uk']:[]}}),
+groups:[{displayName:'All Staff',groupTypes:['Unified'],securityEnabled:false,mailEnabled:true,mail:'allstaff@'+o+'.com',description:'All company staff',resourceProvisioningOptions:['Team'],createdDateTime:'2024-01-20'},{displayName:'IT Team',groupTypes:['Unified'],securityEnabled:false,mailEnabled:true,mail:'it@'+o+'.com',description:'IT Department',resourceProvisioningOptions:['Team'],createdDateTime:'2024-01-20'},{displayName:'Management',groupTypes:['Unified'],securityEnabled:false,mailEnabled:true,mail:'mgmt@'+o+'.com',description:'Senior management',resourceProvisioningOptions:[],createdDateTime:'2024-02-01'},{displayName:'SG-VPN-Users',groupTypes:[],securityEnabled:true,mailEnabled:false,description:'VPN access group',createdDateTime:'2024-03-10'},{displayName:'SG-Intune-Devices',groupTypes:[],securityEnabled:true,mailEnabled:false,description:'Intune managed devices',membershipRule:'(device.deviceOSType -eq "Windows")',createdDateTime:'2024-03-10'},{displayName:'Finance DL',groupTypes:[],securityEnabled:false,mailEnabled:true,mail:'finance@'+o+'.com',description:'Finance distribution list',createdDateTime:'2024-02-05'},{displayName:'Sales DL',groupTypes:[],securityEnabled:false,mailEnabled:true,mail:'sales@'+o+'.com',description:'Sales team distribution',createdDateTime:'2024-02-05'},{displayName:'SG-M365-E5-Users',groupTypes:[],securityEnabled:true,mailEnabled:false,description:'E5 license assignment group',membershipRule:'(user.department -eq "IT") -or (user.department -eq "Finance")',createdDateTime:'2024-03-15'},{displayName:'MSG-ExternalPartners',groupTypes:[],securityEnabled:true,mailEnabled:true,mail:'partners@'+o+'.com',description:'Mail-enabled security for partners',createdDateTime:'2024-04-01'}],
+admins:[{displayName:'Global Administrator',members:[{displayName:'John Smith'},{displayName:'BreakGlass1'}]},{displayName:'Exchange Administrator',members:[{displayName:'Jane Doe'}]},{displayName:'Security Administrator',members:[{displayName:'Bob Wilson'}]},{displayName:'Intune Administrator',members:[{displayName:'Bob Wilson'}]},{displayName:'SharePoint Administrator',members:[{displayName:'Hannah Irving'}]},{displayName:'User Administrator',members:[{displayName:'Alice Brown'}]},{displayName:'Compliance Administrator',members:[]},{displayName:'Billing Administrator',members:[{displayName:'Jane Doe'}]}],
+conditionalAccess:[{displayName:'Require MFA - All Users',state:'enabled',conditions:{users:{includeUsers:['All']}},grantControls:{builtInControls:['mfa']}},{displayName:'Block Legacy Authentication',state:'enabled',conditions:{users:{includeUsers:['All']}},grantControls:{builtInControls:['block']}},{displayName:'Require Compliant Device - Corporate Apps',state:'reportOnly',conditions:{users:{includeUsers:['All']}},grantControls:{builtInControls:['compliantDevice']}},{displayName:'Block Countries - High Risk',state:'enabled',conditions:{users:{includeUsers:['All']}},grantControls:{builtInControls:['block']}},{displayName:'Require App Protection - Mobile',state:'disabled',conditions:{users:{includeUsers:['All']}},grantControls:{builtInControls:['approvedApplication']}}],
+authMethods:{authenticationMethodConfigurations:[{id:'MicrosoftAuthenticator',state:'enabled'},{id:'Fido2',state:'disabled'},{id:'Sms',state:'enabled'},{id:'TemporaryAccessPass',state:'enabled'},{id:'Email',state:'disabled'},{id:'X509Certificate',state:'disabled'},{id:'SoftwareOath',state:'enabled'}]},
+securityDefaults:{isEnabled:false},
+authzPolicy:{defaultUserRolePermissions:{allowedToReadOtherUsers:true,permissionGrantPoliciesAssigned:[]},allowInvitesFrom:'adminsAndGuestInviters'},
+namedLocations:[{displayName:'Corporate Office','@odata.type':'#microsoft.graph.ipNamedLocation',isTrusted:true,ipRanges:[{cidrAddress:'203.0.113.0/24'},{cidrAddress:'198.51.100.0/24'}]},{displayName:'Blocked Countries','@odata.type':'#microsoft.graph.countryNamedLocation',isTrusted:false,countriesAndRegions:['RU','CN','KP','IR']}],
+spSettings:{sharingCapability:'ExternalUserSharingOnly',isResharingByExternalUsersEnabled:false,isUnmanagedSyncAppForTenantRestricted:true},
+spSites:[{displayName:'Communication Site',webUrl:'https://'+o+'.sharepoint.com/sites/comms',lastModifiedDateTime:'2025-02-20T14:30:00Z'},{displayName:'IT Documentation',webUrl:'https://'+o+'.sharepoint.com/sites/it-docs',lastModifiedDateTime:'2025-03-01T09:15:00Z'},{displayName:'HR Portal',webUrl:'https://'+o+'.sharepoint.com/sites/hr',lastModifiedDateTime:'2025-02-28T11:00:00Z'},{displayName:'Finance Shared',webUrl:'https://'+o+'.sharepoint.com/sites/finance',lastModifiedDateTime:'2025-03-02T16:45:00Z'},{displayName:'Project Alpha',webUrl:'https://'+o+'.sharepoint.com/sites/alpha',lastModifiedDateTime:'2025-01-15T10:20:00Z'}],
+appRegistrations:[{displayName:'MSP Monitoring Tool',appId:uid2()+'-'+uid2(),signInAudience:'AzureADMyOrg',passwordCredentials:[{endDateTime:'2025-06-15T00:00:00Z'}],keyCredentials:[],createdDateTime:'2024-06-01'},{displayName:'Custom Reporting App',appId:uid2()+'-'+uid2(),signInAudience:'AzureADMyOrg',passwordCredentials:[{endDateTime:'2024-12-01T00:00:00Z'}],keyCredentials:[],createdDateTime:'2024-03-15'},{displayName:'API Integration',appId:uid2()+'-'+uid2(),signInAudience:'AzureADMultipleOrgs',passwordCredentials:[],keyCredentials:[{endDateTime:'2026-01-01T00:00:00Z'}],createdDateTime:'2024-08-20'},{displayName:'MSP Tenant Automation',appId:uid2()+'-'+uid2(),signInAudience:'AzureADMyOrg',passwordCredentials:[{endDateTime:'2026-03-04T00:00:00Z'}],keyCredentials:[],createdDateTime:'2025-03-04'}],
+enterpriseApps:[{displayName:'Slack',servicePrincipalType:'Application',accountEnabled:true,createdDateTime:'2024-02-01',tags:['WindowsAzureActiveDirectoryIntegratedApp']},{displayName:'Zoom',servicePrincipalType:'Application',accountEnabled:true,createdDateTime:'2024-02-15',tags:['WindowsAzureActiveDirectoryIntegratedApp']},{displayName:'Salesforce',servicePrincipalType:'Application',accountEnabled:true,createdDateTime:'2024-03-01',tags:['WindowsAzureActiveDirectoryIntegratedApp']},{displayName:'DocuSign',servicePrincipalType:'Application',accountEnabled:true,createdDateTime:'2024-04-10',tags:['WindowsAzureActiveDirectoryIntegratedApp']},{displayName:'Mimecast',servicePrincipalType:'Application',accountEnabled:true,createdDateTime:'2024-01-25',tags:['WindowsAzureActiveDirectoryIntegratedApp']},{displayName:'Adobe Creative Cloud',servicePrincipalType:'Application',accountEnabled:false,createdDateTime:'2024-05-20',tags:['WindowsAzureActiveDirectoryIntegratedApp']}],
+oauthGrants:[{clientId:'slack-app-id',consentType:'AllPrincipals',scope:'User.Read Mail.Read'},{clientId:'zoom-app-id',consentType:'AllPrincipals',scope:'User.Read Calendars.Read'},{clientId:'unknown-app-id',consentType:'Principal',scope:'User.Read Mail.ReadWrite Files.ReadWrite.All'}],
+deviceCompliance:[{displayName:'[CE+] Windows 10 Baseline','@odata.type':'#microsoft.graph.windows10CompliancePolicy',createdDateTime:'2024-03-20'},{displayName:'[CE+] Defender AV Required','@odata.type':'#microsoft.graph.windows10CompliancePolicy',createdDateTime:'2024-03-20'},{displayName:'iOS Compliance','@odata.type':'#microsoft.graph.iosCompliancePolicy',createdDateTime:'2024-04-01'}],
+deviceConfig:[{displayName:'[CE+] Windows Update Ring','@odata.type':'#microsoft.graph.windowsUpdateForBusinessConfiguration',createdDateTime:'2024-03-20'},{displayName:'BitLocker Encryption','@odata.type':'#microsoft.graph.windows10EndpointProtectionConfiguration',createdDateTime:'2024-03-25'},{displayName:'Endpoint Protection','@odata.type':'#microsoft.graph.windows10GeneralConfiguration',createdDateTime:'2024-04-01'},{displayName:'WiFi Profile — Corporate','@odata.type':'#microsoft.graph.windowsWifiConfiguration',createdDateTime:'2024-05-10'}],
+managedDevices:['DESKTOP-JSmith|Windows|10.0.22631.3155|Dell|Latitude 5540|John Smith','DESKTOP-JDoe|Windows|10.0.22631.3155|Lenovo|ThinkPad X1|Jane Doe','LAPTOP-BWilson|Windows|10.0.19045.3930|HP|EliteBook 840|Bob Wilson','DESKTOP-ABrown|Windows|10.0.22631.3155|Dell|OptiPlex 7090|Alice Brown','iPhone-CDavis|iOS|17.3.1|Apple|iPhone 15|Charlie Davis','iPad-DEV01|iPadOS|17.3|Apple|iPad Air|Diana Evans','DESKTOP-CONF01|Windows|10.0.22621.1555|Dell|Latitude 3540|George Hill'].map((d,i)=>{const[nm,os,ver,mfr,mod,usr]=d.split('|');return{deviceName:nm,operatingSystem:os,osVersion:ver,manufacturer:mfr,model:mod,userPrincipalName:usr.toLowerCase().replace(' ','.')+'@'+o+'.com',complianceState:i<5?'compliant':'noncompliant',lastSyncDateTime:new Date(Date.now()-i*86400000*3).toISOString(),serialNumber:'SN'+uid2(),isEncrypted:i<5}}),
+intuneApps:[{displayName:'Microsoft 365 Apps for Enterprise',publisher:'Microsoft',isAssigned:true},{displayName:'Microsoft Teams',publisher:'Microsoft',isAssigned:true},{displayName:'Company Portal',publisher:'Microsoft',isAssigned:true},{displayName:'Adobe Acrobat Reader',publisher:'Adobe',isAssigned:true},{displayName:'Slack Desktop',publisher:'Slack Technologies',isAssigned:true}],
+endpointSecurity:[{displayName:'Antivirus - Windows Defender',description:'Configure Windows Defender AV settings',isAssigned:true,lastModifiedDateTime:'2025-02-15'},{displayName:'Firewall - Windows Firewall Rules',description:'Block inbound by default, allow corporate apps',isAssigned:true,lastModifiedDateTime:'2025-02-15'},{displayName:'Disk Encryption - BitLocker',description:'Require BitLocker with TPM',isAssigned:true,lastModifiedDateTime:'2025-01-20'},{displayName:'EDR - Endpoint Detection',description:'Defender for Endpoint integration',isAssigned:true,lastModifiedDateTime:'2025-02-28'},{displayName:'Attack Surface Reduction',description:'ASR rules for Office apps and scripts',isAssigned:false,lastModifiedDateTime:'2025-01-10'}],
+appProtection:[{displayName:'iOS MAM Policy','@odata.type':'#microsoft.graph.iosManagedAppProtection',version:'3',lastModifiedDateTime:'2025-02-20'},{displayName:'Android MAM Policy','@odata.type':'#microsoft.graph.androidManagedAppProtection',version:'2',lastModifiedDateTime:'2025-02-20'},{displayName:'Windows Information Protection','@odata.type':'#microsoft.graph.windowsInformationProtection',version:'1',lastModifiedDateTime:'2025-01-15'}],
+enrollmentConfig:[{displayName:'Default Platform Restrictions',deviceEnrollmentConfigurationType:'platformRestrictions',priority:0,createdDateTime:'2024-01-20'},{displayName:'Default Windows Enrollment',deviceEnrollmentConfigurationType:'windowsHelloForBusiness',priority:0,createdDateTime:'2024-01-20'},{displayName:'Device Limit Restriction',deviceEnrollmentConfigurationType:'limit',priority:0,createdDateTime:'2024-01-20'},{displayName:'Corporate Autopilot Enrollment',deviceEnrollmentConfigurationType:'singlePlatformRestriction',priority:1,createdDateTime:'2024-06-10'}],
+autopilot:[{displayName:'Standard User Deployment',description:'Self-deploying mode for standard users with Company Portal',language:'en-GB',lastModifiedDateTime:'2025-01-15'},{displayName:'Kiosk Device Deployment',description:'Self-deploying mode for shared/kiosk devices',language:'en-GB',lastModifiedDateTime:'2025-02-01'}],
+groupPolicyConfig:[{displayName:'Imported - Domain Security Policy',description:'Migrated from on-prem AD GPO',lastModifiedDateTime:'2024-08-15'},{displayName:'Imported - Office 365 Settings',description:'Office configuration from Group Policy',lastModifiedDateTime:'2024-09-01'}],
+sensitivityLabels:[{name:'Public',description:'Information freely available',isActive:true,priority:0,color:'#00AA00'},{name:'Internal',description:'Not for external distribution',isActive:true,priority:1,color:'#FFB900'},{name:'Confidential',description:'Restricted to authorised personnel',isActive:true,priority:2,color:'#FF6600'},{name:'Highly Confidential',description:'Board and C-suite only',isActive:true,priority:3,color:'#D13438'},{name:'Personal',description:'Personal non-business data',isActive:false,priority:4,color:'#0078D4'}],
+retentionLabels:[{displayName:'7 Year Financial Records',description:'Retain financial documents for 7 years',isInUse:true,retentionDuration:'P2555D',actionAfterRetentionPeriod:'delete',createdDateTime:'2024-06-01'},{displayName:'3 Year HR Records',description:'Employee records retention',isInUse:true,retentionDuration:'P1095D',actionAfterRetentionPeriod:'startDispositionReview',createdDateTime:'2024-06-01'},{displayName:'1 Year General',description:'Default retention for general content',isInUse:false,retentionDuration:'P365D',actionAfterRetentionPeriod:'none',createdDateTime:'2024-06-01'}],
+dlpPolicies:[{displayName:'UK Financial Data Protection',mode:'Enable',createdDateTime:'2024-07-01'},{displayName:'PII Detection - Email',mode:'Enable',createdDateTime:'2024-07-01'},{displayName:'Credit Card Number Block',mode:'TestWithNotifications',createdDateTime:'2024-08-15'}],
+mailboxes:['John Smith|IT|IT Manager','Jane Doe|Finance|CFO','Bob Wilson|IT|Sysadmin','Alice Brown|HR|HR Director','Charlie Davis|Sales|Account Exec','Diana Evans|Marketing|Marketing Lead','Edward Foster|Operations|Ops Manager','Fiona Grant|Legal|Legal Counsel','George Hill|Sales|Sales Director','Hannah Irving|IT|Helpdesk'].map((n,i)=>{const[nm]=n.split('|');return{displayName:nm,userPrincipalName:nm.toLowerCase().replace(' ','.')+'@'+o+'.com',mail:nm.toLowerCase().replace(' ','.')+'@'+o+'.com',assignedLicenses:[{skuId:'x'}],proxyAddresses:['SMTP:'+nm.toLowerCase().replace(' ','.')+'@'+o+'.com','smtp:'+nm.toLowerCase().replace(' ','.')+'@'+o+'.co.uk']}}),
+transportRules:[{name:'Disclaimer - External Emails',state:'Enabled',priority:0},{name:'Block Auto-Forward to External',state:'Enabled',priority:1},{name:'Encrypt Sensitive Data',state:'Enabled',priority:2}],
+acceptedDomains:[{domainName:o+'.com',domainType:'Authoritative'},{domainName:o+'.co.uk',domainType:'Authoritative'},{domainName:dom,domainType:'Authoritative'}],
+connectors:[{name:'Mimecast Inbound',connectorType:'Partner',enabled:true}],
+secureScore:[{currentScore:42,maxScore:78}]
 }[k]||{}}
 </script>
 </body>
