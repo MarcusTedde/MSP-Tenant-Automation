@@ -109,7 +109,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 </head>
 <body>
 <div id="app">
-<header class="header"><div class="header-brand"><div class="header-logo">M</div><div><div class="header-title">M365 Tenant Automation</div><div class="header-subtitle">MSP Onboarding &amp; CE+ Compliance</div></div></div><div class="header-meta"><span class="badge badge-cyan">Graph API v1.0</span><div id="authStatus" class="auth-status disconnected"><span class="auth-dot"></span><span id="authStatusText">Not connected</span></div><button id="authBtn" class="btn btn-sm btn-secondary" onclick="handleAuth()">Sign In</button></div></header>
+<header class="header"><div class="header-brand"><div class="header-logo">M</div><div><div class="header-title">M365 Tenant Automation</div><div class="header-subtitle">MSP Onboarding &amp; CE+ Compliance</div></div></div><div class="header-meta"><span class="badge badge-cyan">Graph API v1.0</span><span class="badge badge-green" style="margin-left:4px">v3.0</span><div id="authStatus" class="auth-status disconnected"><span class="auth-dot"></span><span id="authStatusText">Not connected</span></div><button id="authBtn" class="btn btn-sm btn-secondary" onclick="handleAuth()">Sign In</button></div></header>
 <nav class="tab-bar"><button class="tab-btn active" data-tab="setup" onclick="switchTab('setup',this)"><span>⚡</span> New Tenant Setup</button><button class="tab-btn" data-tab="discovery" onclick="switchTab('discovery',this)"><span>🔍</span> Tenant Discovery</button><button class="tab-btn" data-tab="compliance" onclick="switchTab('compliance',this)"><span>✅</span> CE+ Compliance</button><button class="tab-btn" data-tab="config" onclick="switchTab('config',this)"><span>⚙</span> App Config</button></nav>
 <main class="main-content">
 
@@ -222,7 +222,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
    CORE CONFIG & POLICY DEFINITIONS
    ============================================================ */
 const GE='https://graph.microsoft.com/v1.0',GB='https://graph.microsoft.com/beta';
-const PERMS=[{n:'Directory.ReadWrite.All',id:'19dbc75e-c2e2-444c-a770-ec596d67a114'},{n:'Policy.ReadWrite.ConditionalAccess',id:'01c0a623-fc9b-48e9-b794-0756f8e8f067'},{n:'Policy.ReadWrite.AuthenticationMethod',id:'7e823077-d88e-468f-a337-e18f1f0e6c7c'},{n:'Application.ReadWrite.All',id:'1bfefb4e-e0b5-418b-a88f-73c46d2cc8e9'},{n:'AppRoleAssignment.ReadWrite.All',id:'06b708a9-e830-4db3-a914-8e69da51d44f'},{n:'DeviceManagementConfiguration.ReadWrite.All',id:'9241abd9-d0e6-425a-bd4f-47ba86d767a4'},{n:'DeviceManagementManagedDevices.ReadWrite.All',id:'243333ab-4d21-40cb-a475-36241daa0842'},{n:'SecurityEvents.ReadWrite.All',id:'d903a879-88e0-4c09-b0c9-82f6a1333f84'},{n:'AuditLog.Read.All',id:'b0afded3-3588-46d8-8b3d-9842eff778da'},{n:'SharePointTenantSettings.ReadWrite.All',id:'aa07f155-3612-49b8-a147-6c590df35536'},{n:'RoleManagement.ReadWrite.Directory',id:'d01b97e9-cbc0-49fe-810a-e34b2ca3da7d'},{n:'Organization.ReadWrite.All',id:'292d869f-3427-49a8-9dab-8c70152b74e9'},{n:'User.ReadWrite.All',id:'741f803b-c850-494e-b5df-cde7c675a1ca'},{n:'Group.ReadWrite.All',id:'62a82d76-70ea-41e2-9197-370581804d09'},{n:'Mail.ReadWrite',id:'e2a3a72e-5f79-4c64-b1b1-878b674786c9'}];
+const PERMS=[{n:'Directory.ReadWrite.All',id:'_'},{n:'Policy.Read.All',id:'_'},{n:'Policy.ReadWrite.ConditionalAccess',id:'_'},{n:'Policy.ReadWrite.AuthenticationMethod',id:'_'},{n:'Application.ReadWrite.All',id:'_'},{n:'AppRoleAssignment.ReadWrite.All',id:'_'},{n:'DeviceManagementConfiguration.ReadWrite.All',id:'_'},{n:'DeviceManagementManagedDevices.ReadWrite.All',id:'_'},{n:'DeviceManagementApps.ReadWrite.All',id:'_'},{n:'DeviceManagementServiceConfig.ReadWrite.All',id:'_'},{n:'SecurityEvents.ReadWrite.All',id:'_'},{n:'AuditLog.Read.All',id:'_'},{n:'SharePointTenantSettings.ReadWrite.All',id:'_'},{n:'Sites.Read.All',id:'_'},{n:'RoleManagement.ReadWrite.Directory',id:'_'},{n:'Organization.ReadWrite.All',id:'_'},{n:'User.ReadWrite.All',id:'_'},{n:'Group.ReadWrite.All',id:'_'},{n:'Mail.ReadWrite',id:'_'},{n:'InformationProtection.Read.All',id:'_'},{n:'RecordsManagement.Read.All',id:'_'}];
 
 const CEP={accessControl:{cat:'Access Control',icon:'🔐',p:[
 {id:'ac-001',n:'Enforce MFA for All Users',ce:'Multi-factor authentication must be enabled for all user accounts',sev:'critical',ep:'POST /identity/conditionalAccess/policies',pay:{displayName:'[CE+] Require MFA - All Users',state:'enabled',conditions:{users:{includeUsers:['All']},applications:{includeApplications:['All']}},grantControls:{operator:'OR',builtInControls:['mfa']}}},
@@ -368,6 +368,7 @@ function cleanup(){SS.run=0;$('setupStartBtn').classList.remove('hidden');$('set
    DISCOVERY TAB — Professional presentation
    ============================================================ */
 async function startDiscovery(){
+  console.log('🚀 startDiscovery v3.0 — scanning 33 sections');
   const dom=$('discDomain').value.trim();if(!dom)return;
   $('discScanBtn').disabled=true;$('discScanBtn').innerHTML='<span class="animate-spin" style="display:inline-block">◌</span> Scanning...';$('discProgress').classList.remove('hidden');$('discEmpty').classList.add('hidden');$('discResults').innerHTML='';$('discExBtns').classList.add('hidden');
   DD={domain:dom,ts:new Date().toISOString()};const live=A.ok();
@@ -413,8 +414,8 @@ async function startDiscovery(){
       organization:()=>G.call('/organization'),
       subscribedSkus:()=>G.call('/subscribedSkus?$select=skuPartNumber,prepaidUnits,consumedUnits,appliesTo,skuId'),
       domains:()=>G.call('/domains'),
-      users:()=>G.call('/users?$select=displayName,userPrincipalName,mail,accountEnabled,assignedLicenses,userType,createdDateTime,jobTitle,department,signInActivity,proxyAddresses&$top=999'),
-      groups:()=>G.call('/groups?$select=displayName,groupTypes,securityEnabled,mailEnabled,mailNickname,mail,membershipRule,description,createdDateTime,proxyAddresses,resourceProvisioningOptions&$top=999&$count=true'),
+      users:()=>G.call('/users?$select=displayName,userPrincipalName,mail,accountEnabled,assignedLicenses,userType,createdDateTime,jobTitle,department,proxyAddresses&$top=999'),
+      groups:()=>G.call('/groups?$select=displayName,groupTypes,securityEnabled,mailEnabled,mailNickname,mail,membershipRule,description,createdDateTime,proxyAddresses,resourceProvisioningOptions&$top=999'),
       admins:()=>G.call('/directoryRoles?$expand=members($select=displayName,userPrincipalName)'),
       conditionalAccess:()=>G.call('/identity/conditionalAccess/policies'),
       authMethods:()=>G.call('/policies/authenticationMethodsPolicy'),
@@ -428,17 +429,17 @@ async function startDiscovery(){
       oauthGrants:()=>G.call('/oauth2PermissionGrants?$top=200'),
       deviceCompliance:()=>G.call('/deviceManagement/deviceCompliancePolicies'),
       deviceConfig:()=>G.call('/deviceManagement/deviceConfigurations'),
-      endpointSecurity:async()=>{try{return await G.call('/deviceManagement/intents?$select=displayName,description,templateId,isAssigned,lastModifiedDateTime')}catch{return{_note:'Endpoint security policies require Intune licence and DeviceManagementConfiguration.Read.All'}}},
-      appProtection:async()=>{try{return await G.call('/deviceAppManagement/managedAppPolicies?$select=displayName,createdDateTime,lastModifiedDateTime,version')}catch{return{_note:'App protection policies require DeviceManagementApps.Read.All'}}},
-      enrollmentConfig:async()=>{try{return await G.call('/deviceManagement/deviceEnrollmentConfigurations?$select=displayName,deviceEnrollmentConfigurationType,createdDateTime,priority')}catch{return{_note:'Enrollment configs require DeviceManagementServiceConfig.Read.All'}}},
-      autopilot:async()=>{try{return await G.call('/deviceManagement/windowsAutopilotDeploymentProfiles?$select=displayName,description,language,createdDateTime,lastModifiedDateTime')}catch{return{_note:'Autopilot profiles require DeviceManagementServiceConfig.Read.All'}}},
-      groupPolicyConfig:async()=>{try{return await G.call('/deviceManagement/groupPolicyConfigurations?$select=displayName,description,createdDateTime,lastModifiedDateTime')}catch{return{_note:'Group Policy configs require DeviceManagementConfiguration.Read.All'}}},
+      endpointSecurity:async()=>{try{return await G.call('/deviceManagement/intents?$select=displayName,description,templateId,isAssigned,lastModifiedDateTime',null,null,true)}catch{return{_note:'Endpoint security policies require Intune licence and beta API'}}},
+      appProtection:async()=>{try{return await G.call('/deviceAppManagement/managedAppPolicies',null,null,false)}catch{return{_note:'App protection policies require DeviceManagementApps.Read.All'}}},
+      enrollmentConfig:async()=>{try{return await G.call('/deviceManagement/deviceEnrollmentConfigurations?$select=displayName,createdDateTime,priority')}catch{return{_note:'Enrollment configs require DeviceManagementServiceConfig.Read.All'}}},
+      autopilot:async()=>{try{return await G.call('/deviceManagement/windowsAutopilotDeploymentProfiles?$select=displayName,description,language,createdDateTime,lastModifiedDateTime',null,null,true)}catch{return{_note:'Autopilot profiles require beta API and DeviceManagementServiceConfig.Read.All'}}},
+      groupPolicyConfig:async()=>{try{return await G.call('/deviceManagement/groupPolicyConfigurations?$select=displayName,description,createdDateTime,lastModifiedDateTime',null,null,true)}catch{return{_note:'Group Policy configs require beta API and DeviceManagementConfiguration.Read.All'}}},
       managedDevices:()=>G.call('/deviceManagement/managedDevices?$select=deviceName,operatingSystem,osVersion,complianceState,managementAgent,enrolledDateTime,lastSyncDateTime,userPrincipalName,model,manufacturer,serialNumber,isEncrypted&$top=999'),
-      intuneApps:()=>G.call('/deviceAppManagement/mobileApps?$select=displayName,publisher,createdDateTime,isAssigned&$filter=isAssigned eq true&$top=200'),
-      sensitivityLabels:async()=>{try{return await G.call('/security/informationProtection/sensitivityLabels?$select=name,description,isActive,priority,color')}catch{try{return await G.call('/informationProtection/policy/labels')}catch{return{_note:'Sensitivity labels require InformationProtection.Read.All or equivalent. May require Microsoft 365 E3/E5 licence.'}}}},
-      retentionLabels:async()=>{try{return await G.call('/security/labels/retentionLabels?$select=displayName,description,isInUse,createdDateTime,retentionDuration,actionAfterRetentionPeriod')}catch{return{_note:'Retention labels require Records.Read.All. May require compliance licence.'}}},
-      dlpPolicies:async()=>{try{return await G.call('/security/informationProtection/policy')}catch{try{return await G.call('/informationProtection/policy')}catch{return{_note:'DLP policies are not fully available via Graph API. Use Security & Compliance PowerShell: Get-DlpCompliancePolicy'}}}},
-      mailboxes:()=>G.call("/users?$select=displayName,userPrincipalName,mail,assignedLicenses,proxyAddresses&$filter=assignedLicenses/any()&$top=999"),
+      intuneApps:async()=>{try{return await G.call('/deviceAppManagement/mobileApps?$select=displayName,publisher,createdDateTime&$top=200')}catch{return{_note:'Intune apps require DeviceManagementApps.Read.All'}}},
+      sensitivityLabels:async()=>{try{return await G.call('/security/informationProtection/sensitivityLabels',null,null,true)}catch{try{return await G.call('/informationProtection/sensitivityLabels',null,null,true)}catch{return{_note:'Sensitivity labels require beta API + InformationProtection.Read.All. May need E3/E5 licence.'}}}},
+      retentionLabels:async()=>{try{return await G.call('/security/labels/retentionLabels?$select=displayName,isInUse,createdDateTime,retentionDuration,actionAfterRetentionPeriod')}catch{return{_note:'Retention labels require RecordsManagement.Read.All. May need compliance licence.'}}},
+      dlpPolicies:async()=>({_note:'DLP policies are not available via Microsoft Graph. Use PowerShell: Get-DlpCompliancePolicy | Select Name, Mode, CreatedDate'}),
+      mailboxes:async()=>{const users=DD.users;if(!users||users._error)return{_note:'Mailbox data derived from users — users query must succeed first'};return(Array.isArray(users)?users:[]).filter(u=>u.assignedLicenses?.length>0&&(u.userType||'').toLowerCase()!=='guest')},
       transportRules:async()=>{try{return await G.call('/admin/exchange/transportRules',null,null,true)}catch{return{_note:'Transport rules require Exchange admin role or beta endpoint'}}},
       acceptedDomains:async()=>{try{return await G.call('/admin/exchange/acceptedDomains',null,null,true)}catch{return{_note:'Accepted domains requires Exchange admin permissions'}}},
       connectors:async()=>{try{return await G.call('/admin/exchange/inboundConnectors',null,null,true)}catch{return{_note:'Connectors require Exchange admin permissions'}}},
@@ -446,14 +447,18 @@ async function startDiscovery(){
     };const r=await fns[s.k]();DD[s.k]=r?.value||r}catch(e){DD[s.k]={_error:e.message}}}
     else{await delay(80+Math.random()*150);DD[s.k]=mockD(s.k,dom)}}
   $('discProgress').classList.add('hidden');$('discScanBtn').disabled=false;$('discScanBtn').innerHTML='🔍 Run Discovery';$('discExBtns').classList.remove('hidden');
+  console.log('📦 Discovery complete. Sections:',Object.keys(DD).filter(k=>k!=='domain'&&k!=='ts').length,'Keys:',Object.keys(DD));
   renderDisc()}
 
 function renderDisc(){
+  console.log('🔍 renderDisc v3.0 — 33 section discovery');
+  try{
   if(!DD)return;const d=DD,c=$('discResults');
   const arr=k=>Array.isArray(d[k])?d[k]:[];
+  // Some endpoints return single objects, some return {value:[...]} → extracted as array. Unwrap arrays-of-one.
+  const obj=k=>{const v=d[k];if(!v||v._error)return null;return Array.isArray(v)?v[0]||null:v};
   const errN=k=>d[k]?._error?`<div style="font-size:.76rem;color:var(--accent-amber);padding:5px 10px;background:rgba(245,158,11,.04);border-radius:4px;margin-bottom:6px">⚠ ${esc(d[k]._error)}</div>`:'';
   const u=arr('users'),g=arr('groups'),ca=arr('conditionalAccess'),ar=arr('admins'),sites=arr('spSites'),apps=arr('appRegistrations'),eapps=arr('enterpriseApps'),skus=arr('subscribedSkus'),devs=arr('managedDevices'),iapps=arr('intuneApps'),dcomp=arr('deviceCompliance'),dconf=arr('deviceConfig'),nlocs=arr('namedLocations'),oag=arr('oauthGrants'),mbox=arr('mailboxes'),esec=arr('endpointSecurity'),aprot=arr('appProtection'),enrcfg=arr('enrollmentConfig'),apilot=arr('autopilot'),gpcfg=arr('groupPolicyConfig'),slabels=arr('sensitivityLabels'),rlabels=arr('retentionLabels');
-  const noteN=k=>d[k]?._note?`<div style="font-size:.76rem;color:var(--text-muted);padding:5px 10px;background:rgba(100,116,139,.04);border-radius:4px;margin-bottom:6px">ℹ ${esc(d[k]._note)}</div>`:'';
   const colors=['#3b82f6','#8b5cf6','#06b6d4','#ec4899','#f59e0b','#10b981','#ef4444','#6366f1','#14b8a6','#f97316','#a855f7','#64748b'];
 
   // Group categorisation
@@ -479,7 +484,7 @@ function renderDisc(){
   </div>`;
 
   // ───── ORGANISATION ─────
-  if(d.organization&&!d.organization._error){const o=d.organization;
+  {const o=obj('organization');if(o){
     h+=`<div class="disc-section"><div class="disc-section-head"><div class="sec-icon" style="background:rgba(59,130,246,.1);color:var(--accent-blue)">🏢</div>Organisation</div>
     <div class="disc-grid disc-grid-3">
       <div class="disc-kv"><div class="kv-label">Name</div><div class="kv-value">${esc(o.name||o.displayName||'—')}</div></div>
@@ -488,7 +493,7 @@ function renderDisc(){
       <div class="disc-kv"><div class="kv-label">Admin Contact</div><div class="kv-value mono">${esc(o.mail||o.technicalNotificationMails?.[0]||'—')}</div></div>
       <div class="disc-kv"><div class="kv-label">Tenant Domain</div><div class="kv-value mono">${esc(d.domain)}</div></div>
       <div class="disc-kv"><div class="kv-label">Scan Date</div><div class="kv-value">${new Date(d.ts).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})}</div></div>
-    </div></div>`}
+    </div></div>`}}
 
   // ───── LICENSE INVENTORY ─────
   if(skus.length){h+=`<div class="disc-section">${errN('subscribedSkus')}<div class="disc-section-head"><div class="sec-icon" style="background:rgba(16,185,129,.1);color:var(--accent-green)">📜</div>License Inventory <span class="badge badge-muted" style="margin-left:auto">${skus.length} SKUs</span></div>
@@ -575,32 +580,32 @@ function renderDisc(){
     </tbody></table></div>`}
 
   // ───── AUTH METHODS ─────
-  if(d.authMethods&&!d.authMethods._error){const methods=d.authMethods.methods||d.authMethods.authenticationMethodConfigurations||[];
+  {const am=obj('authMethods');if(am){const methods=am.methods||am.authenticationMethodConfigurations||[];
     h+=`<div class="disc-section"><div class="disc-section-head"><div class="sec-icon" style="background:rgba(99,102,241,.1);color:#818cf8">📱</div>Authentication Methods</div>
     <div class="disc-grid disc-grid-3">
     ${(Array.isArray(methods)?methods:[]).map(m=>{const on=m.on!==undefined?m.on:m.state==='enabled';return`<div class="disc-kv"><div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:.84rem;font-weight:500">${esc(m.id||m.name||'')}</span><span class="status-dot ${on?'on':'off'}"></span></div></div>`}).join('')}
-    </div></div>`}
+    </div></div>`}}
 
   // ───── SECURITY DEFAULTS + AUTHZ POLICY ─────
-  if(d.securityDefaults&&!d.securityDefaults._error){const on=d.securityDefaults.on||d.securityDefaults.isEnabled;
+  if(d.securityDefaults&&!d.securityDefaults._error){const sd=obj('securityDefaults')||d.securityDefaults;const on=sd.on||sd.isEnabled;
     h+=`<div class="disc-section"><div class="disc-section-head"><div class="sec-icon" style="background:rgba(${on?'16,185,129':'239,68,68'},.1);color:${on?'var(--accent-green)':'var(--accent-red)'}">🛡️</div>Security Defaults</div>
     <div class="disc-kv" style="display:inline-flex;gap:10px;align-items:center"><span class="status-dot ${on?'on':'off'}"></span><span style="font-size:.88rem;font-weight:500">${on?'Enabled':'Disabled'}${!on?' — Conditional Access policies should be in use':''}</span></div></div>`}
-  if(d.authzPolicy&&!d.authzPolicy._error){const ap=d.authzPolicy;
+  {const ap=obj('authzPolicy');if(ap){
     h+=`<div class="disc-section"><div class="disc-section-head"><div class="sec-icon" style="background:rgba(139,92,246,.1);color:var(--accent-violet)">📋</div>Authorization Policy</div>
     <div class="disc-grid disc-grid-3">
       <div class="disc-kv"><div class="kv-label">Users Read Directory</div><div class="kv-value">${ap.defaultUserRolePermissions?.allowedToReadOtherUsers!==false||ap.readDir?'<span class="badge badge-amber">Yes</span>':'<span class="badge badge-green">Restricted</span>'}</div></div>
       <div class="disc-kv"><div class="kv-label">User App Consent</div><div class="kv-value">${(ap.defaultUserRolePermissions?.permissionGrantPoliciesAssigned||[]).length>0||ap.consent?'<span class="badge badge-red">Allowed</span>':'<span class="badge badge-green">Blocked</span>'}</div></div>
       <div class="disc-kv"><div class="kv-label">Guest Invites</div><div class="kv-value">${esc(ap.allowInvitesFrom||ap.guestInvite||'—')}</div></div>
-    </div></div>`}
+    </div></div>`}}
 
   // ───── SHAREPOINT + SITES ─────
-  if(d.spSettings&&!d.spSettings._error){const sp=d.spSettings;
+  {const sp=obj('spSettings');if(sp){
     h+=`<div class="disc-section"><div class="disc-section-head"><div class="sec-icon" style="background:rgba(16,185,129,.1);color:var(--accent-green)">📄</div>SharePoint &amp; OneDrive</div>
     <div class="disc-grid disc-grid-3">
       <div class="disc-kv"><div class="kv-label">External Sharing</div><div class="kv-value">${esc(sp.sharing||sp.sharingCapability||'—')}</div></div>
       <div class="disc-kv"><div class="kv-label">Re-sharing by Externals</div><div class="kv-value">${(sp.reshare||sp.isResharingByExternalUsersEnabled)?'<span class="badge badge-red">Allowed</span>':'<span class="badge badge-green">Blocked</span>'}</div></div>
       <div class="disc-kv"><div class="kv-label">Unmanaged Sync Blocked</div><div class="kv-value">${(sp.syncRestricted||sp.isUnmanagedSyncAppForTenantRestricted)?'<span class="badge badge-green">Yes</span>':'<span class="badge badge-amber">No</span>'}</div></div>
-    </div></div>`}
+    </div></div>`}}
   if(sites.length){h+=`<div class="disc-section">${errN('spSites')}<div class="disc-section-head"><div class="sec-icon" style="background:rgba(16,185,129,.1);color:var(--accent-green)">🌍</div>SharePoint Sites <span class="badge badge-muted" style="margin-left:auto">${sites.length}</span></div>
     <table class="disc-table"><thead><tr><th>Site</th><th>URL</th><th>Last Modified</th></tr></thead><tbody>
     ${sites.slice(0,80).map(s=>`<tr><td style="font-weight:500">${esc(s.displayName||s.name||'')}</td><td class="mono" style="font-size:.72rem;color:var(--accent-cyan);max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(s.webUrl||'')}</td><td style="font-size:.78rem;color:var(--text-secondary)">${s.lastModifiedDateTime?new Date(s.lastModifiedDateTime).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'—'}</td></tr>`).join('')}
@@ -733,7 +738,16 @@ function renderDisc(){
       <div class="disc-kv" style="text-align:center"><div class="kv-label">Percentage</div><div class="kv-value" style="font-size:1.4rem;font-weight:800;color:${col}">${pct}%</div></div>
     </div></div>`}}
 
-  h+='</div>';c.innerHTML=h}
+  h+='</div>';c.innerHTML=h;
+  }catch(e){
+    console.error('renderDisc error:',e);
+    $('discResults').innerHTML=`<div style="color:var(--accent-red);padding:20px;font-family:var(--font-display)">
+      <strong>⚠ Rendering error:</strong> ${esc(e.message)}<br>
+      <pre style="font-size:.7rem;color:var(--text-muted);margin-top:8px;white-space:pre-wrap">${esc(e.stack||'')}</pre>
+      <p style="margin-top:12px;color:var(--text-secondary);font-size:.84rem">The data was collected successfully — use the JSON export to access it. Open browser DevTools (F12) for details.</p>
+    </div>`;
+  }
+}
 
 /* ============================================================
    DISCOVERY EXPORTS
