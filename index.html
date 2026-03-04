@@ -22,6 +22,26 @@ if(typeof msal==='undefined'){
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 :root{--bg-root:#060a11;--bg-surface:#0c1220;--bg-elevated:#111a2e;--bg-input:#0a0f1a;--border-subtle:#1a2540;--border-default:#1e2d4a;--border-active:#2563eb;--text-primary:#e8edf5;--text-secondary:#8494b2;--text-muted:#4a5c7a;--text-dim:#2a3a58;--accent-blue:#3b82f6;--accent-cyan:#06b6d4;--accent-green:#10b981;--accent-amber:#f59e0b;--accent-red:#ef4444;--accent-violet:#8b5cf6;--accent-orange:#ec5b2c;--font-mono:'IBM Plex Mono','Consolas',monospace;--font-display:'Outfit',system-ui,sans-serif;--radius-sm:4px;--radius-md:8px;--radius-lg:12px;--radius-xl:16px;--t-fast:150ms ease;--t-norm:250ms ease}
+[data-theme="light"]{--bg-root:#f0f2f5;--bg-surface:#ffffff;--bg-elevated:#f5f7fa;--bg-input:#ffffff;--border-subtle:#d8dde6;--border-default:#bcc3cf;--border-active:#2563eb;--text-primary:#1a1f2e;--text-secondary:#4a5568;--text-muted:#8494b2;--text-dim:#bcc3cf;--accent-blue:#2563eb;--accent-cyan:#0891b2;--accent-green:#059669;--accent-amber:#d97706;--accent-red:#dc2626;--accent-violet:#7c3aed;--accent-orange:#c2410c}
+[data-theme="light"] body::before{display:none}
+[data-theme="light"] .header{background:linear-gradient(180deg,rgba(255,255,255,.97),rgba(245,247,250,.98));border-bottom-color:var(--border-subtle)}
+[data-theme="light"] .header-logo{background:linear-gradient(135deg,#2563eb,#0891b2);color:#fff}
+[data-theme="light"] .header-title{color:var(--text-primary)}
+[data-theme="light"] .tab-bar{background:rgba(255,255,255,.85);border-bottom-color:var(--border-subtle)}
+[data-theme="light"] .tab-btn{color:var(--text-secondary)}
+[data-theme="light"] .tab-btn.active{color:var(--accent-blue);border-bottom-color:var(--accent-blue)}
+[data-theme="light"] .tab-btn:hover{color:var(--text-primary);background:var(--bg-elevated)}
+[data-theme="light"] .log-container{background:var(--bg-elevated)}
+[data-theme="light"] .modal-overlay{background:rgba(0,0,0,.3)}
+[data-theme="light"] .mini-bar{background:var(--border-subtle)}
+[data-theme="light"] .form-input{background:var(--bg-input);border-color:var(--border-subtle);color:var(--text-primary)}
+[data-theme="light"] .form-input:focus{border-color:var(--accent-blue);box-shadow:0 0 0 2px rgba(37,99,235,.12)}
+[data-theme="light"] .btn-primary{background:var(--accent-blue);box-shadow:0 1px 3px rgba(37,99,235,.2)}
+[data-theme="light"] .btn-secondary{background:var(--bg-elevated);color:var(--text-secondary);border-color:var(--border-subtle)}
+[data-theme="light"] .btn-secondary:hover:not(:disabled){background:var(--border-subtle);color:var(--text-primary)}
+[data-theme="light"] code{background:var(--bg-elevated);color:var(--accent-blue)}
+[data-theme="light"] ::-webkit-scrollbar-track{background:var(--bg-root)}
+[data-theme="light"] ::-webkit-scrollbar-thumb{background:var(--border-default)}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{font-size:14px;-webkit-font-smoothing:antialiased}
 body{background:var(--bg-root);color:var(--text-primary);font-family:var(--font-mono);min-height:100vh;overflow-x:hidden}
@@ -109,7 +129,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 </head>
 <body>
 <div id="app">
-<header class="header"><div class="header-brand"><div class="header-logo">M</div><div><div class="header-title">M365 Tenant Automation</div><div class="header-subtitle">MSP Onboarding, Provisioning &amp; CE+ Compliance</div></div></div><div class="header-meta"><span class="badge badge-cyan">Graph API v1.0</span><span class="badge badge-green" style="margin-left:4px">v3.3</span><div id="authStatus" class="auth-status disconnected"><span class="auth-dot"></span><span id="authStatusText">Not connected</span></div><button id="authBtn" class="btn btn-sm btn-secondary" onclick="handleAuth()">Sign In</button></div></header>
+<header class="header"><div class="header-brand"><div class="header-logo">M</div><div><div class="header-title">M365 Tenant Automation</div><div class="header-subtitle">MSP Onboarding, Provisioning &amp; CE+ Compliance</div></div></div><div class="header-meta"><button id="themeBtn" class="btn btn-ghost btn-sm" onclick="toggleTheme()" title="Toggle light/dark theme" style="font-size:1.1rem;padding:4px 8px;line-height:1">🌙</button><span class="badge badge-cyan">Graph API v1.0</span><span class="badge badge-green" style="margin-left:4px">v3.3</span><div id="authStatus" class="auth-status disconnected"><span class="auth-dot"></span><span id="authStatusText">Not connected</span></div><button id="authBtn" class="btn btn-sm btn-secondary" onclick="handleAuth()">Sign In</button></div></header>
 <nav class="tab-bar"><button class="tab-btn active" data-tab="setup" onclick="switchTab('setup',this)"><span>⚡</span> New Tenant Setup</button><button class="tab-btn" data-tab="discovery" onclick="switchTab('discovery',this)"><span>🔍</span> Tenant Discovery</button><button class="tab-btn" data-tab="users" onclick="switchTab('users',this)"><span>👤</span> Users</button><button class="tab-btn" data-tab="domains" onclick="switchTab('domains',this)"><span>🌐</span> Domains</button><button class="tab-btn" data-tab="compliance" onclick="switchTab('compliance',this)"><span>✅</span> CE+ Compliance</button><button class="tab-btn" data-tab="config" onclick="switchTab('config',this)"><span>⚙</span> App Config</button></nav>
 <main class="main-content">
 
@@ -134,9 +154,18 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 <!-- ═══════ USERS TAB ═══════ -->
 <div id="panel-users" class="tab-panel"><div style="max-width:1200px">
 
-<!-- Create User Form -->
+<!-- Create / Modify User Card -->
 <div class="card" style="margin-bottom:22px">
-<div class="card-header"><span class="dot" style="background:var(--accent-blue)"></span> Create New User</div>
+<div class="flex justify-between items-center" style="margin-bottom:0">
+  <div style="display:flex;gap:0;border-bottom:1px solid var(--border-subtle);flex:1;margin-bottom:14px">
+    <button class="btn btn-ghost btn-sm nu-mode-btn active" data-mode="create" onclick="nuSwitchMode('create')" style="border-radius:var(--radius-sm) var(--radius-sm) 0 0;border-bottom:2px solid var(--accent-blue);padding:8px 16px;font-weight:600">👤 Create New User</button>
+    <button class="btn btn-ghost btn-sm nu-mode-btn" data-mode="modify" onclick="nuSwitchMode('modify')" style="border-radius:var(--radius-sm) var(--radius-sm) 0 0;border-bottom:2px solid transparent;padding:8px 16px">✏️ Modify Existing User</button>
+  </div>
+  <button class="btn btn-ghost btn-sm" onclick="nuLoadGroups()" title="Refresh groups, SKUs and domains" style="flex-shrink:0;margin-bottom:14px">↻ Refresh</button>
+</div>
+
+<!-- Create Mode -->
+<div id="nuModeCreate">
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
   <div><label class="form-label">First Name *</label><input id="nuFirst" class="form-input" placeholder="John"></div>
   <div><label class="form-label">Last Name *</label><input id="nuLast" class="form-input" placeholder="Smith"></div>
@@ -188,14 +217,71 @@ Jane,Doe,jane.doe,CFO,Finance,LIC — Business Premium"></textarea>
 </div>
 </div>
 
-<!-- Created Users Log -->
-<div class="card">
-<div class="flex justify-between items-center" style="margin-bottom:12px">
-  <div class="card-header" style="margin-bottom:0"><span class="dot" style="background:var(--accent-green)"></span> Created Users</div>
-  <span id="nuCount" style="font-family:var(--font-display);font-size:.82rem;color:var(--text-muted)">0 users</span>
+<!-- Modify Mode -->
+<div id="nuModeModify" class="hidden">
+<div id="nuModifyEmpty" style="padding:40px;text-align:center;color:var(--text-muted)">
+  <div style="font-size:2rem;margin-bottom:8px">✏️</div>
+  <div style="font-family:var(--font-display);font-weight:600;font-size:.92rem;margin-bottom:4px">Select a user to modify</div>
+  <div style="font-size:.82rem">Click on any user in the "All Users" list below to load their details here.</div>
 </div>
+<div id="nuModifyForm" class="hidden">
+<div style="padding:8px 12px;margin-bottom:14px;border-radius:var(--radius-md);background:rgba(59,130,246,.05);border:1px solid rgba(59,130,246,.15);display:flex;align-items:center;gap:10px">
+  <span style="font-family:var(--font-display);font-weight:600;font-size:.88rem;color:var(--accent-cyan)" id="nuModUPN"></span>
+  <span class="badge badge-blue" style="font-size:.65rem" id="nuModId"></span>
+  <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="nuClearModify()">✕ Clear</button>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+  <div><label class="form-label">First Name</label><input id="nuModFirst" class="form-input"></div>
+  <div><label class="form-label">Last Name</label><input id="nuModLast" class="form-input"></div>
+  <div><label class="form-label">Display Name</label><input id="nuModDisplay" class="form-input"></div>
+  <div><label class="form-label">Username (UPN)</label><input id="nuModUser" class="form-input" disabled style="opacity:.6" title="UPN cannot be changed here — use Azure Portal"></div>
+  <div><label class="form-label">Job Title</label><input id="nuModTitle" class="form-input"></div>
+  <div><label class="form-label">Department</label><input id="nuModDept" class="form-input"></div>
+  <div><label class="form-label">Usage Location</label><input id="nuModLoc" class="form-input" style="max-width:80px"></div>
+  <div><label class="form-label">Account Enabled</label><select id="nuModEnabled" class="form-input" style="width:auto"><option value="true">Enabled</option><option value="false">Disabled</option></select></div>
+</div>
+<div style="margin-bottom:14px">
+  <label class="form-label">Current Group Memberships</label>
+  <div id="nuModGroups" style="padding:10px;background:var(--bg-input);border-radius:var(--radius-md);border:1px solid var(--border-subtle);font-size:.8rem;max-height:120px;overflow-y:auto"></div>
+</div>
+<div style="margin-bottom:14px;padding:12px;background:rgba(245,158,11,.04);border:1px solid rgba(245,158,11,.12);border-radius:var(--radius-md)">
+  <div style="font-size:.78rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;font-family:var(--font-display)">Reset Password</div>
+  <div class="flex gap-sm items-center">
+    <input id="nuModPass" class="form-input" placeholder="Leave blank to keep current password" style="flex:1">
+    <button class="btn btn-secondary btn-sm" onclick="nuGenModPass()">🎲</button>
+    <label style="display:flex;align-items:center;gap:6px;font-size:.78rem;color:var(--text-secondary);white-space:nowrap"><input type="checkbox" id="nuModForceChange" checked> Force change</label>
+  </div>
+</div>
+<div class="flex gap-sm">
+  <button class="btn btn-primary" onclick="nuUpdateUser()">💾 Save Changes</button>
+  <button class="btn btn-secondary" onclick="nuClearModify()">Cancel</button>
+  <div id="nuModResult" style="font-size:.82rem;display:flex;align-items:center;margin-left:8px"></div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- Created Users / All Users Card -->
+<div class="card">
+<div style="display:flex;gap:0;border-bottom:1px solid var(--border-subtle);margin-bottom:12px">
+  <button class="btn btn-ghost btn-sm nu-list-btn active" data-list="created" onclick="nuSwitchList('created')" style="border-radius:var(--radius-sm) var(--radius-sm) 0 0;border-bottom:2px solid var(--accent-green);padding:8px 16px;font-weight:600"><span class="dot" style="background:var(--accent-green);width:6px;height:6px;border-radius:50%;display:inline-block;margin-right:4px"></span>Created Users <span id="nuCount" style="font-family:var(--font-display);font-size:.75rem;color:var(--text-muted);margin-left:4px">0</span></button>
+  <button class="btn btn-ghost btn-sm nu-list-btn" data-list="all" onclick="nuSwitchList('all')" style="border-radius:var(--radius-sm) var(--radius-sm) 0 0;border-bottom:2px solid transparent;padding:8px 16px"><span class="dot" style="background:var(--accent-blue);width:6px;height:6px;border-radius:50%;display:inline-block;margin-right:4px"></span>All Users <span id="nuAllCount" style="font-family:var(--font-display);font-size:.75rem;color:var(--text-muted);margin-left:4px"></span></button>
+</div>
+
+<!-- Created Users List -->
+<div id="nuListCreated">
 <div id="nuLog"></div>
 <div id="nuEmpty" class="empty-state" style="padding:40px"><div class="empty-icon">👤</div><div class="empty-title">No users created yet</div><div class="empty-desc">Fill in the form above and click Create User</div></div>
+</div>
+
+<!-- All Users List -->
+<div id="nuListAll" class="hidden">
+<div class="flex gap-sm items-center" style="margin-bottom:12px">
+  <input id="nuAllSearch" class="form-input" placeholder="Search users by name, email, department..." style="flex:1" oninput="nuFilterAll()">
+  <button class="btn btn-secondary btn-sm" onclick="nuLoadAllUsers()">↻ Load Users</button>
+</div>
+<div id="nuAllLog"><div class="empty-state" style="padding:40px"><div class="empty-icon">👥</div><div class="empty-title">Click "Load Users" to fetch all tenant users</div></div></div>
+</div>
 </div>
 
 </div></div>
@@ -790,9 +876,31 @@ let SS={run:0,abort:0,ph:0,st:0,cfg:0,err:0,logs:[]};
 let DD=null,CR=null,CRP=null,MR=null;
 
 /* ============================================================
+   THEME TOGGLE
+   ============================================================ */
+function toggleTheme(){
+  const html=document.documentElement;
+  const current=html.getAttribute('data-theme');
+  const next=current==='light'?'dark':'light';
+  html.setAttribute('data-theme',next);
+  localStorage.setItem('m365_theme',next);
+  $('themeBtn').textContent=next==='light'?'☀️':'🌙';
+  $('themeBtn').title=next==='light'?'Switch to dark theme':'Switch to light theme';
+}
+function initTheme(){
+  const saved=localStorage.getItem('m365_theme');
+  if(saved==='light'){
+    document.documentElement.setAttribute('data-theme','light');
+    $('themeBtn').textContent='☀️';
+    $('themeBtn').title='Switch to dark theme';
+  }
+}
+
+/* ============================================================
    INIT
    ============================================================ */
 document.addEventListener('DOMContentLoaded',()=>{
+  initTheme();
   // Check MSAL loaded
   if(typeof msal==='undefined'){
     const warn=document.createElement('div');
@@ -810,7 +918,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   $('permList').innerHTML=PERMS.map(p=>`<div style="padding:3px 0"><span class="badge badge-violet" style="margin-right:8px">Role</span> ${p.n}</div>`).join('');
 });
 
-function switchTab(t,b){document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));$('panel-'+t).classList.add('active');b.classList.add('active')}
+function switchTab(t,b){document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));$('panel-'+t).classList.add('active');b.classList.add('active');if(t==='users'&&A.ok())nuLoadGroups()}
 function authUI(c,u){const e=$('authStatus'),t=$('authStatusText'),b=$('authBtn');if(c){e.className='auth-status connected';t.textContent=u;b.textContent='Sign Out';b.onclick=()=>A.logout().then(()=>authUI(0))}else{e.className='auth-status disconnected';t.textContent='Not connected';b.textContent='Sign In';b.onclick=handleAuth}}
 function handleAuth(){if(!A.cfg.cid){switchTab('config',document.querySelector('[data-tab="config"]'));$('cfgClientId').focus();return}if(!A.inst)A.init();if(A.ok()){A.logout()}else{A.login().then(()=>{$('step2Badge').className='badge badge-green';$('step2Badge').textContent='Signed In'}).catch(e=>{
   let msg='Auth failed: '+e.message;
@@ -1453,8 +1561,10 @@ function nuGenPass(){
   $('nuPass').value=p;
 }
 
+let NU_LOADING=false;
 async function nuLoadGroups(){
   if(!A.ok()){alert('Sign in first');return}
+  if(NU_LOADING)return;NU_LOADING=true;
   const el=$('nuLicGroups');
   el.innerHTML='<div style="color:var(--text-muted);font-size:.82rem;padding:8px">Loading groups...</div>';
   try{
@@ -1464,7 +1574,8 @@ async function nuLoadGroups(){
     const groups=(resp.value||[]).sort((a,b)=>(a.displayName||'').localeCompare(b.displayName||''));
     NU_GROUPS=groups;
 
-    if(!groups.length){el.innerHTML='<div style="color:var(--text-muted);font-size:.82rem;padding:8px">No security groups found. Create one below.</div>';return}
+    if(!groups.length){el.innerHTML='<div style="color:var(--text-muted);font-size:.82rem;padding:8px">No security groups found. Create one below.</div>'}
+    else {
 
     el.innerHTML=groups.map(g=>{
       const isLic=/^(LIC|License|M365|Lic\s)/i.test(g.displayName);
@@ -1474,6 +1585,7 @@ async function nuLoadGroups(){
         ${isLic?'<span class="badge badge-cyan" style="font-size:.65rem">License</span>':''}
       </label>`
     }).join('');
+    } // end else (groups exist)
 
     // Also load SKUs for the quick-create dropdown
     try{
@@ -1495,9 +1607,11 @@ async function nuLoadGroups(){
     // Load domains for UPN dropdown
     await nuLoadDomains();
     G.scopes=null;
+    NU_LOADING=false;
   }catch(e){
     el.innerHTML=`<div style="color:var(--accent-red);font-size:.82rem;padding:8px">Error loading groups: ${esc(e.message)}</div>`;
     G.scopes=null;
+    NU_LOADING=false;
   }
 }
 
@@ -1589,7 +1703,7 @@ async function nuCreateUser(){
 
 function nuRenderLog(){
   const el=$('nuLog'),empty=$('nuEmpty');
-  $('nuCount').textContent=NU_CREATED.length+' user'+(NU_CREATED.length!==1?'s':'');
+  $('nuCount').textContent=NU_CREATED.length;
   if(!NU_CREATED.length){el.innerHTML='';empty.style.display='';return}
   empty.style.display='none';
   el.innerHTML=`<div style="overflow-x:auto"><table style="width:100%;font-size:.8rem;border-collapse:collapse">
@@ -1618,6 +1732,218 @@ function nuExportCreds(){
   const blob=new Blob([csv],{type:'text/csv'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);
   a.download=`user-credentials-${new Date().toISOString().slice(0,10)}.csv`;a.click();
+}
+
+/* ── Create/Modify mode switching ── */
+function nuSwitchMode(mode){
+  document.querySelectorAll('.nu-mode-btn').forEach(b=>{
+    b.classList.toggle('active',b.dataset.mode===mode);
+    b.style.borderBottomColor=b.dataset.mode===mode?'var(--accent-blue)':'transparent';
+    b.style.fontWeight=b.dataset.mode===mode?'600':'400';
+  });
+  $('nuModeCreate').classList.toggle('hidden',mode!=='create');
+  $('nuModeModify').classList.toggle('hidden',mode!=='modify');
+}
+
+function nuSwitchList(list){
+  document.querySelectorAll('.nu-list-btn').forEach(b=>{
+    b.classList.toggle('active',b.dataset.list===list);
+    b.style.borderBottomColor=b.dataset.list===list?(list==='created'?'var(--accent-green)':'var(--accent-blue)'):'transparent';
+    b.style.fontWeight=b.dataset.list===list?'600':'400';
+  });
+  $('nuListCreated').classList.toggle('hidden',list!=='created');
+  $('nuListAll').classList.toggle('hidden',list!=='all');
+  // Auto-load all users on first switch
+  if(list==='all'&&!NU_ALL_USERS.length&&A.ok())nuLoadAllUsers();
+}
+
+/* ── All Users ── */
+let NU_ALL_USERS=[];
+
+async function nuLoadAllUsers(){
+  if(!A.ok()){alert('Sign in first');return}
+  const el=$('nuAllLog');
+  el.innerHTML='<div style="color:var(--text-muted);font-size:.82rem;padding:20px;text-align:center">Loading users...</div>';
+  try{
+    G.scopes=Auth.DISCOVERY_SCOPES;
+    let allUsers=[];
+    let url='/users?$select=id,displayName,givenName,surname,userPrincipalName,jobTitle,department,usageLocation,accountEnabled,userType,createdDateTime&$top=200&$orderby=displayName';
+    // Page through results
+    while(url){
+      const resp=await G.call(url);
+      allUsers=allUsers.concat(resp.value||[]);
+      url=resp['@odata.nextLink']?resp['@odata.nextLink'].replace('https://graph.microsoft.com/v1.0',''):null;
+      if(allUsers.length>999)break; // safety cap
+    }
+    NU_ALL_USERS=allUsers;
+    $('nuAllCount').textContent=allUsers.length;
+    G.scopes=null;
+    nuRenderAllUsers();
+  }catch(e){
+    el.innerHTML=`<div style="color:var(--accent-red);font-size:.82rem;padding:12px">Error: ${esc(e.message)}</div>`;
+    G.scopes=null;
+  }
+}
+
+function nuRenderAllUsers(filter){
+  const el=$('nuAllLog');
+  let users=NU_ALL_USERS;
+  if(filter){
+    const q=filter.toLowerCase();
+    users=users.filter(u=>
+      (u.displayName||'').toLowerCase().includes(q)||
+      (u.userPrincipalName||'').toLowerCase().includes(q)||
+      (u.jobTitle||'').toLowerCase().includes(q)||
+      (u.department||'').toLowerCase().includes(q)
+    );
+  }
+  if(!users.length){el.innerHTML='<div style="color:var(--text-muted);font-size:.82rem;padding:20px;text-align:center">No users found.</div>';return}
+
+  el.innerHTML=`<div style="overflow-x:auto;max-height:500px;overflow-y:auto"><table style="width:100%;font-size:.8rem;border-collapse:collapse">
+    <thead style="position:sticky;top:0;background:var(--bg-surface);z-index:1"><tr style="text-align:left;color:var(--text-muted);font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border-subtle)">
+      <th style="padding:8px">Name</th><th style="padding:8px">UPN</th><th style="padding:8px">Title / Dept</th><th style="padding:8px">Location</th><th style="padding:8px">Type</th><th style="padding:8px">Status</th>
+    </tr></thead><tbody>
+    ${users.map(u=>{
+      const isGuest=(u.userType||'').toLowerCase()==='guest';
+      return`<tr style="border-bottom:1px solid var(--border-subtle);cursor:pointer;transition:background .15s" onmouseenter="this.style.background='var(--bg-elevated)'" onmouseleave="this.style.background=''" onclick="nuSelectUser('${u.id}')">
+        <td style="padding:8px;font-weight:500">${esc(u.displayName||'')}</td>
+        <td style="padding:8px;color:var(--accent-cyan);font-size:.76rem;font-family:var(--font-mono)">${esc(u.userPrincipalName||'')}</td>
+        <td style="padding:8px;font-size:.76rem;color:var(--text-secondary)">${esc(u.jobTitle||'')}${u.jobTitle&&u.department?' · ':''}${esc(u.department||'')}</td>
+        <td style="padding:8px;font-size:.76rem">${esc(u.usageLocation||'—')}</td>
+        <td style="padding:8px">${isGuest?'<span class="badge badge-amber" style="font-size:.62rem">Guest</span>':'<span class="badge badge-blue" style="font-size:.62rem">Member</span>'}</td>
+        <td style="padding:8px">${u.accountEnabled?'<span class="badge badge-green" style="font-size:.62rem">Active</span>':'<span class="badge badge-red" style="font-size:.62rem">Disabled</span>'}</td>
+      </tr>`}).join('')}
+    </tbody></table></div>
+    <div style="margin-top:8px;font-size:.76rem;color:var(--text-muted)">${users.length} user${users.length!==1?'s':''} shown${filter?' (filtered)':''}</div>`;
+}
+
+function nuFilterAll(){
+  const q=$('nuAllSearch').value.trim();
+  nuRenderAllUsers(q||null);
+}
+
+/* ── Select user for modification ── */
+let NU_MOD_USER=null;
+
+async function nuSelectUser(userId){
+  // Switch to Modify tab
+  nuSwitchMode('modify');
+  $('nuModifyEmpty').classList.add('hidden');
+  $('nuModifyForm').classList.add('hidden');
+  $('nuModResult').innerHTML='<span style="color:var(--text-muted)">Loading user details...</span>';
+  $('nuModifyForm').classList.remove('hidden');
+
+  try{
+    G.scopes=Auth.DISCOVERY_SCOPES;
+    const u=await G.call(`/users/${userId}?$select=id,displayName,givenName,surname,userPrincipalName,jobTitle,department,usageLocation,accountEnabled`);
+    NU_MOD_USER=u;
+
+    $('nuModFirst').value=u.givenName||'';
+    $('nuModLast').value=u.surname||'';
+    $('nuModDisplay').value=u.displayName||'';
+    $('nuModUser').value=u.userPrincipalName||'';
+    $('nuModTitle').value=u.jobTitle||'';
+    $('nuModDept').value=u.department||'';
+    $('nuModLoc').value=u.usageLocation||'';
+    $('nuModEnabled').value=u.accountEnabled?'true':'false';
+    $('nuModUPN').textContent=u.userPrincipalName||'';
+    $('nuModId').textContent=u.id;
+    $('nuModPass').value='';
+    $('nuModResult').innerHTML='';
+
+    // Load group memberships
+    $('nuModGroups').innerHTML='<span style="color:var(--text-muted)">Loading groups...</span>';
+    try{
+      const grps=await G.call(`/users/${userId}/memberOf?$select=id,displayName,groupTypes,securityEnabled,mailEnabled`);
+      const groups=(grps.value||[]).filter(g=>g['@odata.type']==='#microsoft.graph.group');
+      if(groups.length){
+        $('nuModGroups').innerHTML=groups.map(g=>{
+          const isLic=/^(LIC|License|M365|Lic\s)/i.test(g.displayName);
+          return`<span class="badge ${isLic?'badge-cyan':'badge-muted'}" style="font-size:.7rem;margin:2px">${esc(g.displayName)}</span>`;
+        }).join('');
+      } else {
+        $('nuModGroups').innerHTML='<span style="color:var(--text-muted);font-size:.78rem">No group memberships</span>';
+      }
+    }catch{$('nuModGroups').innerHTML='<span style="color:var(--text-muted);font-size:.78rem">Could not load groups</span>'}
+
+    G.scopes=null;
+
+    // Scroll to form
+    $('nuModeModify').scrollIntoView({behavior:'smooth',block:'start'});
+  }catch(e){
+    $('nuModResult').innerHTML=`<span style="color:var(--accent-red);font-size:.82rem">Error: ${esc(e.message)}</span>`;
+    G.scopes=null;
+  }
+}
+
+function nuClearModify(){
+  NU_MOD_USER=null;
+  $('nuModifyForm').classList.add('hidden');
+  $('nuModifyEmpty').classList.remove('hidden');
+  ['nuModFirst','nuModLast','nuModDisplay','nuModUser','nuModTitle','nuModDept','nuModLoc','nuModPass'].forEach(id=>$(id).value='');
+  $('nuModResult').innerHTML='';
+}
+
+function nuGenModPass(){
+  const chars='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%&*';
+  let p='';for(let i=0;i<16;i++)p+=chars[Math.floor(Math.random()*chars.length)];
+  p=p.replace(/^./,'A').replace(/.$/,'1').replace(/.(?=.{5}$)/,'!').replace(/.(?=.{3}$)/,'z');
+  $('nuModPass').value=p;
+}
+
+async function nuUpdateUser(){
+  if(!NU_MOD_USER||!A.ok()){alert('No user selected or not signed in');return}
+  const btn=document.querySelector('#nuModeModify .btn-primary');
+  btn.disabled=true;btn.textContent='Saving...';
+  $('nuModResult').innerHTML='';
+
+  try{
+    G.scopes=Auth.DISCOVERY_SCOPES;
+    const payload={};
+    const fields=[
+      ['givenName','nuModFirst'],['surname','nuModLast'],['displayName','nuModDisplay'],
+      ['jobTitle','nuModTitle'],['department','nuModDept'],['usageLocation','nuModLoc']
+    ];
+    // Only include changed fields
+    for(const[key,elId] of fields){
+      const val=$(elId).value.trim();
+      if(val!==(NU_MOD_USER[key]||''))payload[key]=val;
+    }
+    const enabled=$('nuModEnabled').value==='true';
+    if(enabled!==NU_MOD_USER.accountEnabled)payload.accountEnabled=enabled;
+
+    if(Object.keys(payload).length){
+      await G.call(`/users/${NU_MOD_USER.id}`,'PATCH',payload);
+    }
+
+    // Password reset if provided
+    const newPass=$('nuModPass').value.trim();
+    if(newPass){
+      const forceChange=$('nuModForceChange').checked;
+      await G.call(`/users/${NU_MOD_USER.id}`,'PATCH',{
+        passwordProfile:{password:newPass,forceChangePasswordNextSignIn:forceChange}
+      });
+    }
+
+    G.scopes=null;
+
+    const changes=Object.keys(payload).length+(newPass?1:0);
+    $('nuModResult').innerHTML=`<span style="color:var(--accent-green)">✓ ${changes} change${changes!==1?'s':''} saved successfully</span>`;
+
+    // Update in-memory data
+    Object.assign(NU_MOD_USER,payload);
+
+    // Refresh all users list if loaded
+    if(NU_ALL_USERS.length){
+      const idx=NU_ALL_USERS.findIndex(u=>u.id===NU_MOD_USER.id);
+      if(idx>=0)Object.assign(NU_ALL_USERS[idx],payload);
+      nuRenderAllUsers($('nuAllSearch').value.trim()||null);
+    }
+  }catch(e){
+    $('nuModResult').innerHTML=`<span style="color:var(--accent-red)">✗ ${esc(e.message)}</span>`;
+    G.scopes=null;
+  }
+  btn.disabled=false;btn.textContent='💾 Save Changes';
 }
 
 function nuBulkToggle(){$('nuBulkArea').classList.toggle('hidden')}
