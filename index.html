@@ -958,6 +958,7 @@ function openRem(id){
   if(p.note){$('remNote').classList.remove('hidden');$('remNote').textContent='⚠ '+p.note}else{$('remNote').classList.add('hidden')}
   // Show/hide apply button based on whether we have an endpoint
   const applyBtn=$('remApplyBtn');
+  applyBtn.disabled=false;applyBtn.style.background='';
   if(p.ep&&!p.ep.startsWith('GET')){applyBtn.style.display='';applyBtn.textContent='⚡ Apply Configuration'}
   else if(p.note&&!p.ep){applyBtn.style.display='';applyBtn.textContent='✓ Mark as Reviewed'}
   else{applyBtn.style.display=''}
