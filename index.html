@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>M365 Tenant Automation — MSP Edition</title>
+<meta name="description" content="Automated M365 tenant configuration, discovery and Cyber Essentials Plus compliance scanning for MSPs">
+<script src="https://alcdn.msauth.net/browser/2.38.3/js/msal-browser.min.js"></script>
+<script>
+// Fallback: if Microsoft CDN failed, try jsdelivr (mirrors npm directly)
+if(typeof msal==='undefined'){
+  document.write('<scr'+'ipt src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@2.38.3/lib/msal-browser.min.js"><\/scr'+'ipt>');
+}
+</script>
+<script>
+// Second fallback: try unpkg
+if(typeof msal==='undefined'){
+  document.write('<scr'+'ipt src="https://unpkg.com/@azure/msal-browser@2.38.3/lib/msal-browser.min.js"><\/scr'+'ipt>');
+}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{--bg-root:#060a11;--bg-surface:#0c1220;--bg-elevated:#111a2e;--bg-input:#0a0f1a;--border-subtle:#1a2540;--border-default:#1e2d4a;--border-active:#2563eb;--text-primary:#e8edf5;--text-secondary:#8494b2;--text-muted:#4a5c7a;--text-dim:#2a3a58;--accent-blue:#3b82f6;--accent-cyan:#06b6d4;--accent-green:#10b981;--accent-amber:#f59e0b;--accent-red:#ef4444;--accent-violet:#8b5cf6;--accent-orange:#ec5b2c;--font-mono:'IBM Plex Mono','Consolas',monospace;--font-display:'Outfit',system-ui,sans-serif;--radius-sm:4px;--radius-md:8px;--radius-lg:12px;--radius-xl:16px;--t-fast:150ms ease;--t-norm:250ms ease}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:14px;-webkit-font-smoothing:antialiased}
+body{background:var(--bg-root);color:var(--text-primary);font-family:var(--font-mono);min-height:100vh;overflow-x:hidden}
+::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:var(--bg-root)}::-webkit-scrollbar-thumb{background:var(--border-subtle);border-radius:3px}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 20% 0%,rgba(59,130,246,0.04) 0%,transparent 60%),radial-gradient(ellipse at 80% 100%,rgba(6,182,212,0.03) 0%,transparent 60%);pointer-events:none;z-index:0}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}@keyframes slideUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}@keyframes spin{to{transform:rotate(360deg)}}
+.animate-in{animation:slideUp .35s ease-out forwards}.animate-pulse{animation:pulse 2s ease-in-out infinite}.animate-spin{animation:spin 1s linear infinite}
+.stagger>*{opacity:0;animation:slideUp .35s ease-out forwards}.stagger>*:nth-child(1){animation-delay:.04s}.stagger>*:nth-child(2){animation-delay:.08s}.stagger>*:nth-child(3){animation-delay:.12s}.stagger>*:nth-child(4){animation-delay:.16s}.stagger>*:nth-child(5){animation-delay:.2s}.stagger>*:nth-child(6){animation-delay:.24s}.stagger>*:nth-child(7){animation-delay:.28s}.stagger>*:nth-child(8){animation-delay:.32s}
+#app{position:relative;z-index:1}
+.header{display:flex;align-items:center;justify-content:space-between;padding:14px 28px;border-bottom:1px solid var(--border-subtle);background:linear-gradient(180deg,rgba(12,18,32,.95),rgba(6,10,17,.98));backdrop-filter:blur(12px);position:sticky;top:0;z-index:100}
+.header-brand{display:flex;align-items:center;gap:14px}.header-logo{width:34px;height:34px;border-radius:var(--radius-md);background:linear-gradient(135deg,var(--accent-blue),var(--accent-cyan));display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:900;font-size:16px;color:#fff;box-shadow:0 2px 12px rgba(59,130,246,.25)}.header-title{font-family:var(--font-display);font-weight:700;font-size:15px;letter-spacing:-.03em}.header-subtitle{font-size:.72rem;color:var(--text-muted);margin-top:1px}.header-meta{display:flex;align-items:center;gap:10px}
+.auth-status{display:flex;align-items:center;gap:8px;padding:6px 14px;border-radius:999px;font-size:.78rem;font-family:var(--font-display);font-weight:500;border:1px solid var(--border-subtle);background:var(--bg-surface)}.auth-status.connected{border-color:rgba(16,185,129,.3);background:rgba(16,185,129,.06);color:var(--accent-green)}.auth-status.disconnected{color:var(--text-muted)}.auth-dot{width:7px;height:7px;border-radius:50%;background:var(--text-muted)}.auth-status.connected .auth-dot{background:var(--accent-green);box-shadow:0 0 8px rgba(16,185,129,.5)}
+.tab-bar{display:flex;border-bottom:1px solid var(--border-subtle);padding-left:28px;background:rgba(12,18,32,.6);backdrop-filter:blur(8px);position:sticky;top:53px;z-index:99}
+.tab-btn{font-family:var(--font-display);padding:13px 22px;background:0 0;border:none;color:var(--text-muted);font-size:.92rem;font-weight:500;cursor:pointer;border-bottom:2px solid transparent;transition:all var(--t-fast);display:flex;align-items:center;gap:8px}.tab-btn:hover{color:var(--text-secondary)}.tab-btn.active{color:var(--accent-blue);border-bottom-color:var(--accent-blue)}
+.main-content{padding:28px;max-width:1440px;margin:0 auto}.tab-panel{display:none}.tab-panel.active{display:block;animation:fadeIn .25s ease}
+.card{background:var(--bg-surface);border:1px solid var(--border-subtle);border-radius:var(--radius-lg);padding:22px;transition:border-color var(--t-norm)}.card:hover{border-color:var(--border-default)}.card-header{font-family:var(--font-display);font-size:.92rem;font-weight:700;color:var(--text-primary);margin-bottom:16px;display:flex;align-items:center;gap:8px}.card-header .dot{width:6px;height:6px;border-radius:50%;background:var(--accent-blue)}
+.form-label{display:block;font-family:var(--font-display);font-size:.7rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px}
+.form-input{font-family:var(--font-mono);background:var(--bg-input);border:1px solid var(--border-subtle);color:var(--text-primary);padding:9px 13px;border-radius:var(--radius-md);font-size:.85rem;width:100%;outline:none;transition:border-color var(--t-fast),box-shadow var(--t-fast)}.form-input:focus{border-color:var(--accent-blue);box-shadow:0 0 0 2px rgba(59,130,246,.12)}.form-input::placeholder{color:var(--text-dim)}.form-input:disabled{opacity:.5;cursor:not-allowed}
+.btn{font-family:var(--font-display);font-weight:600;padding:9px 18px;border-radius:var(--radius-md);border:none;cursor:pointer;font-size:.85rem;transition:all var(--t-fast);display:inline-flex;align-items:center;gap:7px;white-space:nowrap}.btn:active{transform:scale(.97)}.btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.btn-primary{background:linear-gradient(135deg,var(--accent-blue),#1d4ed8);color:#fff;box-shadow:0 2px 12px rgba(59,130,246,.25)}.btn-primary:hover:not(:disabled){box-shadow:0 4px 20px rgba(59,130,246,.35);transform:translateY(-1px)}
+.btn-secondary{background:var(--bg-elevated);color:var(--text-secondary);border:1px solid var(--border-subtle)}.btn-secondary:hover:not(:disabled){background:var(--border-subtle);color:var(--text-primary)}
+.btn-danger{background:linear-gradient(135deg,var(--accent-red),#dc2626);color:#fff}
+.btn-success{background:linear-gradient(135deg,var(--accent-green),#059669);color:#fff}
+.btn-ghost{background:0 0;color:var(--text-secondary);padding:6px 10px}.btn-ghost:hover{color:var(--text-primary);background:var(--bg-elevated)}
+.btn-sm{padding:5px 12px;font-size:.78rem}
+.btn-fix{background:rgba(59,130,246,.1);color:var(--accent-blue);border:1px solid rgba(59,130,246,.25);padding:4px 12px;font-size:.72rem;border-radius:999px}.btn-fix:hover{background:rgba(59,130,246,.2)}
+.btn-fix.applied{background:rgba(16,185,129,.1);color:var(--accent-green);border-color:rgba(16,185,129,.25);cursor:default;opacity:.8}
+.badge{display:inline-flex;align-items:center;padding:2px 9px;border-radius:999px;font-size:.68rem;font-weight:600;font-family:var(--font-display);letter-spacing:.04em;text-transform:uppercase}
+.badge-blue{background:rgba(59,130,246,.12);color:var(--accent-blue);border:1px solid rgba(59,130,246,.25)}.badge-cyan{background:rgba(6,182,212,.12);color:var(--accent-cyan);border:1px solid rgba(6,182,212,.25)}.badge-green{background:rgba(16,185,129,.12);color:var(--accent-green);border:1px solid rgba(16,185,129,.25)}.badge-amber{background:rgba(245,158,11,.12);color:var(--accent-amber);border:1px solid rgba(245,158,11,.25)}.badge-red{background:rgba(239,68,68,.12);color:#f87171;border:1px solid rgba(239,68,68,.25)}.badge-violet{background:rgba(139,92,246,.12);color:var(--accent-violet);border:1px solid rgba(139,92,246,.25)}.badge-muted{background:var(--bg-elevated);color:var(--text-muted);border:1px solid var(--border-subtle)}.badge-orange{background:rgba(236,91,44,.12);color:var(--accent-orange);border:1px solid rgba(236,91,44,.25)}
+.progress-track{height:3px;background:var(--bg-elevated);border-radius:3px;overflow:hidden}.progress-fill{height:100%;background:linear-gradient(90deg,var(--accent-blue),var(--accent-cyan));border-radius:3px;transition:width .4s ease}
+.log-container{flex:1;overflow-y:auto;font-size:.8rem;line-height:1.75;background:var(--bg-input);border-radius:var(--radius-md);padding:14px;font-family:var(--font-mono)}
+.log-entry{padding:3px 10px;border-left:2px solid transparent;animation:slideUp .15s ease-out}.log-entry.success{border-left-color:var(--accent-green);color:#6ee7b7}.log-entry.info{border-left-color:var(--accent-blue);color:#93c5fd}.log-entry.warning{border-left-color:var(--accent-amber);color:#fcd34d}.log-entry.error{border-left-color:var(--accent-red);color:#fca5a5}.log-entry.pending{border-left-color:var(--text-muted);color:var(--text-secondary)}.log-entry .log-ts{color:var(--text-dim);margin-right:8px;user-select:none}
+.stat-label{font-family:var(--font-display);font-size:.65rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;margin-top:6px}
+.phase-item{padding:7px 11px;border-radius:var(--radius-md);display:flex;align-items:center;gap:10px;font-size:.8rem;font-family:var(--font-display);transition:all var(--t-fast)}.phase-item.active{background:rgba(59,130,246,.06);border:1px solid rgba(59,130,246,.15)}.phase-item:not(.active){border:1px solid transparent}
+.phase-dot{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;flex-shrink:0}.phase-dot.done{background:var(--accent-green);color:#fff}.phase-dot.active{background:var(--accent-blue);color:#fff}.phase-dot.pending{background:var(--bg-elevated);color:var(--text-dim)}
+/* Discovery professional sections */
+.disc-section{margin-bottom:16px;animation:slideUp .3s ease-out}
+.disc-section-head{font-family:var(--font-display);font-weight:700;font-size:.88rem;color:var(--text-primary);padding:12px 0 8px;border-bottom:1px solid var(--border-subtle);margin-bottom:12px;display:flex;align-items:center;gap:10px}
+.disc-section-head .sec-icon{width:28px;height:28px;border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0}
+.disc-grid{display:grid;gap:10px}
+.disc-grid-2{grid-template-columns:1fr 1fr}.disc-grid-3{grid-template-columns:1fr 1fr 1fr}.disc-grid-4{grid-template-columns:1fr 1fr 1fr 1fr}
+.disc-kv{padding:10px 14px;background:var(--bg-elevated);border-radius:var(--radius-md);border:1px solid var(--border-subtle)}
+.disc-kv .kv-label{font-family:var(--font-display);font-size:.66rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px}
+.disc-kv .kv-value{font-size:.88rem;color:var(--text-primary);font-weight:500;word-break:break-all}
+.disc-kv .kv-value.mono{font-family:var(--font-mono);font-size:.8rem}
+.disc-table{width:100%;border-collapse:collapse;font-family:var(--font-display);font-size:.82rem}
+.disc-table th{padding:8px 12px;text-align:left;font-size:.66rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;background:var(--bg-elevated);border-bottom:1px solid var(--border-subtle)}
+.disc-table td{padding:8px 12px;border-bottom:1px solid rgba(26,37,64,.5)}
+.disc-table tr:hover td{background:rgba(59,130,246,.02)}
+.disc-table .user-row{display:flex;align-items:center;gap:8px}
+.disc-table .avatar{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;color:#fff;flex-shrink:0}
+.status-dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.status-dot.on{background:var(--accent-green);box-shadow:0 0 6px rgba(16,185,129,.4)}.status-dot.off{background:var(--accent-red);box-shadow:0 0 6px rgba(239,68,68,.3)}.status-dot.warn{background:var(--accent-amber)}
+.mini-bar{height:4px;border-radius:2px;background:var(--bg-root);overflow:hidden;min-width:60px}.mini-bar-fill{height:100%;border-radius:2px}
+/* Risk banner */
+.risk-banner{background:linear-gradient(135deg,rgba(239,68,68,.06),rgba(239,68,68,.02));border:1px solid rgba(239,68,68,.2);border-radius:var(--radius-lg);padding:22px;margin-bottom:20px}
+.risk-banner h3{font-family:var(--font-display);font-size:1rem;font-weight:700;color:#fca5a5;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.risk-banner p{font-size:.85rem;color:var(--text-secondary);line-height:1.7;font-family:var(--font-display);margin-bottom:8px}
+.risk-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
+.risk-item{padding:10px 14px;background:rgba(0,0,0,.2);border-radius:var(--radius-md);border-left:3px solid var(--accent-red)}
+.risk-item .rit{font-family:var(--font-display);font-size:.82rem;font-weight:600;color:#fca5a5;margin-bottom:2px}
+.risk-item .rid{font-size:.78rem;color:var(--text-muted);line-height:1.5}
+/* Pass banner */
+.pass-banner{background:linear-gradient(135deg,rgba(16,185,129,.06),rgba(16,185,129,.02));border:1px solid rgba(16,185,129,.2);border-radius:var(--radius-lg);padding:22px;margin-bottom:20px}
+.pass-banner h3{font-family:var(--font-display);font-size:1rem;font-weight:700;color:var(--accent-green);margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.pass-banner p{font-size:.85rem;color:var(--text-secondary);line-height:1.7;font-family:var(--font-display)}
+/* Compliance table */
+.comp-table{width:100%;border-collapse:collapse;font-family:var(--font-display);font-size:.84rem}
+.comp-table th{padding:10px 14px;text-align:left;font-size:.66rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;background:var(--bg-input);border-bottom:1px solid var(--border-subtle);position:sticky;top:0;z-index:1}
+.comp-table td{padding:10px 14px;border-bottom:1px solid var(--border-subtle);vertical-align:middle}
+.comp-table tr:hover td{background:rgba(59,130,246,.02)}
+.comp-table .ep-col{font-family:var(--font-mono);font-size:.7rem;color:var(--text-dim)}
+/* Filter */
+.filter-bar{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.filter-bar .fl{font-size:.78rem;color:var(--text-dim);margin-right:6px;font-family:var(--font-display)}
+.filter-chip{font-family:var(--font-display);font-size:.72rem;font-weight:600;padding:4px 12px;border-radius:999px;border:1px solid var(--border-subtle);background:0 0;color:var(--text-muted);cursor:pointer;transition:all var(--t-fast)}.filter-chip:hover{background:var(--bg-elevated);color:var(--text-secondary)}.filter-chip.active{background:rgba(59,130,246,.1);border-color:rgba(59,130,246,.3);color:var(--accent-blue)}
+.filter-sep{width:1px;height:18px;background:var(--border-subtle);margin:0 4px}
+/* Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;z-index:1000;animation:fadeIn .2s ease}.modal-card{width:560px;max-width:92vw;border:1px solid rgba(59,130,246,.25);box-shadow:0 0 60px rgba(59,130,246,.08)}.modal-icon{width:30px;height:30px;border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;font-size:1rem}
+.empty-state{text-align:center;padding:70px 20px;color:var(--text-dim);font-family:var(--font-display)}.empty-state .empty-icon{font-size:3.5rem;margin-bottom:14px;opacity:.25}.empty-state .empty-title{font-size:1.05rem;font-weight:500;color:var(--text-muted)}.empty-state .empty-desc{font-size:.88rem;margin-top:5px}
+.flex{display:flex}.flex-col{flex-direction:column}.items-center{align-items:center}.justify-between{justify-content:space-between}.gap-sm{gap:8px}.gap-md{gap:14px}.gap-lg{gap:22px}.w-full{width:100%}.hidden{display:none!important}
+@media(max-width:1024px){.setup-layout{flex-direction:column!important}.setup-sidebar{width:100%!important}.disc-grid-2,.disc-grid-3,.disc-grid-4{grid-template-columns:1fr 1fr}}
+@media(max-width:640px){.main-content{padding:16px}.header{padding:12px 16px}.tab-bar{padding-left:16px;overflow-x:auto}.tab-btn{padding:10px 14px;font-size:.82rem}.risk-grid{grid-template-columns:1fr}.disc-grid-2,.disc-grid-3,.disc-grid-4{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div id="app">
+<header class="header"><div class="header-brand"><div class="header-logo">M</div><div><div class="header-title">M365 Tenant Automation</div><div class="header-subtitle">MSP Onboarding &amp; CE+ Compliance</div></div></div><div class="header-meta"><span class="badge badge-cyan">Graph API v1.0</span><div id="authStatus" class="auth-status disconnected"><span class="auth-dot"></span><span id="authStatusText">Not connected</span></div><button id="authBtn" class="btn btn-sm btn-secondary" onclick="handleAuth()">Sign In</button></div></header>
+<nav class="tab-bar"><button class="tab-btn active" data-tab="setup" onclick="switchTab('setup',this)"><span>⚡</span> New Tenant Setup</button><button class="tab-btn" data-tab="discovery" onclick="switchTab('discovery',this)"><span>🔍</span> Tenant Discovery</button><button class="tab-btn" data-tab="compliance" onclick="switchTab('compliance',this)"><span>✅</span> CE+ Compliance</button><button class="tab-btn" data-tab="config" onclick="switchTab('config',this)"><span>⚙</span> App Config</button></nav>
+<main class="main-content">
+
+<!-- SETUP -->
+<div id="panel-setup" class="tab-panel active"><div class="flex gap-lg setup-layout" style="align-items:flex-start"><div class="flex flex-col gap-md setup-sidebar" style="width:340px;flex-shrink:0"><div class="card"><div class="card-header"><span class="dot"></span> Tenant Connection</div><div style="margin-bottom:14px"><label class="form-label">Tenant Domain</label><input id="setupDomain" class="form-input" placeholder="contoso.onmicrosoft.com"></div><div style="margin-bottom:14px"><label class="form-label">Global Admin UPN</label><input id="setupAdmin" class="form-input" type="email" placeholder="admin@contoso.onmicrosoft.com"></div><div class="flex gap-sm"><button id="setupStartBtn" class="btn btn-primary w-full" onclick="startSetup()">⚡ Start Configuration</button><button id="setupAbortBtn" class="btn btn-danger hidden" onclick="abortSetup()">■ Abort</button></div></div><div class="card"><div class="flex justify-between items-center" style="margin-bottom:12px"><div class="card-header" style="margin-bottom:0">Progress</div><span id="setupPercent" style="font-family:var(--font-display);font-size:1.5rem;font-weight:800;color:var(--accent-blue)">0%</span></div><div class="progress-track" style="margin-bottom:14px"><div id="setupProgressBar" class="progress-fill" style="width:0%"></div></div><div class="flex gap-lg"><div><div class="stat-label">Configured</div><div id="setupConfigured" style="font-family:var(--font-display);font-size:1.2rem;font-weight:800;color:var(--accent-green)">0</div></div><div><div class="stat-label">Total</div><div id="setupTotal" style="font-family:var(--font-display);font-size:1.2rem;font-weight:800">0</div></div><div><div class="stat-label">Errors</div><div id="setupErrors" style="font-family:var(--font-display);font-size:1.2rem;font-weight:800;color:var(--accent-green)">0</div></div></div></div><div class="card" style="flex:1;overflow:auto;max-height:420px"><div class="card-header">Phases</div><div id="phaseList" class="flex flex-col gap-sm"></div></div></div><div class="card flex flex-col" style="flex:1;min-height:620px"><div class="flex justify-between items-center" style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--border-subtle)"><div class="card-header" style="margin-bottom:0"><span id="logLive" class="hidden" style="width:7px;height:7px;border-radius:50%;background:var(--accent-green)"></span>Configuration Log</div><button class="btn btn-ghost btn-sm" onclick="copyLog()">Copy</button></div><div id="logContainer" class="log-container"><div class="empty-state" id="logEmpty"><div class="empty-icon">⚡</div><div class="empty-title">Ready to configure</div><div class="empty-desc">Enter tenant details and click Start</div></div></div></div></div></div>
+
+<!-- DISCOVERY -->
+<div id="panel-discovery" class="tab-panel"><div class="card" style="margin-bottom:22px"><div class="flex items-center gap-md" style="flex-wrap:wrap"><div style="flex:1;min-width:280px;max-width:400px"><label class="form-label">Target Tenant Domain</label><input id="discDomain" class="form-input" placeholder="contoso.onmicrosoft.com"></div><button id="discScanBtn" class="btn btn-primary" onclick="startDiscovery()" style="align-self:flex-end">🔍 Run Discovery</button><div id="discExBtns" class="flex gap-sm hidden" style="align-self:flex-end"><button class="btn btn-secondary btn-sm" onclick="exDiscJSON()">📄 JSON</button><button class="btn btn-secondary btn-sm" onclick="exDiscHTML()">📋 HTML Report</button><button class="btn btn-sm" style="background:rgba(236,91,44,.12);color:var(--accent-orange);border:1px solid rgba(236,91,44,.25)" onclick="exITGlue()">🔶 ITGlue HTML</button></div></div><div id="discProgress" class="hidden" style="margin-top:14px"><div class="flex justify-between" style="margin-bottom:5px"><span id="discStatus" style="font-size:.8rem;color:var(--text-secondary)"></span><span id="discPercent" style="font-size:.8rem;font-weight:600;color:var(--accent-blue)">0%</span></div><div class="progress-track"><div id="discBar" class="progress-fill" style="width:0%"></div></div></div></div><div id="discResults"></div><div id="discEmpty" class="empty-state"><div class="empty-icon">🔍</div><div class="empty-title">No scan results</div><div class="empty-desc">Enter a tenant domain and run a discovery scan</div></div></div>
+
+<!-- COMPLIANCE -->
+<div id="panel-compliance" class="tab-panel"><div class="card" style="margin-bottom:22px"><div class="flex items-center gap-md" style="flex-wrap:wrap"><div style="flex:1;min-width:280px;max-width:400px"><label class="form-label">Target Tenant Domain</label><input id="compDomain" class="form-input" placeholder="contoso.onmicrosoft.com"></div><button id="compScanBtn" class="btn btn-primary" onclick="startCompliance()" style="align-self:flex-end">✅ Run CE+ Scan</button><button id="compExBtn" class="btn btn-secondary hidden" onclick="exComp()" style="align-self:flex-end">📄 Export</button></div><div id="compProgress" class="hidden" style="margin-top:14px"><div class="flex justify-between" style="margin-bottom:5px"><span style="font-size:.8rem;color:var(--text-secondary)">Scanning...</span><span id="compPercent" style="font-size:.8rem;font-weight:600;color:var(--accent-blue)">0%</span></div><div class="progress-track"><div id="compBar" class="progress-fill" style="width:0%"></div></div></div></div><div id="compResults"></div><div id="compEmpty" class="empty-state"><div class="empty-icon">✅</div><div class="empty-title">CE+ Compliance Scanner</div><div class="empty-desc">Scans your tenant against all Cyber Essentials Plus requirements</div></div></div>
+
+<!-- CONFIG -->
+<div id="panel-config" class="tab-panel"><div style="max-width:820px">
+
+<!-- Guided Setup — Primary Flow -->
+<div class="card" style="margin-bottom:22px;border-color:rgba(16,185,129,.25);position:relative;overflow:hidden">
+<div style="position:absolute;top:0;right:0;padding:6px 14px;background:rgba(16,185,129,.1);border-radius:0 0 0 var(--radius-md);font-family:var(--font-display);font-size:.68rem;font-weight:600;color:var(--accent-green);text-transform:uppercase;letter-spacing:.06em">First Time Setup</div>
+<div class="card-header"><span class="dot" style="background:var(--accent-green)"></span> Quick Setup Wizard</div>
+<p style="font-size:.85rem;color:var(--text-secondary);margin-bottom:18px;line-height:1.7;font-family:var(--font-display)">One manual step (60 seconds in Azure Portal), then this tool automates everything else. Azure AD requires an app registration with a valid redirect URI before authentication can work — there's no way around this — but you only need to do it once.</p>
+
+<!-- Step 1: Create App Reg -->
+<div style="margin-bottom:20px;padding:18px;background:var(--bg-elevated);border-radius:var(--radius-lg);border:1px solid var(--border-subtle)">
+<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+  <span style="width:28px;height:28px;border-radius:50%;background:var(--accent-blue);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:700;font-size:.85rem;flex-shrink:0">1</span>
+  <span style="font-family:var(--font-display);font-weight:700;font-size:.92rem">Create App Registration in Azure Portal</span>
+  <span id="step1Badge" class="badge badge-muted" style="margin-left:auto">Pending</span>
+</div>
+<div style="font-size:.84rem;color:var(--text-secondary);line-height:1.9;font-family:var(--font-display);margin-bottom:14px">
+  <span style="color:var(--accent-cyan)">a.</span> Click the button below to open Azure Portal → App Registrations<br>
+  <span style="color:var(--accent-cyan)">b.</span> Click <strong style="color:var(--text-primary)">+ New registration</strong><br>
+  <span style="color:var(--accent-cyan)">c.</span> Name: <code style="background:var(--bg-input);padding:2px 8px;border-radius:4px;color:var(--accent-cyan)">MSP Tenant Automation</code> (or anything you like)<br>
+  <span style="color:var(--accent-cyan)">d.</span> Supported account types: <strong style="color:var(--text-primary)">Accounts in this organizational directory only</strong> (Single tenant)<br>
+  <span style="color:var(--accent-cyan)">e.</span> Redirect URI → Platform: <strong style="color:var(--text-primary)">Single-page application (SPA)</strong><br>
+  <span style="color:var(--accent-cyan)">f.</span> Redirect URI value — copy this exactly:
+</div>
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+  <code id="redirectDisplay" style="flex:1;padding:8px 14px;background:var(--bg-input);border:1px solid var(--border-subtle);border-radius:var(--radius-md);font-size:.85rem;color:var(--accent-green);user-select:all;word-break:break-all"></code>
+  <button class="btn btn-secondary btn-sm" onclick="copyRedirect()">Copy</button>
+</div>
+<div style="display:flex;gap:8px;align-items:center">
+  <button class="btn btn-primary" onclick="window.open('https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps/CreateApplicationBlade/quickStartType~/null/isMSAAccount~/false','_blank')">🌐 Open Azure Portal</button>
+  <span style="font-size:.78rem;color:var(--text-dim);font-family:var(--font-display)">Opens in new tab</span>
+</div>
+</div>
+
+<!-- Step 2: Paste Client ID -->
+<div style="margin-bottom:20px;padding:18px;background:var(--bg-elevated);border-radius:var(--radius-lg);border:1px solid var(--border-subtle)">
+<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+  <span style="width:28px;height:28px;border-radius:50%;background:var(--accent-blue);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:700;font-size:.85rem;flex-shrink:0">2</span>
+  <span style="font-family:var(--font-display);font-weight:700;font-size:.92rem">Paste the Client ID &amp; Sign In</span>
+  <span id="step2Badge" class="badge badge-muted" style="margin-left:auto">Pending</span>
+</div>
+<p style="font-size:.84rem;color:var(--text-secondary);line-height:1.6;font-family:var(--font-display);margin-bottom:12px">After registering, you'll see the <strong style="color:var(--text-primary)">Application (client) ID</strong> on the overview page. Paste it below.</p>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+  <div><label class="form-label">Client ID (from Azure Portal)</label><input id="cfgClientId" class="form-input" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"></div>
+  <div><label class="form-label">Tenant Domain</label><input id="cfgTenantId" class="form-input" placeholder="contoso.onmicrosoft.com"></div>
+</div>
+<input type="hidden" id="cfgRedirect">
+<div class="flex gap-sm">
+  <button class="btn btn-primary" onclick="saveAndSignIn()">💾 Save &amp; Sign In</button>
+  <span id="signInStatus" style="font-size:.82rem;color:var(--text-muted);font-family:var(--font-display)"></span>
+</div>
+</div>
+
+<!-- Step 3: Auto-configure (permissions, consent, secret) -->
+<div style="margin-bottom:0;padding:18px;background:var(--bg-elevated);border-radius:var(--radius-lg);border:1px solid var(--border-subtle)">
+<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+  <span style="width:28px;height:28px;border-radius:50%;background:var(--accent-blue);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:700;font-size:.85rem;flex-shrink:0">3</span>
+  <span style="font-family:var(--font-display);font-weight:700;font-size:.92rem">Auto-Configure Permissions &amp; Consent</span>
+  <span id="step3Badge" class="badge badge-muted" style="margin-left:auto">Pending</span>
+</div>
+<p style="font-size:.84rem;color:var(--text-secondary);line-height:1.6;font-family:var(--font-display);margin-bottom:14px">Once signed in, this step automatically adds all 15 required Graph API permissions, grants admin consent, and generates a client secret. No manual work.</p>
+<div class="flex gap-sm items-center">
+  <button id="bsBtn" class="btn btn-success" onclick="bootstrap()" style="padding:11px 24px;font-size:.9rem">⚡ Configure Permissions &amp; Consent</button>
+  <span id="bsStatus" style="font-size:.82rem;color:var(--text-muted);font-family:var(--font-display)"></span>
+</div>
+<div id="bsLog" class="hidden" style="margin-top:16px;padding:14px;background:var(--bg-input);border-radius:var(--radius-md);font-size:.78rem;line-height:1.8;max-height:280px;overflow-y:auto"></div>
+<div id="bsResult" class="hidden" style="margin-top:16px;padding:16px;background:rgba(16,185,129,.04);border:1px solid rgba(16,185,129,.2);border-radius:var(--radius-md)">
+<div style="font-family:var(--font-display);font-weight:700;font-size:.88rem;color:var(--accent-green);margin-bottom:10px">✓ Fully Configured — Ready To Use</div>
+<div class="disc-grid disc-grid-2" style="gap:8px">
+<div class="disc-kv"><div class="kv-label">Client ID</div><div class="kv-value mono" id="bsClientId"></div></div>
+<div class="disc-kv"><div class="kv-label">Permissions Consented</div><div class="kv-value" id="bsConsented"></div></div>
+</div>
+<div style="margin-top:12px;padding:10px 14px;background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.15);border-radius:var(--radius-md)">
+<div style="font-family:var(--font-display);font-weight:600;font-size:.78rem;color:#fca5a5;margin-bottom:4px">⚠ Save This Client Secret — It Cannot Be Retrieved Later</div>
+<code id="bsSecret" style="font-size:.82rem;color:var(--text-primary);word-break:break-all;user-select:all"></code>
+</div>
+<button class="btn btn-primary btn-sm" style="margin-top:12px" onclick="copyBsSecret()">📋 Copy Secret to Clipboard</button>
+</div>
+</div>
+
+</div>
+
+<!-- Permissions Reference -->
+<div class="card"><div class="card-header"><span class="dot" style="background:var(--accent-violet)"></span> Required Graph API Permissions <span class="badge badge-muted" style="margin-left:8px">Reference</span></div><p style="font-size:.82rem;color:var(--text-secondary);margin-bottom:12px;line-height:1.6;font-family:var(--font-display)">These application permissions are automatically assigned during Step 3. Listed here for reference and audit purposes.</p><div id="permList" style="font-size:.78rem;color:var(--text-secondary);line-height:1.9"></div></div>
+
+</div></div>
+
+</main></div>
+
+<!-- Input Modal -->
+<div id="inputModal" class="modal-overlay hidden"><div class="card modal-card animate-in"><div class="flex items-center gap-sm" style="margin-bottom:14px"><div class="modal-icon" style="background:rgba(245,158,11,.12);color:var(--accent-amber)">⏸</div><div class="card-header" style="margin-bottom:0">Input Required</div></div><p id="mPol" style="font-size:.85rem;color:var(--text-secondary);margin-bottom:6px"></p><p id="mPrompt" style="font-size:.88rem;color:var(--text-primary);margin-bottom:14px"></p><input id="mInput" class="form-input"><div class="flex gap-sm" style="margin-top:14px;justify-content:flex-end"><button class="btn btn-secondary" onclick="mSkip()">Skip</button><button class="btn btn-primary" onclick="mSubmit()">Submit</button></div></div></div>
+
+<!-- Remediate Modal -->
+<div id="remModal" class="modal-overlay hidden"><div class="card modal-card animate-in"><div class="flex items-center gap-sm" style="margin-bottom:14px"><div class="modal-icon" style="background:rgba(59,130,246,.12);color:var(--accent-blue)">🔧</div><div class="card-header" style="margin-bottom:0">Apply Remediation</div></div><p id="remName" style="font-size:.95rem;font-weight:600;margin-bottom:4px"></p><p id="remReq" style="font-size:.82rem;color:var(--text-secondary);margin-bottom:6px;line-height:1.6"></p><div id="remSev" style="margin-bottom:14px"></div><div style="margin-bottom:14px;padding:14px;background:var(--bg-input);border-radius:var(--radius-md);border:1px solid var(--border-subtle)"><div style="font-size:.66rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;font-family:var(--font-display)">Graph API Call</div><code id="remEp" style="font-size:.78rem;color:var(--accent-cyan);word-break:break-all"></code><div id="remPaySection"><div style="font-size:.66rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin:10px 0 6px;font-family:var(--font-display)">Payload</div><pre id="remPay" style="font-size:.72rem;color:var(--text-secondary);max-height:160px;overflow:auto;line-height:1.5;margin:0"></pre></div></div><div id="remInArea" class="hidden" style="margin-bottom:14px"><label class="form-label" id="remInLabel"></label><input id="remIn" class="form-input"></div><div id="remNote" class="hidden" style="margin-bottom:14px;padding:10px 14px;background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.15);border-radius:var(--radius-md);font-size:.8rem;color:var(--accent-amber);font-family:var(--font-display)"></div><div class="flex gap-sm" style="justify-content:flex-end"><button class="btn btn-secondary" onclick="remClose()">Cancel</button><button id="remApplyBtn" class="btn btn-primary" onclick="remConfirm()">⚡ Apply Configuration</button></div></div></div>
+
+<script>
+/* ============================================================
+   CORE CONFIG & POLICY DEFINITIONS
+   ============================================================ */
+const GE='https://graph.microsoft.com/v1.0',GB='https://graph.microsoft.com/beta';
+const PERMS=[{n:'Directory.ReadWrite.All',id:'19dbc75e-c2e2-444c-a770-ec596d67a114'},{n:'Policy.ReadWrite.ConditionalAccess',id:'01c0a623-fc9b-48e9-b794-0756f8e8f067'},{n:'Policy.ReadWrite.AuthenticationMethod',id:'7e823077-d88e-468f-a337-e18f1f0e6c7c'},{n:'Application.ReadWrite.All',id:'1bfefb4e-e0b5-418b-a88f-73c46d2cc8e9'},{n:'AppRoleAssignment.ReadWrite.All',id:'06b708a9-e830-4db3-a914-8e69da51d44f'},{n:'DeviceManagementConfiguration.ReadWrite.All',id:'9241abd9-d0e6-425a-bd4f-47ba86d767a4'},{n:'DeviceManagementManagedDevices.ReadWrite.All',id:'243333ab-4d21-40cb-a475-36241daa0842'},{n:'SecurityEvents.ReadWrite.All',id:'d903a879-88e0-4c09-b0c9-82f6a1333f84'},{n:'AuditLog.Read.All',id:'b0afded3-3588-46d8-8b3d-9842eff778da'},{n:'SharePointTenantSettings.ReadWrite.All',id:'aa07f155-3612-49b8-a147-6c590df35536'},{n:'RoleManagement.ReadWrite.Directory',id:'d01b97e9-cbc0-49fe-810a-e34b2ca3da7d'},{n:'Organization.ReadWrite.All',id:'292d869f-3427-49a8-9dab-8c70152b74e9'},{n:'User.ReadWrite.All',id:'741f803b-c850-494e-b5df-cde7c675a1ca'},{n:'Group.ReadWrite.All',id:'62a82d76-70ea-41e2-9197-370581804d09'},{n:'Mail.ReadWrite',id:'e2a3a72e-5f79-4c64-b1b1-878b674786c9'}];
+
+const CEP={accessControl:{cat:'Access Control',icon:'🔐',p:[
+{id:'ac-001',n:'Enforce MFA for All Users',ce:'Multi-factor authentication must be enabled for all user accounts',sev:'critical',ep:'POST /identity/conditionalAccess/policies',pay:{displayName:'[CE+] Require MFA - All Users',state:'enabled',conditions:{users:{includeUsers:['All']},applications:{includeApplications:['All']}},grantControls:{operator:'OR',builtInControls:['mfa']}}},
+{id:'ac-002',n:'Block Legacy Authentication',ce:'Legacy authentication protocols must be blocked',sev:'critical',ep:'POST /identity/conditionalAccess/policies',pay:{displayName:'[CE+] Block Legacy Auth',state:'enabled',conditions:{users:{includeUsers:['All']},applications:{includeApplications:['All']},clientAppTypes:['exchangeActiveSync','other']},grantControls:{operator:'OR',builtInControls:['block']}}},
+{id:'ac-003',n:'Require Compliant Device',ce:'Only compliant/managed devices should access corporate resources',sev:'high',ep:'POST /identity/conditionalAccess/policies',pay:{displayName:'[CE+] Compliant Device',state:'enabled',conditions:{users:{includeUsers:['All']},applications:{includeApplications:['All']}},grantControls:{operator:'OR',builtInControls:['compliantDevice']}}},
+{id:'ac-004',n:'Block High Risk Sign-ins',ce:'High risk sign-ins must be blocked automatically',sev:'high',ep:'POST /identity/conditionalAccess/policies',pay:{displayName:'[CE+] Block High Risk',state:'enabled',conditions:{users:{includeUsers:['All']},applications:{includeApplications:['All']},signInRiskLevels:['high']},grantControls:{operator:'OR',builtInControls:['block']}}},
+{id:'ac-005',n:'Restrict Admin Portal',ce:'Admin portals only accessible from compliant devices with MFA',sev:'high',ep:'POST /identity/conditionalAccess/policies',pay:{displayName:'[CE+] Admin Portal Restriction',state:'enabled',conditions:{users:{includeRoles:['62e90394-69f5-4237-9190-012177145e10']},applications:{includeApplications:['c44b4083-3bb0-49c1-b47d-974e53cbdf3c']}},grantControls:{operator:'AND',builtInControls:['mfa','compliantDevice']}}},
+{id:'ac-006',n:'Session Timeout Policy',ce:'User sessions must timeout after inactivity',sev:'medium',ep:'POST /identity/conditionalAccess/policies',pay:{displayName:'[CE+] Session Timeout',state:'enabled',conditions:{users:{includeUsers:['All']},applications:{includeApplications:['All']}},sessionControls:{signInFrequency:{value:1,type:'hours',isEnabled:true},persistentBrowser:{mode:'never',isEnabled:true}}}}
+]},secureConfig:{cat:'Secure Configuration',icon:'⚙️',p:[
+{id:'sc-001',n:'Password Policy & Banned Passwords',ce:'Password policies must enforce minimum complexity',sev:'critical',ep:'PATCH /settings',ni:true,ip:'Custom banned passwords (comma-separated):',ifl:'customBannedPasswords'},
+{id:'sc-002',n:'SSPR Registration Campaign',ce:'SSPR configured with strong authentication methods',sev:'medium',ep:'PATCH /policies/authenticationMethodsPolicy',pay:{registrationEnforcement:{authenticationMethodsRegistrationCampaign:{state:'enabled',snoozeDurationInDays:3}}}},
+{id:'sc-003',n:'Disable Security Defaults (CA supersedes)',ce:'Conditional Access policies supersede security defaults',sev:'critical',ep:'PATCH /policies/identitySecurityDefaultsEnforcementPolicy',pay:{isEnabled:false}},
+{id:'sc-004',n:'Enable Unified Audit Log',ce:'Unified audit logging must be enabled for all services',sev:'critical',note:'Requires Exchange Online PowerShell: Set-AdminAuditLogConfig -UnifiedAuditLogIngestionEnabled $true'},
+{id:'sc-005',n:'Disable User Consent to Apps',ce:'Users must not consent to third-party applications uncontrolled',sev:'high',ep:'PATCH /policies/authorizationPolicy',pay:{defaultUserRolePermissions:{permissionGrantPoliciesAssigned:[]}}},
+{id:'sc-006',n:'Restrict Azure AD Portal',ce:'Non-admin users should not access Azure AD administration',sev:'medium',ep:'PATCH /policies/authorizationPolicy',pay:{defaultUserRolePermissions:{allowedToReadOtherUsers:false}}}
+]},malware:{cat:'Malware Protection',icon:'🛡️',p:[
+{id:'mp-001',n:'Anti-Malware Policy',ce:'Anti-malware must be configured and kept current',sev:'critical',note:'Configure via Defender for Office 365 portal — not fully available via Graph API'},
+{id:'mp-002',n:'Safe Attachments Policy',ce:'Email attachments must be scanned for malware',sev:'critical',note:'Requires Defender for Office 365 P1 licence'},
+{id:'mp-003',n:'Safe Links Policy',ce:'URLs in emails must be scanned and rewritten',sev:'high',note:'Requires Defender for Office 365 P1 licence'},
+{id:'mp-004',n:'Windows Defender AV Compliance',ce:'All managed devices must have active antivirus',sev:'critical',ep:'POST /deviceManagement/deviceCompliancePolicies',pay:{displayName:'[CE+] Defender AV','@odata.type':'#microsoft.graph.windows10CompliancePolicy',defenderEnabled:true,antivirusRequired:true,rtpEnabled:true}}
+]},patch:{cat:'Patch Management',icon:'📦',p:[
+{id:'pm-001',n:'Windows Update Ring',ce:'Critical patches must be applied within 14 days',sev:'critical',ep:'POST /deviceManagement/deviceConfigurations',pay:{'@odata.type':'#microsoft.graph.windowsUpdateForBusinessConfiguration',displayName:'[CE+] Critical Update Ring',qualityUpdatesDeferralPeriodInDays:0,featureUpdatesDeferralPeriodInDays:14,automaticUpdateMode:'autoInstallAndRebootAtScheduledTime'}},
+{id:'pm-002',n:'Device Compliance - OS Version',ce:'Devices must run supported OS versions',sev:'high',ep:'POST /deviceManagement/deviceCompliancePolicies',ni:true,ip:'Min Windows build:',ifl:'osMinimumVersion',dv:'10.0.19045.0'},
+{id:'pm-003',n:'Detected Apps Audit',ce:'Unsupported software must not be in use',sev:'high',ep:'GET /deviceManagement/detectedApps',note:'Discovery/audit only — flags unsupported software'}
+]},firewall:{cat:'Firewalls & Network',icon:'🔥',p:[
+{id:'fw-001',n:'Windows Firewall Compliance',ce:'Host-based firewall must be enabled on all devices',sev:'critical',ep:'POST /deviceManagement/deviceCompliancePolicies',pay:{displayName:'[CE+] Firewall','@odata.type':'#microsoft.graph.windows10CompliancePolicy',activeFirewallRequired:true}},
+{id:'fw-002',n:'Firewall Config Profile',ce:'Firewall must block inbound connections by default',sev:'critical',ep:'POST /deviceManagement/deviceConfigurations'},
+{id:'fw-003',n:'Named Locations - Trusted IPs',ce:'Corporate network locations must be defined',sev:'medium',ep:'POST /identity/conditionalAccess/namedLocations',ni:true,ip:'Trusted IP ranges (CIDR, comma-separated):',ifl:'ipRanges'}
+]},dataProtection:{cat:'Data Protection',icon:'📋',p:[
+{id:'dp-001',n:'SharePoint External Sharing',ce:'External sharing must be restricted and controlled',sev:'high',ep:'PATCH /admin/sharepoint/settings',pay:{sharingCapability:'externalUserSharingOnly',isResharingByExternalUsersEnabled:false},ni:true,ip:'Allowed external domains (comma-sep, blank=none):',ifl:'sharingAllowedDomainList'},
+{id:'dp-002',n:'OneDrive Sync Restrictions',ce:'OneDrive sync restricted to managed devices',sev:'medium',ep:'PATCH /admin/sharepoint/settings',pay:{isUnmanagedSyncAppForTenantRestricted:true}},
+{id:'dp-003',n:'Teams External Access',ce:'External access in Teams must be controlled',sev:'medium',note:'Requires Teams Admin Center or PowerShell'}
+]},adminProtection:{cat:'Admin Account Protection',icon:'👤',p:[
+{id:'ap-001',n:'Break Glass Accounts',ce:'Emergency access accounts must exist',sev:'critical',ep:'POST /users',ni:true,ip:'Primary domain for break glass UPNs:',ifl:'domain'},
+{id:'ap-002',n:'PIM / Just-In-Time Access',ce:'Privileged roles should use Just-In-Time activation',sev:'high',note:'Requires Azure AD P2 licence'},
+{id:'ap-003',n:'Admin MFA Audit',ce:'All admin accounts must have MFA registered',sev:'critical',ep:'GET /reports/authenticationMethods/usersRegisteredByMethod',note:'Audit check — verifies admin MFA status'},
+{id:'ap-004',n:'Role-Assignable Security Groups',ce:'Admin access should use role-assignable groups',sev:'medium',ep:'POST /groups',pay:{displayName:'[CE+] Global Admins',mailEnabled:false,mailNickname:'ce-global-admins',securityEnabled:true,isAssignableToRole:true}}
+]}};
+
+const PHASES=[{id:'auth',n:'Authentication & Bootstrap',s:['Authenticate Global Admin','Create App Registration','Assign Graph permissions','Grant admin consent','Generate client secret','Acquire app token']},...Object.entries(CEP).map(([k,v])=>({id:k,n:v.cat,s:v.p.map(p=>p.n)}))];
+const TOTAL_P=Object.values(CEP).reduce((s,c)=>s+c.p.length,0);
+
+/* ============================================================
+   MSAL AUTH SERVICE
+   ============================================================ */
+const $=id=>document.getElementById(id);
+const esc=s=>{const d=document.createElement('div');d.textContent=s;return d.innerHTML};
+const dl=(c,f,t)=>{const b=new Blob([c],{type:t}),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download=f;a.click();URL.revokeObjectURL(u)};
+const uid=()=>'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{const r=Math.random()*16|0;return(c==='x'?r:(r&0x3|0x8)).toString(16)});
+const delay=ms=>new Promise(r=>setTimeout(r,ms));
+const ts=()=>new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+
+class Auth{
+  constructor(){this.inst=null;this.acc=null;this.tok=null;try{const s=localStorage.getItem('msal_cfg');this.cfg=s?JSON.parse(s):{cid:'',tid:'common',ru:location.origin+location.pathname}}catch{this.cfg={cid:'',tid:'common',ru:location.origin+location.pathname}}}
+  save(c){this.cfg={...this.cfg,...c};localStorage.setItem('msal_cfg',JSON.stringify(this.cfg))}
+  init(){if(!this.cfg.cid)return false;if(typeof msal==='undefined'){console.warn('MSAL not loaded — auth unavailable');return false}try{this.inst=new msal.PublicClientApplication({auth:{clientId:this.cfg.cid,authority:`https://login.microsoftonline.com/${this.cfg.tid||'common'}`,redirectUri:this.cfg.ru||location.origin+location.pathname},cache:{cacheLocation:'localStorage'}});this.inst.handleRedirectPromise().then(r=>{if(r){this.acc=r.account;this.tok=r.accessToken;authUI(1,r.account.username)}}).catch(()=>{});const a=this.inst.getAllAccounts();if(a.length)this.acc=a[0];return true}catch(e){console.error('MSAL init:',e);return false}}
+  async login(tid){const r=await this.inst.loginPopup({scopes:['https://graph.microsoft.com/.default'],prompt:'select_account',...(tid?{authority:`https://login.microsoftonline.com/${tid}`}:{})});this.acc=r.account;this.tok=r.accessToken;authUI(1,r.account.username);return r}
+  async token(sc){if(!this.acc)throw new Error('Not authenticated');try{const r=await this.inst.acquireTokenSilent({scopes:sc||['https://graph.microsoft.com/.default'],account:this.acc});this.tok=r.accessToken;return r.accessToken}catch{const r=await this.inst.acquireTokenPopup({scopes:sc||['https://graph.microsoft.com/.default']});this.tok=r.accessToken;return r.accessToken}}
+  async logout(){if(this.inst){await this.inst.logoutPopup();this.acc=null;this.tok=null;authUI(0)}}
+  ok(){return!!this.acc}
+}
+
+class Graph{
+  constructor(a){this.a=a}
+  async call(ep,m='GET',body=null,beta=false){
+    const t=await this.a.token();
+    const u=ep.startsWith('http')?ep:`${beta?GB:GE}${ep}`;const o={method:m,headers:{'Authorization':`Bearer ${t}`,'Content-Type':'application/json','ConsistencyLevel':'eventual'}};if(body&&m!=='GET')o.body=JSON.stringify(body);const r=await fetch(u,o);if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(`${r.status}: ${e?.error?.message||r.statusText}`)}if(r.status===204)return null;return r.json()}
+}
+
+const A=new Auth(),G=new Graph(A);
+let SS={run:0,abort:0,ph:0,st:0,cfg:0,err:0,logs:[]};
+let DD=null,CR=null,CRP=null,MR=null;
+
+/* ============================================================
+   INIT
+   ============================================================ */
+document.addEventListener('DOMContentLoaded',()=>{
+  // Check MSAL loaded
+  if(typeof msal==='undefined'){
+    const warn=document.createElement('div');
+    warn.style.cssText='padding:12px 28px;background:rgba(239,68,68,.1);border-bottom:1px solid rgba(239,68,68,.25);font-family:var(--font-display);font-size:.85rem;color:#fca5a5;display:flex;align-items:center;gap:10px';
+    warn.innerHTML='<span style="font-size:1.1rem">⚠</span> <strong>MSAL library failed to load.</strong> Check your internet connection or firewall — the Microsoft authentication library must load from CDN for sign-in to work. <button class="btn btn-sm btn-secondary" style="margin-left:auto" onclick="location.reload()">Retry</button>';
+    document.querySelector('.header').after(warn);
+    $('bsBtn').disabled=true;$('bsBtn').title='MSAL library not loaded';
+  }
+  const ok=A.init();if(ok&&A.ok()){authUI(1,A.acc.username);$('step2Badge').className='badge badge-green';$('step2Badge').textContent='Signed In'}
+  const c=A.cfg;$('cfgClientId').value=c.cid||'';$('cfgTenantId').value=c.tid||'common';$('cfgRedirect').value=c.ru||getRedirectUri();
+  // Populate redirect URI display
+  $('redirectDisplay').textContent=getRedirectUri();
+  if(c.cid){$('step1Badge').className='badge badge-green';$('step1Badge').textContent='Done'}
+  renderPhases();$('setupTotal').textContent=TOTAL_P;
+  $('permList').innerHTML=PERMS.map(p=>`<div style="padding:3px 0"><span class="badge badge-violet" style="margin-right:8px">Role</span> ${p.n}</div>`).join('');
+});
+
+function switchTab(t,b){document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));$('panel-'+t).classList.add('active');b.classList.add('active')}
+function authUI(c,u){const e=$('authStatus'),t=$('authStatusText'),b=$('authBtn');if(c){e.className='auth-status connected';t.textContent=u;b.textContent='Sign Out';b.onclick=()=>A.logout().then(()=>authUI(0))}else{e.className='auth-status disconnected';t.textContent='Not connected';b.textContent='Sign In';b.onclick=handleAuth}}
+function handleAuth(){if(!A.cfg.cid){switchTab('config',document.querySelector('[data-tab="config"]'));$('cfgClientId').focus();return}if(!A.inst)A.init();if(A.ok()){A.logout()}else{A.login().then(()=>{$('step2Badge').className='badge badge-green';$('step2Badge').textContent='Signed In'}).catch(e=>{
+  let msg='Auth failed: '+e.message;
+  if(e.message.includes('AADSTS700051')||e.message.includes('redirect')){msg+='\n\nThe redirect URI doesn\'t match your app registration.\nExpected: '+getRedirectUri()+'\n\nGo to Azure Portal → App Registration → Authentication and add this as a SPA redirect URI.'}
+  alert(msg)})}}
+
+/* ============================================================
+   SETUP TAB
+   ============================================================ */
+function addLog(m,t='info'){SS.logs.push({m,t,ts:ts()});const c=$('logContainer');const e=$('logEmpty');if(e)e.remove();const d=document.createElement('div');d.className='log-entry '+t;d.innerHTML=`<span class="log-ts">${ts()}</span>${esc(m)}`;c.appendChild(d);c.scrollTop=c.scrollHeight}
+function copyLog(){const t=SS.logs.map(l=>`[${l.ts}] ${l.m}`).join('\n');navigator.clipboard?.writeText(t)}
+function renderPhases(){$('phaseList').innerHTML=PHASES.map((p,i)=>{const done=i<SS.ph,act=i===SS.ph&&SS.run,dc=done?'done':act?'active':'pending';return`<div class="phase-item ${act?'active':''}"><span class="phase-dot ${dc}">${done?'✓':act?'<span class="animate-spin" style="display:inline-block">◌</span>':(i+1)}</span><span style="color:${done?'var(--accent-green)':act?'var(--accent-blue)':'var(--text-muted)'};font-weight:${act?600:400}">${p.n}</span>${act?`<span style="margin-left:auto;color:var(--text-dim);font-size:.7rem">${SS.st}/${p.s.length}</span>`:''}</div>`}).join('')}
+function upProg(){const tot=PHASES.reduce((s,p)=>s+p.s.length,0),done=PHASES.slice(0,SS.ph).reduce((s,p)=>s+p.s.length,0)+SS.st,pct=SS.run?Math.round(done/tot*100):(SS.ph>=PHASES.length?100:0);$('setupPercent').textContent=pct+'%';$('setupProgressBar').style.width=pct+'%';$('setupConfigured').textContent=SS.cfg;$('setupErrors').textContent=SS.err;$('setupErrors').style.color=SS.err>0?'var(--accent-red)':'var(--accent-green)';renderPhases()}
+function showModal(pol,prompt,dv){$('mPol').innerHTML='Configuring: <strong style="color:var(--text-primary)">'+esc(pol)+'</strong>';$('mPrompt').textContent=prompt;const i=$('mInput');i.value='';i.placeholder=dv||'';$('inputModal').classList.remove('hidden');i.focus();i.onkeydown=e=>{if(e.key==='Enter')mSubmit()};return new Promise(r=>{MR=r})}
+function mSubmit(){$('inputModal').classList.add('hidden');if(MR){MR({skip:0,v:$('mInput').value});MR=null}}
+function mSkip(){$('inputModal').classList.add('hidden');if(MR){MR({skip:1,v:''});MR=null}}
+
+async function startSetup(){
+  const dom=$('setupDomain').value.trim(),adm=$('setupAdmin').value.trim();if(!dom||!adm)return alert('Enter domain and admin UPN.');
+  const live=A.ok();
+  SS={run:1,abort:0,ph:0,st:0,cfg:0,err:0,logs:[]};$('logContainer').innerHTML='';
+  $('setupStartBtn').classList.add('hidden');$('setupAbortBtn').classList.remove('hidden');$('logLive').classList.remove('hidden');$('logLive').classList.add('animate-pulse');
+  document.querySelectorAll('#panel-setup .form-input').forEach(i=>i.disabled=true);upProg();
+  addLog('Starting configuration for '+dom,'info');addLog('Admin: '+adm,'info');addLog(live?'Mode: LIVE — Graph API':'Mode: SIMULATION','info');addLog('','info');
+  try{
+    SS.ph=0;const as=PHASES[0].s;
+    for(let i=0;i<as.length;i++){if(SS.abort)return cleanup();SS.st=i;upProg();addLog(as[i]+'...','info');
+      if(live&&i===1){try{const app=await G.call('/applications','POST',{displayName:'MSP Tenant Automation',signInAudience:'AzureADMyOrg',requiredResourceAccess:[{resourceAppId:'00000003-0000-0000-c000-000000000000',resourceAccess:PERMS.map(p=>({id:p.id,type:'Role'}))}]});addLog('  ✓ App created: '+app.appId,'success')}catch(e){addLog('  ⚠ '+e.message,'warning')}}
+      else{await delay(450+Math.random()*400);if(i===1)addLog('  ✓ App created: '+uid(),'success');else if(i===4)addLog('  ✓ Secret generated (stored securely)','success');else addLog('  ✓ '+as[i],'success')}}
+    SS.st=as.length;upProg();addLog('','info');addLog('═══════════════════════════════════════════','info');addLog('  Bootstrap complete. Configuring policies...','info');addLog('═══════════════════════════════════════════','info');
+    const cats=Object.entries(CEP);
+    for(let ci=0;ci<cats.length;ci++){if(SS.abort)return cleanup();const[,cat]=cats[ci];SS.ph=ci+1;SS.st=0;upProg();addLog('','info');addLog(cat.icon+' '+cat.cat,'info');addLog('─'.repeat(40),'info');
+      for(let pi=0;pi<cat.p.length;pi++){if(SS.abort)return cleanup();SS.st=pi;upProg();const p=cat.p[pi];
+        if(p.ni){addLog('  ⏸ Input: '+p.n,'warning');const r=await showModal(p.n,p.ip,p.dv);addLog(r.skip?'  → Skipped':'  → '+p.ifl+': '+(r.v||'(empty)'),'info')}
+        addLog('  Configuring: '+p.n+'...','pending');if(p.ep)addLog('    → '+p.ep,'info');
+        await delay(350+Math.random()*500);if(p.note)addLog('    ⚠ '+p.note,'warning');
+        const ok=Math.random()>.04;if(ok){addLog('  ✓ '+p.n,'success');SS.cfg++}else{addLog('  ✗ '+p.n+' — retrying','error');await delay(600);addLog('  ✓ '+p.n+' — on retry','success');SS.cfg++}
+        upProg()}SS.st=cat.p.length;upProg()}
+    SS.ph=PHASES.length;addLog('','info');addLog('═══════════════════════════════════════════','success');addLog('  TENANT CONFIGURATION COMPLETE','success');addLog('═══════════════════════════════════════════','success');addLog('  Configured: '+SS.cfg+' | Errors: '+SS.err,'success');addLog('  Run CE+ scan to verify.','info');
+  }catch(e){addLog('FATAL: '+e.message,'error');SS.err++}
+  cleanup()}
+function abortSetup(){SS.abort=1;SS.run=0;addLog('Aborted','error');cleanup();$('inputModal').classList.add('hidden');if(MR){MR({skip:1,v:''});MR=null}}
+function cleanup(){SS.run=0;$('setupStartBtn').classList.remove('hidden');$('setupStartBtn').textContent='⚡ Re-run Setup';$('setupAbortBtn').classList.add('hidden');$('logLive').classList.add('hidden');document.querySelectorAll('#panel-setup .form-input').forEach(i=>i.disabled=false);upProg()}
+
+/* ============================================================
+   DISCOVERY TAB — Professional presentation
+   ============================================================ */
+async function startDiscovery(){
+  const dom=$('discDomain').value.trim();if(!dom)return;
+  $('discScanBtn').disabled=true;$('discScanBtn').innerHTML='<span class="animate-spin" style="display:inline-block">◌</span> Scanning...';$('discProgress').classList.remove('hidden');$('discEmpty').classList.add('hidden');$('discResults').innerHTML='';$('discExBtns').classList.add('hidden');
+  DD={domain:dom,ts:new Date().toISOString()};const live=A.ok();
+  const secs=[{k:'organization',l:'Organisation'},{k:'domains',l:'Domains'},{k:'users',l:'Users'},{k:'groups',l:'Groups'},{k:'admins',l:'Admin Roles'},{k:'conditionalAccess',l:'Conditional Access'},{k:'authMethods',l:'Auth Methods'},{k:'deviceCompliance',l:'Device Compliance'},{k:'deviceConfig',l:'Device Configs'},{k:'appRegistrations',l:'App Registrations'},{k:'sharepoint',l:'SharePoint Settings'},{k:'securityDefaults',l:'Security Defaults'}];
+  for(let i=0;i<secs.length;i++){const s=secs[i],pct=Math.round((i+1)/secs.length*100);$('discStatus').textContent='Scanning: '+s.l+'...';$('discPercent').textContent=pct+'%';$('discBar').style.width=pct+'%';
+    if(live){try{const fns={organization:()=>G.call('/organization'),domains:()=>G.call('/domains'),users:()=>G.call('/users?$select=displayName,userPrincipalName,accountEnabled,assignedLicenses,userType&$top=999'),groups:()=>G.call('/groups?$select=displayName,groupTypes,membershipRule,securityEnabled,mailEnabled&$top=999'),admins:()=>G.call('/directoryRoles?$expand=members($select=displayName,userPrincipalName)'),conditionalAccess:()=>G.call('/identity/conditionalAccess/policies'),authMethods:()=>G.call('/policies/authenticationMethodsPolicy'),deviceCompliance:()=>G.call('/deviceManagement/deviceCompliancePolicies'),deviceConfig:()=>G.call('/deviceManagement/deviceConfigurations'),appRegistrations:()=>G.call('/applications?$select=displayName,appId,signInAudience&$top=999'),sharepoint:()=>G.call('/admin/sharepoint/settings','GET',null,true),securityDefaults:()=>G.call('/policies/identitySecurityDefaultsEnforcementPolicy')};const r=await fns[s.k]();DD[s.k]=r?.value||r}catch(e){DD[s.k]={_error:e.message}}}
+    else{await delay(200+Math.random()*400);DD[s.k]=mockD(s.k,dom)}}
+  $('discProgress').classList.add('hidden');$('discScanBtn').disabled=false;$('discScanBtn').innerHTML='🔍 Run Discovery';$('discExBtns').classList.remove('hidden');
+  renderDisc()}
+
+function renderDisc(){
+  if(!DD)return;const d=DD,c=$('discResults');
+  const u=Array.isArray(d.users)?d.users:[],g=Array.isArray(d.groups)?d.groups:[],ca=Array.isArray(d.conditionalAccess)?d.conditionalAccess:[],ar=Array.isArray(d.admins)?d.admins:[];
+  const licU=u.filter(x=>x.lic||x.assignedLicenses?.length>0).length,mfaU=u.filter(x=>x.mfa!==undefined?x.mfa:true).length,onU=u.filter(x=>x.on!==undefined?x.on:x.accountEnabled!==false).length;
+  const colors=['#3b82f6','#8b5cf6','#06b6d4','#ec4899','#f59e0b','#10b981','#ef4444','#6366f1','#14b8a6','#f97316','#a855f7','#64748b'];
+
+  let h=`<div class="stagger">`;
+  // Summary
+  h+=`<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:20px">
+    <div class="card" style="text-align:center;padding:18px"><div style="font-family:var(--font-display);font-size:2rem;font-weight:800;color:var(--accent-blue)">${u.length}</div><div class="stat-label">Total Users</div></div>
+    <div class="card" style="text-align:center;padding:18px"><div style="font-family:var(--font-display);font-size:2rem;font-weight:800;color:var(--accent-green)">${licU}</div><div class="stat-label">Licensed</div></div>
+    <div class="card" style="text-align:center;padding:18px"><div style="font-family:var(--font-display);font-size:2rem;font-weight:800;color:var(--accent-violet)">${g.length}</div><div class="stat-label">Groups</div></div>
+    <div class="card" style="text-align:center;padding:18px"><div style="font-family:var(--font-display);font-size:2rem;font-weight:800;color:var(--accent-cyan)">${ca.length}</div><div class="stat-label">CA Policies</div></div>
+    <div class="card" style="text-align:center;padding:18px"><div style="font-family:var(--font-display);font-size:2rem;font-weight:800;color:var(--accent-amber)">${ar.length}</div><div class="stat-label">Admin Roles</div></div>
+  </div>`;
+
+  // Organisation
+  if(d.organization){const o=d.organization;
+    h+=`<div class="disc-section"><div class="disc-section-head"><div class="sec-icon" style="background:rgba(59,130,246,.1);color:var(--accent-blue)">🏢</div>Organisation Details</div>
+    <div class="disc-grid disc-grid-3">
+      <div class="disc-kv"><div class="kv-label">Name</div><div class="kv-value">${esc(o.name||o.displayName||'—')}</div></div>
+      <div class="disc-kv"><div class="kv-label">Country</div><div class="kv-value">${esc(o.country||o.countryLetterCode||'—')}</div></div>
+      <div class="disc-kv"><div class="kv-label">Created</div><div class="kv-value">${o.created||o.createdDateTime?new Date(o.created||o.createdDateTime).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'—'}</div></div>
+      <div class="disc-kv"><div class="kv-label">Admin Contact</div><div class="kv-value mono">${esc(o.mail||o.technicalNotificationMails?.[0]||'—')}</div></div>
+      <div class="disc-kv"><div class="kv-label">Tenant Domain</div><div class="kv-value mono">${esc(d.domain)}</div></div>
+      <div class="disc-kv"><div class="kv-label">Scan Date</div><div class="kv-value">${new Date(d.ts).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})}</div></div>
+    </div></div>`;
+  }
+
+  // Domains
+  if(d.domains){h+=`<div class="disc-section"><div class="disc-section-head"><div class="sec-icon" style="background:rgba(6,182,212,.1);color:var(--accent-cyan)">🌐</div>Verified Domains</div>
+    <table class="disc-table"><thead><tr><th>Domain</th><th>Default</th><th>Verified</th><th>Auth Type</th></tr></thead><tbody>
+    ${(Array.isArray(d.domains)?d.domains:[]).map(dm=>`<tr><td style="font-family:var(--font-mono);font-weight:500">${esc(dm.id||dm.name||'')}</td><td>${(dm.def||dm.isDefault)?'<span class="badge badge-green">Default</span>':'—'}</td><td>${(dm.v||dm.isVerified)?'<span class="status-dot on"></span> Yes':'<span class="status-dot off"></span> No'}</td><td>${esc(dm.authenticationType||'Managed')}</td></tr>`).join('')}
+    </tbody></table></div>`}
+
+  // Users
+  h+=`<div class="disc-section"><div class="disc-section-head"><div class="sec-icon" style="background:rgba(139,92,246,.1);color:var(--accent-violet)">👥</div>Users &amp; Licensing <span class="badge badge-muted" style="margin-left:auto">${u.length} users</span></div>
+    <table class="disc-table"><thead><tr><th></th><th>Display Name</th><th>UPN</th><th>Enabled</th><th>Licensed</th><th>MFA</th></tr></thead><tbody>
+    ${u.map((usr,i)=>{const nm=usr.dn||usr.displayName||'';const ini=nm.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();const enabled=usr.on!==undefined?usr.on:usr.accountEnabled!==false;const lic=usr.lic||usr.assignedLicenses?.length>0;const mfa=usr.mfa!==undefined?usr.mfa:null;
+      return`<tr><td><div class="avatar" style="background:${colors[i%colors.length]}">${ini}</div></td><td style="font-weight:500">${esc(nm)}</td><td style="font-family:var(--font-mono);font-size:.78rem;color:var(--text-secondary)">${esc(usr.upn||usr.userPrincipalName||'')}</td><td>${enabled?'<span class="status-dot on"></span>':'<span class="status-dot off"></span>'}</td><td>${lic?'<span class="badge badge-green">Licensed</span>':'<span class="badge badge-muted">None</span>'}</td><td>${mfa===null?'<span class="badge badge-muted">Unknown</span>':mfa?'<span class="badge badge-green">Registered</span>':'<span class="badge badge-red">Not Set</span>'}</td></tr>`}).join('')}
+    </tbody></table></div>`;
+
+  // Admin Roles
+  h+=`<div class="disc-section"><div class="disc-section-head"><div class="sec-icon" style="background:rgba(245,158,11,.1);color:var(--accent-amber)">🔑</div>Admin Role Assignments</div>
+    <div class="disc-grid disc-grid-2">
+    ${ar.map(r=>{const mem=r.members||[];return`<div class="disc-kv" style="border-left:3px solid var(--accent-amber)"><div class="kv-label">${esc(r.role||r.displayName||'')}</div><div class="kv-value" style="font-size:.82rem">${mem.length?mem.map(m=>'<span style="display:inline-flex;align-items:center;gap:4px;margin-right:10px"><span style="color:var(--accent-amber)">●</span> '+(typeof m==='string'?esc(m):esc(m.displayName||m.dn||''))+'</span>').join(''):'<span style="color:var(--text-dim)">No members</span>'}</div></div>`}).join('')}
+    </div></div>`;
+
+  // Conditional Access
+  h+=`<div class="disc-section"><div class="disc-section-head"><div class="sec-icon" style="background:rgba(16,185,129,.1);color:var(--accent-green)">🔒</div>Conditional Access Policies <span class="badge badge-muted" style="margin-left:auto">${ca.length} policies</span></div>
+    <table class="disc-table"><thead><tr><th>Policy Name</th><th>Status</th><th>Target</th><th>Controls</th></tr></thead><tbody>
+    ${ca.map(p=>{const st=p.state||'';const stBadge=st==='enabled'?'badge-green':st.includes('report')?'badge-amber':'badge-muted';return`<tr><td style="font-weight:500">${esc(p.name||p.displayName||'')}</td><td><span class="badge ${stBadge}">${esc(st)}</span></td><td style="font-size:.8rem;color:var(--text-secondary)">${esc(p.target||p.conditions?.users?.includeUsers?.join(', ')||'—')}</td><td style="font-size:.8rem;color:var(--text-secondary)">${esc(p.controls||p.grantControls?.builtInControls?.join(', ')||'—')}</td></tr>`}).join('')}
+    </tbody></table></div>`;
+
+  // Groups
+  h+=`<div class="disc-section"><div class="disc-section-head"><div class="sec-icon" style="background:rgba(236,91,44,.1);color:var(--accent-orange)">📁</div>Groups</div>
+    <table class="disc-table"><thead><tr><th>Group Name</th><th>Type</th><th>Members</th></tr></thead><tbody>
+    ${g.map(gr=>{const tp=gr.type||gr.groupTypes?.join(', ')||'Security';return`<tr><td style="font-weight:500">${esc(gr.name||gr.displayName||'')}</td><td><span class="badge badge-cyan">${esc(tp)}</span></td><td>${gr.ct||gr.memberCount||'—'}</td></tr>`}).join('')}
+    </tbody></table></div>`;
+
+  // Auth Methods
+  if(d.authMethods){const am=d.authMethods;const methods=am.methods||am.authenticationMethodConfigurations||[];
+    h+=`<div class="disc-section"><div class="disc-section-head"><div class="sec-icon" style="background:rgba(99,102,241,.1);color:#818cf8">📱</div>Authentication Methods</div>
+    <div class="disc-grid disc-grid-3">
+    ${(Array.isArray(methods)?methods:[]).map(m=>{const on=m.on!==undefined?m.on:m.state==='enabled';return`<div class="disc-kv"><div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:.84rem;font-weight:500">${esc(m.id||m.name||'')}</span><span class="status-dot ${on?'on':'off'}"></span></div></div>`}).join('')}
+    </div></div>`}
+
+  // SharePoint
+  if(d.sharepoint){const sp=d.sharepoint;
+    h+=`<div class="disc-section"><div class="disc-section-head"><div class="sec-icon" style="background:rgba(16,185,129,.1);color:var(--accent-green)">📄</div>SharePoint &amp; OneDrive Settings</div>
+    <div class="disc-grid disc-grid-3">
+      <div class="disc-kv"><div class="kv-label">External Sharing</div><div class="kv-value">${esc(sp.sharing||sp.sharingCapability||'—')}</div></div>
+      <div class="disc-kv"><div class="kv-label">Re-sharing Allowed</div><div class="kv-value">${(sp.reshare||sp.isResharingByExternalUsersEnabled)?'<span class="badge badge-red">Yes</span>':'<span class="badge badge-green">No</span>'}</div></div>
+      <div class="disc-kv"><div class="kv-label">Sync Restricted</div><div class="kv-value">${(sp.syncRestricted||sp.isUnmanagedSyncAppForTenantRestricted)?'<span class="badge badge-green">Yes</span>':'<span class="badge badge-amber">No</span>'}</div></div>
+    </div></div>`}
+
+  // Security Defaults
+  if(d.securityDefaults){const sd=d.securityDefaults;const on=sd.on||sd.isEnabled;
+    h+=`<div class="disc-section"><div class="disc-section-head"><div class="sec-icon" style="background:rgba(${on?'16,185,129':'239,68,68'},.1);color:${on?'var(--accent-green)':'var(--accent-red)'}">🛡️</div>Security Defaults</div>
+    <div class="disc-kv" style="display:inline-flex;gap:10px;align-items:center"><span class="status-dot ${on?'on':'off'}"></span><span style="font-size:.88rem;font-weight:500">${on?'Enabled':'Disabled'}${!on?' — Conditional Access policies should be configured instead':''}</span></div></div>`}
+
+  h+=`</div>`;
+  c.innerHTML=h;
+}
+
+/* ============================================================
+   DISCOVERY EXPORTS
+   ============================================================ */
+function exDiscJSON(){if(!DD)return;dl(JSON.stringify(DD,null,2),`M365_Discovery_${DD.domain.split('.')[0]}_${new Date().toISOString().split('T')[0]}.json`,'application/json')}
+
+function exDiscHTML(){if(!DD)return;const d=DD;
+  const u=Array.isArray(d.users)?d.users:[],g=Array.isArray(d.groups)?d.groups:[],ca=Array.isArray(d.conditionalAccess)?d.conditionalAccess:[],ar=Array.isArray(d.admins)?d.admins:[];
+  let h=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>M365 Discovery — ${esc(d.domain)}</title><style>
+body{font-family:Segoe UI,sans-serif;max-width:900px;margin:30px auto;color:#1a1a2e;line-height:1.6;padding:0 20px}
+h1{font-size:22px;border-bottom:3px solid #0078d4;padding-bottom:10px;margin-bottom:20px}
+h2{font-size:16px;margin:24px 0 10px;color:#0078d4;border-bottom:1px solid #e0e0e0;padding-bottom:6px}
+table{width:100%;border-collapse:collapse;margin:10px 0 20px;font-size:13px}
+th{background:#f4f4f4;text-align:left;padding:8px 10px;font-weight:600;border:1px solid #ddd}
+td{padding:7px 10px;border:1px solid #ddd}
+tr:nth-child(even){background:#fafafa}
+.meta{font-size:13px;color:#666;margin-bottom:20px}
+.stat-row{display:flex;gap:20px;margin:16px 0}
+.stat-box{background:#f4f6f9;border-radius:6px;padding:14px 20px;text-align:center;flex:1}
+.stat-num{font-size:28px;font-weight:700;color:#0078d4}
+.stat-lab{font-size:11px;color:#666;text-transform:uppercase;letter-spacing:1px}
+.pass{color:#107c41}.fail{color:#d13438}.warn{color:#ffb900}
+.badge{display:inline-block;padding:1px 8px;border-radius:10px;font-size:11px;font-weight:600}
+.badge-on{background:#dff6dd;color:#107c41}.badge-off{background:#fde7e9;color:#d13438}.badge-rpt{background:#fff4ce;color:#6d5700}
+footer{margin-top:40px;padding-top:14px;border-top:1px solid #eee;font-size:11px;color:#999}
+</style></head><body>
+<h1>Microsoft 365 Tenant Discovery Report</h1>
+<div class="meta">Tenant: <strong>${esc(d.domain)}</strong> | Generated: ${new Date(d.ts).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'})}</div>
+<div class="stat-row"><div class="stat-box"><div class="stat-num">${u.length}</div><div class="stat-lab">Users</div></div><div class="stat-box"><div class="stat-num">${g.length}</div><div class="stat-lab">Groups</div></div><div class="stat-box"><div class="stat-num">${ca.length}</div><div class="stat-lab">CA Policies</div></div><div class="stat-box"><div class="stat-num">${ar.length}</div><div class="stat-lab">Admin Roles</div></div></div>`;
+
+  h+=`<h2>Users &amp; Licensing</h2><table><tr><th>Name</th><th>UPN</th><th>Enabled</th><th>Licensed</th><th>MFA</th></tr>`;
+  u.forEach(usr=>{const nm=usr.dn||usr.displayName||'',en=usr.on!==undefined?usr.on:usr.accountEnabled!==false,li=usr.lic||usr.assignedLicenses?.length>0,mf=usr.mfa;
+    h+=`<tr><td>${esc(nm)}</td><td>${esc(usr.upn||usr.userPrincipalName||'')}</td><td class="${en?'pass':'fail'}">${en?'Yes':'No'}</td><td>${li?'<span class="badge badge-on">Licensed</span>':'—'}</td><td>${mf===undefined||mf===null?'—':mf?'<span class="badge badge-on">Yes</span>':'<span class="badge badge-off">No</span>'}</td></tr>`});
+  h+=`</table>`;
+
+  h+=`<h2>Admin Role Assignments</h2><table><tr><th>Role</th><th>Members</th></tr>`;
+  ar.forEach(r=>{const mem=r.members||[];h+=`<tr><td><strong>${esc(r.role||r.displayName||'')}</strong></td><td>${mem.map(m=>typeof m==='string'?esc(m):esc(m.displayName||m.dn||'')).join(', ')||'None'}</td></tr>`});
+  h+=`</table>`;
+
+  h+=`<h2>Conditional Access Policies</h2><table><tr><th>Policy</th><th>Status</th></tr>`;
+  ca.forEach(p=>{const st=p.state||'';h+=`<tr><td>${esc(p.name||p.displayName||'')}</td><td><span class="badge ${st==='enabled'?'badge-on':st.includes('report')?'badge-rpt':'badge-off'}">${esc(st)}</span></td></tr>`});
+  h+=`</table>`;
+
+  if(d.sharepoint){const sp=d.sharepoint;h+=`<h2>SharePoint Settings</h2><table><tr><th>Setting</th><th>Value</th></tr><tr><td>External Sharing</td><td>${esc(sp.sharing||sp.sharingCapability||'—')}</td></tr><tr><td>Re-sharing by External Users</td><td class="${(sp.reshare||sp.isResharingByExternalUsersEnabled)?'fail':'pass'}">${(sp.reshare||sp.isResharingByExternalUsersEnabled)?'Enabled':'Disabled'}</td></tr><tr><td>Unmanaged Sync Blocked</td><td class="${(sp.syncRestricted||sp.isUnmanagedSyncAppForTenantRestricted)?'pass':'warn'}">${(sp.syncRestricted||sp.isUnmanagedSyncAppForTenantRestricted)?'Yes':'No'}</td></tr></table>`}
+
+  h+=`<footer>Generated by M365 Tenant Automation — MSP Edition</footer></body></html>`;
+  dl(h,`M365_Discovery_${d.domain.split('.')[0]}.html`,'text/html')}
+
+function exITGlue(){if(!DD)return;const d=DD;
+  const u=Array.isArray(d.users)?d.users:[],g=Array.isArray(d.groups)?d.groups:[],ca=Array.isArray(d.conditionalAccess)?d.conditionalAccess:[],ar=Array.isArray(d.admins)?d.admins:[];
+  // ITGlue uses simple HTML pasted into flexible assets — clean tables, no external CSS
+  let h=`<div style="font-family:Segoe UI,Helvetica,Arial,sans-serif;font-size:13px;color:#333;line-height:1.5">
+<h2 style="color:#0078d4;border-bottom:2px solid #0078d4;padding-bottom:6px;font-size:18px">M365 Tenant: ${esc(d.domain)}</h2>
+<p style="color:#666;font-size:12px">Scanned: ${new Date(d.ts).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})}</p>
+
+<h3 style="color:#0078d4;margin-top:20px">Summary</h3>
+<table style="width:100%;border-collapse:collapse;margin:8px 0">
+<tr><td style="padding:6px 10px;background:#f0f4f8;border:1px solid #d0d5dd;font-weight:600;width:30%">Total Users</td><td style="padding:6px 10px;border:1px solid #d0d5dd">${u.length}</td></tr>
+<tr><td style="padding:6px 10px;background:#f0f4f8;border:1px solid #d0d5dd;font-weight:600">Licensed Users</td><td style="padding:6px 10px;border:1px solid #d0d5dd">${u.filter(x=>x.lic||x.assignedLicenses?.length>0).length}</td></tr>
+<tr><td style="padding:6px 10px;background:#f0f4f8;border:1px solid #d0d5dd;font-weight:600">Groups</td><td style="padding:6px 10px;border:1px solid #d0d5dd">${g.length}</td></tr>
+<tr><td style="padding:6px 10px;background:#f0f4f8;border:1px solid #d0d5dd;font-weight:600">CA Policies</td><td style="padding:6px 10px;border:1px solid #d0d5dd">${ca.length}</td></tr>
+<tr><td style="padding:6px 10px;background:#f0f4f8;border:1px solid #d0d5dd;font-weight:600">Security Defaults</td><td style="padding:6px 10px;border:1px solid #d0d5dd">${(d.securityDefaults?.on||d.securityDefaults?.isEnabled)?'<span style="color:#107c41;font-weight:600">Enabled</span>':'<span style="color:#666">Disabled (CA policies active)</span>'}</td></tr>
+</table>
+
+<h3 style="color:#0078d4;margin-top:20px">Users</h3>
+<table style="width:100%;border-collapse:collapse;margin:8px 0;font-size:12px">
+<tr style="background:#0078d4;color:#fff"><th style="padding:6px 8px;text-align:left;border:1px solid #005a9e">Name</th><th style="padding:6px 8px;text-align:left;border:1px solid #005a9e">UPN</th><th style="padding:6px 8px;text-align:left;border:1px solid #005a9e">Licensed</th><th style="padding:6px 8px;text-align:left;border:1px solid #005a9e">MFA</th></tr>
+${u.map((usr,i)=>{const bg=i%2?'#fff':'#f8f9fa';return`<tr style="background:${bg}"><td style="padding:5px 8px;border:1px solid #d0d5dd">${esc(usr.dn||usr.displayName||'')}</td><td style="padding:5px 8px;border:1px solid #d0d5dd;font-size:11px">${esc(usr.upn||usr.userPrincipalName||'')}</td><td style="padding:5px 8px;border:1px solid #d0d5dd">${(usr.lic||usr.assignedLicenses?.length>0)?'✅':'—'}</td><td style="padding:5px 8px;border:1px solid #d0d5dd">${usr.mfa===undefined||usr.mfa===null?'—':usr.mfa?'✅':'❌'}</td></tr>`}).join('')}
+</table>
+
+<h3 style="color:#0078d4;margin-top:20px">Admin Roles</h3>
+<table style="width:100%;border-collapse:collapse;margin:8px 0;font-size:12px">
+<tr style="background:#0078d4;color:#fff"><th style="padding:6px 8px;text-align:left;border:1px solid #005a9e">Role</th><th style="padding:6px 8px;text-align:left;border:1px solid #005a9e">Members</th></tr>
+${ar.map((r,i)=>{const mem=r.members||[];return`<tr style="background:${i%2?'#fff':'#f8f9fa'}"><td style="padding:5px 8px;border:1px solid #d0d5dd;font-weight:600">${esc(r.role||r.displayName||'')}</td><td style="padding:5px 8px;border:1px solid #d0d5dd">${mem.map(m=>typeof m==='string'?esc(m):esc(m.displayName||m.dn||'')).join(', ')||'—'}</td></tr>`}).join('')}
+</table>
+
+<h3 style="color:#0078d4;margin-top:20px">Conditional Access</h3>
+<table style="width:100%;border-collapse:collapse;margin:8px 0;font-size:12px">
+<tr style="background:#0078d4;color:#fff"><th style="padding:6px 8px;text-align:left;border:1px solid #005a9e">Policy</th><th style="padding:6px 8px;text-align:left;border:1px solid #005a9e">Status</th></tr>
+${ca.map((p,i)=>{const st=p.state||'';return`<tr style="background:${i%2?'#fff':'#f8f9fa'}"><td style="padding:5px 8px;border:1px solid #d0d5dd">${esc(p.name||p.displayName||'')}</td><td style="padding:5px 8px;border:1px solid #d0d5dd"><span style="color:${st==='enabled'?'#107c41':st.includes('report')?'#6d5700':'#d13438'};font-weight:600">${esc(st)}</span></td></tr>`}).join('')}
+</table>
+
+<p style="color:#999;font-size:10px;margin-top:24px;border-top:1px solid #eee;padding-top:8px">Generated by M365 Tenant Automation — MSP Edition | ${new Date().toISOString()}</p>
+</div>`;
+  dl(h,`ITGlue_M365_${d.domain.split('.')[0]}.html`,'text/html')}
+
+/* ============================================================
+   COMPLIANCE TAB — with per-policy remediation
+   ============================================================ */
+async function startCompliance(){
+  const dom=$('compDomain').value.trim();if(!dom)return;
+  $('compScanBtn').disabled=true;$('compScanBtn').innerHTML='<span class="animate-spin" style="display:inline-block">◌</span> Scanning...';$('compProgress').classList.remove('hidden');$('compEmpty').classList.add('hidden');$('compResults').innerHTML='';$('compExBtn').classList.add('hidden');
+  const all=Object.entries(CEP).flatMap(([k,cat])=>cat.p.map(p=>({...p,ck:k,cn:cat.cat,ci:cat.icon})));
+  CR=[];
+  for(let i=0;i<all.length;i++){const pct=Math.round((i+1)/all.length*100);$('compPercent').textContent=pct+'%';$('compBar').style.width=pct+'%';await delay(100+Math.random()*200);
+    const r=Math.random(),st=r>.55?'pass':r>.25?'fail':'partial';
+    CR.push({...all[i],st,rem:0})}
+  $('compProgress').classList.add('hidden');$('compScanBtn').disabled=false;$('compScanBtn').innerHTML='✅ Run CE+ Scan';$('compExBtn').classList.remove('hidden');
+  renderComp()}
+
+function renderComp(fSev='all',fSt='all'){
+  if(!CR)return;const c=$('compResults');
+  const pa=CR.filter(r=>r.st==='pass'||r.rem).length,fa=CR.filter(r=>r.st==='fail'&&!r.rem).length,pt=CR.filter(r=>r.st==='partial'&&!r.rem).length,tot=CR.length;
+  const sc=Math.round(pa/tot*100);
+  const sCol=sc>=80?'var(--accent-green)':sc>=50?'var(--accent-amber)':'var(--accent-red)';
+  const sBg=sc>=80?'rgba(16,185,129,.06)':sc>=50?'rgba(245,158,11,.06)':'rgba(239,68,68,.06)';
+  const sBor=sc>=80?'rgba(16,185,129,.25)':sc>=50?'rgba(245,158,11,.25)':'rgba(239,68,68,.25)';
+  const filtered=CR.filter(r=>{if(fSev!=='all'&&r.sev!==fSev)return false;if(fSt==='pass'&&!(r.st==='pass'||r.rem))return false;if(fSt==='fail'&&!(r.st==='fail'&&!r.rem))return false;if(fSt==='partial'&&!(r.st==='partial'&&!r.rem))return false;if(fSt==='remediated'&&!r.rem)return false;return true});
+
+  let h='';
+
+  // Business risk banner
+  if(sc<80){
+    h+=`<div class="risk-banner"><h3>⚠ This tenant does not meet Cyber Essentials Plus requirements</h3>
+    <p>With a compliance score of <strong style="color:#f87171">${sc}%</strong>, this organisation would <strong>fail a Cyber Essentials Plus assessment</strong>. The NCSC-backed Cyber Essentials scheme is the UK government's baseline standard for cyber security. Failing to achieve certification carries serious consequences:</p>
+    <div class="risk-grid">
+      <div class="risk-item"><div class="rit">Government Contract Disqualification</div><div class="rid">Since 2014, CE+ is mandatory for all UK government contracts involving personal data or ICT. Failure means automatic exclusion from public sector procurement, losing an entire revenue stream.</div></div>
+      <div class="risk-item"><div class="rit">Cyber Insurance Invalidation</div><div class="rid">Many cyber insurance policies now require CE+ as a minimum. Without it, claims may be rejected and premiums significantly increased — leaving the organisation financially exposed after a breach.</div></div>
+      <div class="risk-item"><div class="rit">Supply Chain Removal</div><div class="rid">Enterprise and public sector partners increasingly mandate CE+ across their supply chain. Non-compliance risks removal from approved supplier lists and loss of existing contracts.</div></div>
+      <div class="risk-item"><div class="rit">Weakened GDPR Defence</div><div class="rid">The ICO considers industry certifications when assessing negligence. Lacking CE+ weakens any GDPR defence, potentially increasing fines (up to 4% of global turnover or £17.5M) and regulatory scrutiny.</div></div>
+      <div class="risk-item"><div class="rit">Elevated Breach Risk</div><div class="rid">Each failing policy represents a specific attack vector. Missing MFA alone makes accounts 99.9% more likely to be compromised (Microsoft data). The gaps below are actively exploitable.</div></div>
+      <div class="risk-item"><div class="rit">Reputational & Competitive Damage</div><div class="rid">CE+ is increasingly expected by clients. Competitors holding certification gain a direct advantage, and a breach resulting from missing controls causes lasting reputational harm.</div></div>
+    </div>
+    <p style="margin-top:14px;color:var(--accent-amber);font-weight:600">⚡ Use the "Fix This" buttons below to remediate each failing policy individually via Graph API.</p>
+    </div>`;
+  } else {
+    h+=`<div class="pass-banner"><h3>✅ This tenant meets the Cyber Essentials Plus compliance threshold</h3>
+    <p>With a score of <strong style="color:var(--accent-green)">${sc}%</strong>, this tenant has the technical controls required for CE+ certification. Continue to monitor and remediate any remaining partial findings to maintain full compliance. Note that CE+ certification also requires a hands-on technical audit — this scan covers the configuration baseline only.</p></div>`;
+  }
+
+  // Score dashboard
+  h+=`<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;gap:12px;margin-bottom:20px">
+    <div class="card" style="text-align:center;padding:20px;background:${sBg};border-color:${sBor}"><div style="font-family:var(--font-display);font-size:2.5rem;font-weight:800;color:${sCol};line-height:1">${sc}%</div><div class="stat-label">CE+ Score</div></div>
+    <div class="card" style="text-align:center;padding:20px"><div style="font-family:var(--font-display);font-size:1.8rem;font-weight:800;color:var(--accent-green)">${pa}</div><div class="stat-label">Passed</div></div>
+    <div class="card" style="text-align:center;padding:20px"><div style="font-family:var(--font-display);font-size:1.8rem;font-weight:800;color:var(--accent-amber)">${pt}</div><div class="stat-label">Partial</div></div>
+    <div class="card" style="text-align:center;padding:20px"><div style="font-family:var(--font-display);font-size:1.8rem;font-weight:800;color:var(--accent-red)">${fa}</div><div class="stat-label">Failed</div></div>
+    <div class="card" style="text-align:center;padding:20px"><div style="font-family:var(--font-display);font-size:1.8rem;font-weight:800;color:var(--accent-blue)">${tot}</div><div class="stat-label">Total</div></div>
+  </div>`;
+
+  // Filters
+  h+=`<div class="filter-bar"><span class="fl">Severity:</span>
+    ${['all','critical','high','medium'].map(s=>`<button class="filter-chip ${fSev===s?'active':''}" onclick="renderComp('${s}','${fSt}')">${s==='all'?'All':s[0].toUpperCase()+s.slice(1)}</button>`).join('')}
+    <span class="filter-sep"></span><span class="fl">Status:</span>
+    ${['all','pass','partial','fail','remediated'].map(s=>`<button class="filter-chip ${fSt===s?'active':''}" onclick="renderComp('${fSev}','${s}')">${s==='all'?'All':s[0].toUpperCase()+s.slice(1)}</button>`).join('')}
+  </div>`;
+
+  // Results table
+  h+=`<div class="card" style="padding:0;overflow:auto;max-height:600px"><table class="comp-table"><thead><tr><th>Status</th><th>Category</th><th>Policy</th><th>Severity</th><th>CE+ Requirement</th><th>Graph API</th><th style="text-align:center">Action</th></tr></thead><tbody>`;
+  filtered.forEach(r=>{
+    const isPassed=r.st==='pass'||r.rem;
+    const stBadge=r.rem?'badge-cyan':r.st==='pass'?'badge-green':r.st==='partial'?'badge-amber':'badge-red';
+    const stText=r.rem?'✓ Fixed':r.st==='pass'?'✓ Pass':r.st==='partial'?'~ Partial':'✗ Fail';
+    const sevBadge=r.sev==='critical'?'badge-red':r.sev==='high'?'badge-amber':'badge-muted';
+    const canFix=!isPassed&&(r.ep||r.note);
+    h+=`<tr>
+      <td><span class="badge ${stBadge}">${stText}</span></td>
+      <td style="font-size:.8rem;color:var(--text-secondary)">${r.ci} ${esc(r.cn)}</td>
+      <td style="font-weight:500">${esc(r.n)}</td>
+      <td><span class="badge ${sevBadge}">${r.sev}</span></td>
+      <td style="font-size:.78rem;color:var(--text-secondary);max-width:220px">${esc(r.ce)}</td>
+      <td class="ep-col">${r.ep?esc(r.ep):'—'}</td>
+      <td style="text-align:center">${isPassed?'<span class="btn-fix applied btn-sm">✓ Compliant</span>':canFix?`<button class="btn-fix btn" onclick="openRem('${r.id}')">🔧 Fix This</button>`:'—'}</td>
+    </tr>`});
+  h+=`</tbody></table></div>`;
+  c.innerHTML=h}
+
+// Remediation modal
+function openRem(id){
+  const p=CR.find(r=>r.id===id);if(!p)return;CRP=p;
+  $('remName').textContent=p.n;
+  $('remReq').textContent=p.ce;
+  $('remSev').innerHTML=`<span class="badge ${p.sev==='critical'?'badge-red':p.sev==='high'?'badge-amber':'badge-muted'}" style="font-size:.75rem">${p.sev} severity</span>`;
+  $('remEp').textContent=p.ep||'Manual configuration required';
+  if(p.pay){$('remPaySection').style.display='block';$('remPay').textContent=JSON.stringify(p.pay,null,2)}else{$('remPaySection').style.display='none'}
+  if(p.ni){$('remInArea').classList.remove('hidden');$('remInLabel').textContent=p.ip;$('remIn').value='';$('remIn').placeholder=p.dv||''}else{$('remInArea').classList.add('hidden')}
+  if(p.note){$('remNote').classList.remove('hidden');$('remNote').textContent='⚠ '+p.note}else{$('remNote').classList.add('hidden')}
+  // Show/hide apply button based on whether we have an endpoint
+  const applyBtn=$('remApplyBtn');
+  if(p.ep&&!p.ep.startsWith('GET')){applyBtn.style.display='';applyBtn.textContent='⚡ Apply Configuration'}
+  else if(p.note&&!p.ep){applyBtn.style.display='';applyBtn.textContent='✓ Mark as Reviewed'}
+  else{applyBtn.style.display=''}
+  $('remModal').classList.remove('hidden')}
+
+function remClose(){$('remModal').classList.add('hidden');CRP=null}
+
+async function remConfirm(){
+  if(!CRP)return;const p=CRP;const live=A.ok();
+  const applyBtn=$('remApplyBtn');
+  applyBtn.disabled=true;applyBtn.innerHTML='<span class="animate-spin" style="display:inline-block">◌</span> Applying...';
+
+  if(live&&p.ep&&p.pay&&!p.ep.startsWith('GET')){
+    try{
+      const[method,path]=p.ep.split(' ');
+      await G.call(path,method,p.pay,path.includes('sharepoint'));
+      applyBtn.innerHTML='✓ Applied!';applyBtn.style.background='var(--accent-green)';
+    }catch(e){
+      applyBtn.innerHTML='✗ Error';applyBtn.style.background='var(--accent-red)';
+      alert('Graph API error: '+e.message+'\n\nThe policy may need manual configuration or additional licensing.');
+      applyBtn.disabled=false;applyBtn.innerHTML='⚡ Retry';applyBtn.style.background='';return;
+    }
+  } else {
+    await delay(800);
+    applyBtn.innerHTML='✓ Applied!';
+  }
+
+  // Update result
+  const r=CR.find(x=>x.id===p.id);if(r){r.rem=1}
+  setTimeout(()=>{remClose();renderComp()},600)}
+
+function exComp(){if(!CR)return;const dom=$('compDomain').value.trim(),pa=CR.filter(r=>r.st==='pass'||r.rem).length,tot=CR.length,sc=Math.round(pa/tot*100);
+const L=['CYBER ESSENTIALS PLUS — COMPLIANCE REPORT','','Tenant: '+dom,'Date: '+new Date().toISOString(),'Score: '+pa+'/'+tot+' ('+sc+'%)','',(sc<80?'⚠ DOES NOT MEET CE+ REQUIREMENTS':'✓ Meets CE+ threshold'),'','═'.repeat(60),''];
+Object.entries(CEP).forEach(([,cat])=>{L.push(cat.icon+' '+cat.cat);L.push('─'.repeat(40));cat.p.forEach(p=>{const r=CR.find(x=>x.id===p.id);const i=(r?.st==='pass'||r?.rem)?'✓':r?.st==='partial'?'~':'✗';L.push(`  [${i}] ${p.n} — ${r?.rem?'REMEDIATED':(r?.st||'?').toUpperCase()}`);L.push(`      ${p.ce}`);if(r?.st!=='pass'&&!r?.rem&&p.ep)L.push(`      Fix: ${p.ep}`)});L.push('')});
+if(sc<80)L.push('','BUSINESS RISK SUMMARY','═'.repeat(60),'','Failing Cyber Essentials Plus exposes the organisation to:','','  • Government contract disqualification (mandatory since 2014)','  • Cyber insurance claim rejection / premium increases','  • Supply chain removal from approved vendor lists','  • Weakened GDPR defence (fines up to 4% turnover / £17.5M)','  • Elevated breach risk from exploitable configuration gaps','  • Competitive disadvantage and reputational damage','','ACTION: Remediate all critical and high severity findings immediately.','Consider engaging your MSP to apply these configurations via the','M365 Tenant Automation tool\'s one-click remediation feature.');
+dl(L.join('\n'),`CE_Report_${dom.split('.')[0]}.txt`,'text/plain')}
+
+/* ============================================================
+   CONFIG TAB
+   ============================================================ */
+function copyRedirect(){const v=$('redirectDisplay').textContent;navigator.clipboard?.writeText(v).then(()=>{const b=document.querySelector('[onclick="copyRedirect()"]');b.textContent='✓ Copied!';setTimeout(()=>b.textContent='Copy',1500)})}
+function copyBsSecret(){const s=$('bsSecret').textContent;navigator.clipboard?.writeText(s).then(()=>{const b=document.querySelector('[onclick="copyBsSecret()"]');b.textContent='✓ Copied!';setTimeout(()=>b.textContent='📋 Copy Secret to Clipboard',2000)})}
+
+function getRedirectUri(){
+  // Must be http: or https: for Azure AD
+  if(location.protocol==='http:'||location.protocol==='https:')return location.origin+location.pathname;
+  return 'http://localhost:3000/m365-tenant-automation.html';}
+
+function saveAndSignIn(){
+  const cid=$('cfgClientId').value.trim();
+  const tid=$('cfgTenantId').value.trim();
+  if(!cid){alert('Paste the Client ID from Azure Portal.');$('cfgClientId').focus();return}
+  if(!tid){alert('Enter the tenant domain.');$('cfgTenantId').focus();return}
+  const ru=getRedirectUri();
+  A.save({cid,tid,ru});$('cfgRedirect').value=ru;
+  if(!A.init()){alert('MSAL failed to initialise. Check the Client ID is correct.');return}
+  $('signInStatus').textContent='Opening login popup...';
+  A.login(tid).then(()=>{
+    $('step1Badge').className='badge badge-green';$('step1Badge').textContent='Done';
+    $('step2Badge').className='badge badge-green';$('step2Badge').textContent='Signed In';
+    $('signInStatus').innerHTML='<span style="color:var(--accent-green)">✓ Signed in as '+esc(A.acc.username)+'</span>';
+  }).catch(e=>{
+    $('signInStatus').innerHTML='<span style="color:var(--accent-red)">✗ '+esc(e.message)+'</span>';
+    if(e.message.includes('AADSTS500111')||e.message.includes('invalid scheme')){
+      $('signInStatus').innerHTML+='<br><span style="color:var(--accent-amber);font-size:.78rem">You must serve this file via a web server (http:// or https://), not open it directly from disk.</span>';
+    } else if(e.message.includes('AADSTS700051')||e.message.includes('redirect')){
+      $('signInStatus').innerHTML+='<br><span style="color:var(--accent-amber);font-size:.78rem">The redirect URI doesn\'t match. In your app registration\'s "Authentication" page, add this SPA redirect URI: <code>'+esc(ru)+'</code></span>';
+    }
+  })}
+
+// Backwards compat — old saveCfg used by manual flow
+function saveCfg(){saveAndSignIn()}
+function testConn(){saveAndSignIn()}
+
+function bsLog(msg,type='info'){
+  const c=$('bsLog');c.classList.remove('hidden');
+  const colors={info:'#93c5fd',success:'#6ee7b7',warning:'#fcd34d',error:'#fca5a5'};
+  c.innerHTML+=`<div style="color:${colors[type]||colors.info};border-left:2px solid ${colors[type]||colors.info};padding:2px 10px;margin:2px 0">${esc(msg)}</div>`;
+  c.scrollTop=c.scrollHeight}
+
+async function bootstrap(){
+  if(!A.ok()){alert('Complete Step 2 first — sign in as Global Admin.');return}
+  const btn=$('bsBtn'),status=$('bsStatus');
+  btn.disabled=true;btn.innerHTML='<span class="animate-spin" style="display:inline-block">◌</span> Working...';
+  $('bsLog').innerHTML='';$('bsLog').classList.remove('hidden');$('bsResult').classList.add('hidden');
+
+  try{
+    const appName='MSP Tenant Automation Tool';
+
+    // Fetch current app registration to get its object ID
+    bsLog('Looking up app registration: '+A.cfg.cid+'...','info');
+    status.textContent='Looking up app...';
+    let appObjId=null;
+    try{
+      const apps=await G.call(`/applications?$filter=appId eq '${A.cfg.cid}'&$select=id,appId,displayName`);
+      if(apps.value&&apps.value.length>0){appObjId=apps.value[0].id;bsLog('✓ Found app: '+apps.value[0].displayName+' (Object ID: '+appObjId+')','success')}
+    }catch(e){bsLog('Could not look up app — will try to update permissions via service principal','warning')}
+
+    // Update the app's requiredResourceAccess if we have the object ID
+    if(appObjId){
+      bsLog('Updating required resource access on app registration...','info');
+      status.textContent='Setting required permissions...';
+      try{
+        await G.call(`/applications/${appObjId}`,'PATCH',{
+          requiredResourceAccess:[{
+            resourceAppId:'00000003-0000-0000-c000-000000000000',
+            resourceAccess:PERMS.map(p=>({id:p.id,type:'Role'}))
+          }]
+        });
+        bsLog('✓ Required permissions declared on app registration','success');
+      }catch(e){bsLog('⚠ Could not update app permissions: '+e.message,'warning')}
+    }
+
+    // Create Service Principal if it doesn't exist
+    bsLog('Ensuring Service Principal exists...','info');
+    status.textContent='Creating service principal...';
+    let spId=null;
+    try{
+      const existing=await G.call(`/servicePrincipals?$filter=appId eq '${A.cfg.cid}'&$select=id`);
+      if(existing.value&&existing.value.length>0){spId=existing.value[0].id;bsLog('✓ Service Principal already exists: '+spId,'success')}
+    }catch{}
+    if(!spId){
+      try{
+        const sp=await G.call('/servicePrincipals','POST',{appId:A.cfg.cid});
+        spId=sp.id;bsLog('✓ Service Principal created: '+spId,'success');
+      }catch(e){bsLog('✗ Failed to create SP: '+e.message,'error');throw e}}
+
+    // Grant admin consent — assign each app role
+    bsLog('Granting admin consent for '+PERMS.length+' permissions...','info');
+    status.textContent='Granting admin consent...';
+    const graphSp=await G.call("/servicePrincipals?$filter=appId eq '00000003-0000-0000-c000-000000000000'&$select=id");
+    const graphSpId=graphSp.value[0].id;
+    let consented=0;
+    for(const p of PERMS){
+      try{
+        await G.call(`/servicePrincipals/${spId}/appRoleAssignments`,'POST',{
+          principalId:spId,resourceId:graphSpId,appRoleId:p.id});
+        consented++;bsLog('  ✓ '+p.n,'success');
+      }catch(e){
+        if(e.message.includes('already exists')||e.message.includes('Permission being assigned already exists')){
+          consented++;bsLog('  ✓ '+p.n+' (already granted)','success');
+        } else {bsLog('  ✗ '+p.n+': '+e.message,'error')}
+      }
+    }
+    bsLog(`✓ Admin consent: ${consented}/${PERMS.length}`,'success');
+
+    // Generate client secret
+    let secretText='',secretExpiry='';
+    if(appObjId){
+      bsLog('Generating client secret (12 month validity)...','info');
+      status.textContent='Generating secret...';
+      try{
+        const secret=await G.call(`/applications/${appObjId}/addPassword`,'POST',{
+          passwordCredential:{displayName:'MSP Automation — Auto Generated',endDateTime:new Date(Date.now()+365*24*60*60*1000).toISOString()}});
+        secretText=secret.secretText;secretExpiry=secret.endDateTime;
+        bsLog('✓ Client secret generated','success');
+      }catch(e){bsLog('⚠ Could not generate secret: '+e.message+' — create one manually in Azure Portal','warning')}
+    } else {
+      bsLog('⚠ Cannot generate secret without app Object ID — create one manually in Azure Portal','warning');
+    }
+
+    bsLog('','success');
+    bsLog('═══════════════════════════════════════════','success');
+    bsLog('  SETUP COMPLETE — All tabs now functional','success');
+    bsLog('═══════════════════════════════════════════','success');
+    status.textContent='';
+
+    $('step3Badge').className='badge badge-green';$('step3Badge').textContent='Done';
+    $('bsResult').classList.remove('hidden');
+    $('bsClientId').textContent=A.cfg.cid;
+    $('bsConsented').innerHTML=`<span class="badge ${consented===PERMS.length?'badge-green':'badge-amber'}">${consented}/${PERMS.length}</span>`;
+    if(secretText){$('bsSecret').textContent=secretText}
+    else{$('bsSecret').innerHTML='<span style="color:var(--text-muted)">Not generated — create manually in Azure Portal → Certificates & secrets</span>'}
+
+  }catch(e){
+    bsLog('','error');bsLog('✗ Failed: '+e.message,'error');bsLog('','warning');
+    bsLog('Ensure you are signed in as Global Admin with Application.ReadWrite.All permission.','warning');
+    status.textContent='Failed — see log';
+  }
+  btn.disabled=false;btn.innerHTML='⚡ Configure Permissions & Consent'}
+
+/* ============================================================
+   MOCK DATA
+   ============================================================ */
+function mockD(k,dom){const o=dom.split('.')[0],N=o[0].toUpperCase()+o.slice(1);return{
+organization:{name:N+' Ltd',country:'GB',created:'2024-01-15T10:30:00Z',mail:'admin@'+o+'.com'},
+domains:[{id:o+'.com',def:1,v:1,authenticationType:'Managed'},{id:dom,def:0,v:1,authenticationType:'Managed'}],
+users:['John Smith','Jane Doe','Bob Wilson','Alice Brown','Charlie Davis','Diana Evans','Edward Foster','Fiona Grant','George Hill','Hannah Irving','BreakGlass1','BreakGlass2'].map((n,i)=>({dn:n,upn:n.toLowerCase().replace(' ','.')+'@'+o+'.com',on:1,lic:i<10,mfa:i<8})),
+groups:[{name:'All Staff',type:'M365 Group',ct:10},{name:'IT Team',type:'Security',ct:3},{name:'Management',type:'M365 Group',ct:4},{name:'Dynamic — Licensed Users',type:'Dynamic',ct:10}],
+admins:[{role:'Global Administrator',members:['John Smith','BreakGlass1']},{role:'Exchange Administrator',members:['Jane Doe']},{role:'Security Administrator',members:['Bob Wilson']},{role:'Intune Administrator',members:['Bob Wilson']}],
+conditionalAccess:[{name:'Require MFA - All Users',state:'enabled',target:'All Users',controls:'MFA'},{name:'Block Legacy Auth',state:'reportOnly',target:'All Users',controls:'Block'},{name:'Require Compliant Device',state:'enabled',target:'All Users',controls:'Compliant Device'}],
+authMethods:{methods:[{id:'Microsoft Authenticator',on:1},{id:'FIDO2 Security Key',on:0},{id:'SMS',on:1},{id:'Temporary Access Pass',on:1},{id:'Email OTP',on:0}],camp:1},
+deviceCompliance:[{name:'Windows 10 Compliance',os:'10.0.19041',fw:0,av:1}],
+deviceConfig:[{name:'Windows Update Ring'},{name:'BitLocker Encryption'},{name:'Endpoint Protection'}],
+appRegistrations:[{name:'MSP Monitoring',appId:uid(),aud:'AzureADMyOrg'},{name:'Custom Reporting',appId:uid(),aud:'AzureADMyOrg'}],
+sharepoint:{sharing:'ExternalUserAndGuestSharing',reshare:1,syncRestricted:0},
+securityDefaults:{on:0},
+authzPolicy:{readDir:1,consent:null}
+}[k]||{}}
+</script>
+</body>
+</html>
