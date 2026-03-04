@@ -1232,6 +1232,7 @@ async function guideSaveAndSignIn(){
     $('step1Badge').className='badge badge-green';$('step1Badge').textContent='Done';
     $('step2Badge').className='badge badge-green';$('step2Badge').textContent='Signed In';
     authUI(1,A.acc.username);
+    propagateDomain();
   }catch(e){
     $('guideSignInStatus').innerHTML='<span style="color:var(--accent-red)">✗ Sign-in failed: '+esc(e.message)+'</span>';
   }
@@ -1313,6 +1314,8 @@ document.addEventListener('DOMContentLoaded',()=>{
   const c=A.cfg;$('cfgClientId').value=c.cid||'';$('cfgTenantId').value=c.tid||'common';$('cfgRedirect').value=c.ru||getRedirectUri();
   // Populate redirect URI display
   $('redirectDisplay').textContent=getRedirectUri();
+  // Auto-populate tenant domain across tabs from saved config
+  propagateDomain();
   if(c.cid){$('step1Badge').className='badge badge-green';$('step1Badge').textContent='Done'}
   renderPhases();$('setupTotal').textContent=TOTAL_P;
   $('permList').innerHTML=PERMS.map(p=>`<div style="padding:3px 0"><span class="badge badge-violet" style="margin-right:8px">Role</span> ${p.n}</div>`).join('');
@@ -1322,7 +1325,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 
 function switchTab(t,b){document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));$('panel-'+t).classList.add('active');b.classList.add('active');if(t==='users'&&A.ok())nuLoadGroups()}
 function authUI(c,u){const e=$('authStatus'),t=$('authStatusText'),b=$('authBtn');if(c){e.className='auth-status connected';t.textContent=u;b.textContent='Sign Out';b.onclick=()=>A.logout().then(()=>authUI(0))}else{e.className='auth-status disconnected';t.textContent='Not connected';b.textContent='Sign In';b.onclick=handleAuth}}
-function handleAuth(){if(!A.cfg.cid){switchTab('config',document.querySelector('[data-tab="config"]'));$('cfgClientId').focus();return}if(!A.inst)A.init();if(A.ok()){A.logout()}else{A.login().then(()=>{$('step2Badge').className='badge badge-green';$('step2Badge').textContent='Signed In'}).catch(e=>{
+function handleAuth(){if(!A.cfg.cid){switchTab('config',document.querySelector('[data-tab="config"]'));$('cfgClientId').focus();return}if(!A.inst)A.init();if(A.ok()){A.logout()}else{A.login().then(()=>{$('step2Badge').className='badge badge-green';$('step2Badge').textContent='Signed In';propagateDomain()}).catch(e=>{
   let msg='Auth failed: '+e.message;
   if(e.message.includes('AADSTS700051')||e.message.includes('redirect')){msg+='\n\nThe redirect URI doesn\'t match your app registration.\nExpected: '+getRedirectUri()+'\n\nGo to Azure Portal → App Registration → Authentication and add this as a SPA redirect URI.'}
   alert(msg)})}}
@@ -2840,6 +2843,13 @@ function getRedirectUri(){
   if(location.protocol==='http:'||location.protocol==='https:')return location.origin+location.pathname;
   return 'http://localhost:3000/m365-tenant-automation.html';}
 
+function propagateDomain(){
+  const d=A.cfg&&A.cfg.tid&&A.cfg.tid!=='common'?A.cfg.tid:'';
+  if(!d)return;
+  ['setupDomain','discDomain','compDomain'].forEach(id=>{if(!$(id).value)$(id).value=d});
+  if(!$('setupAdmin').value&&A.acc)$('setupAdmin').value=A.acc.username||'';
+}
+
 function saveAndSignIn(){
   const cid=$('cfgClientId').value.trim();
   const tid=$('cfgTenantId').value.trim();
@@ -2847,12 +2857,14 @@ function saveAndSignIn(){
   if(!tid){alert('Enter the tenant domain.');$('cfgTenantId').focus();return}
   const ru=getRedirectUri();
   A.save({cid,tid,ru});$('cfgRedirect').value=ru;
+  propagateDomain();
   if(!A.init()){alert('MSAL failed to initialise. Check the Client ID is correct.');return}
   $('signInStatus').textContent='Opening login — you will see a permissions consent prompt...';
   A.login(tid).then(()=>{
     $('step1Badge').className='badge badge-green';$('step1Badge').textContent='Done';
     $('step2Badge').className='badge badge-green';$('step2Badge').textContent='Signed In';
     $('signInStatus').innerHTML='<span style="color:var(--accent-green)">✓ Signed in as '+esc(A.acc.username)+'</span>';
+    propagateDomain();
   }).catch(e=>{
     $('signInStatus').innerHTML='<span style="color:var(--accent-red)">✗ '+esc(e.message)+'</span>';
     if(e.message.includes('AADSTS500111')||e.message.includes('invalid scheme')){
