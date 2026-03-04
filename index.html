@@ -164,7 +164,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
   <div style="font-size:.78rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;font-family:var(--font-display)">Quick Create License Group</div>
   <div class="flex gap-sm items-center">
     <input id="nuNewGrpName" class="form-input" placeholder="e.g. LIC — Business Premium" style="flex:1">
-    <select id="nuNewGrpSku" class="form-input" style="width:auto;min-width:200px"><option value="">Assign SKU (optional)</option></select>
+    <select id="nuNewGrpSku" class="form-input" style="width:auto;min-width:200px" onchange="if(this.value&&!$('nuNewGrpName').value){const o=this.options[this.selectedIndex];const n=o.textContent.split(' (')[0];$('nuNewGrpName').value='LIC — '+n}"><option value="">Assign SKU (optional)</option></select>
     <button class="btn btn-secondary btn-sm" onclick="nuCreateGroup()">+ Create Group</button>
   </div>
 </div>
@@ -201,7 +201,7 @@ Jane,Doe,jane.doe,CFO,Finance,LIC — Business Premium"></textarea>
 </div></div>
 
 <!-- ═══════ DOMAINS TAB ═══════ -->
-<div id="panel-domains" class="tab-panel"><div style="max-width:1000px">
+<div id="panel-domains" class="tab-panel"><div style="max-width:1100px">
 
 <!-- Current Domains -->
 <div class="card" style="margin-bottom:22px">
@@ -215,31 +215,92 @@ Jane,Doe,jane.doe,CFO,Finance,LIC — Business Premium"></textarea>
 <!-- Add Domain -->
 <div class="card" style="margin-bottom:22px">
 <div class="card-header"><span class="dot" style="background:var(--accent-green)"></span> Add Custom Domain</div>
-<p style="font-size:.82rem;color:var(--text-secondary);margin-bottom:14px;line-height:1.5">Add a custom domain to the tenant. After adding, you'll need to create the required DNS records at your DNS provider, then verify the domain.</p>
-<div class="flex gap-sm items-center" style="margin-bottom:14px">
+<p style="font-size:.82rem;color:var(--text-secondary);margin-bottom:14px;line-height:1.5">Add a custom domain to the tenant. After adding, the verification and service DNS records will be displayed automatically.</p>
+<div class="flex gap-sm items-center" style="margin-bottom:10px">
   <input id="domNew" class="form-input" placeholder="contoso.com" style="flex:1;max-width:400px">
   <button class="btn btn-primary" onclick="domAdd()">+ Add Domain</button>
+</div>
+<div style="margin-bottom:14px">
+  <label style="display:flex;align-items:center;gap:8px;font-size:.82rem;color:var(--text-secondary);cursor:pointer"><input type="checkbox" id="domDkimOpt" checked> Set up DKIM signing records</label>
+  <label style="display:flex;align-items:center;gap:8px;font-size:.82rem;color:var(--text-secondary);cursor:pointer;margin-top:4px"><input type="checkbox" id="domAutoEnroll" checked> Include MDM auto-enrolment records (CNAME)</label>
 </div>
 <div id="domAddResult"></div>
 </div>
 
-<!-- DNS Records / Verification -->
-<div id="domVerifyCard" class="card hidden" style="margin-bottom:22px">
-<div class="card-header"><span class="dot" style="background:var(--accent-amber)"></span> DNS Verification Records</div>
-<p style="font-size:.82rem;color:var(--text-secondary);margin-bottom:14px;line-height:1.5">Add these DNS records at your domain registrar, then click Verify. DNS propagation can take up to 48 hours.</p>
-<div id="domDnsRecords" style="margin-bottom:14px"></div>
-<div class="flex gap-sm">
-  <button class="btn btn-primary" onclick="domVerify()">✓ Verify Domain</button>
-  <button class="btn btn-secondary" onclick="domFetchRecords()">↻ Refresh DNS Records</button>
+<!-- Domain Detail Panel (shown after add or clicking a domain) -->
+<div id="domDetailCard" class="card hidden" style="margin-bottom:22px">
+<div class="flex justify-between items-center" style="margin-bottom:4px">
+  <div class="card-header" style="margin-bottom:0"><span class="dot" style="background:var(--accent-amber)"></span> Domain: <span id="domDetailName" style="color:var(--accent-cyan)"></span></div>
+  <div class="flex gap-sm">
+    <span id="domDetailStatus"></span>
+    <button class="btn btn-ghost btn-sm" onclick="$('domDetailCard').classList.add('hidden')">✕ Close</button>
+  </div>
 </div>
-<div id="domVerifyResult" style="margin-top:10px"></div>
+<p style="font-size:.82rem;color:var(--text-secondary);margin-bottom:16px;line-height:1.5">Create all the DNS records below at your domain registrar. TXT record is required for verification; MX, CNAME and SRV records enable M365 services.</p>
+
+<!-- Step 1: Verification -->
+<div style="margin-bottom:18px;padding:14px;background:var(--bg-elevated);border-radius:var(--radius-lg);border:1px solid var(--border-subtle)">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+    <span style="width:24px;height:24px;border-radius:50%;background:var(--accent-amber);color:#000;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.78rem;flex-shrink:0">1</span>
+    <span style="font-family:var(--font-display);font-weight:700;font-size:.88rem">Verification Record</span>
+    <span id="domVerifyBadge" class="badge badge-amber" style="margin-left:auto">Pending</span>
+  </div>
+  <div id="domVerifyRecords"></div>
+  <div class="flex gap-sm" style="margin-top:10px">
+    <button class="btn btn-primary btn-sm" onclick="domVerify()">✓ Verify Domain</button>
+    <div id="domVerifyResult" style="font-size:.8rem"></div>
+  </div>
 </div>
 
-<!-- Domain Services Config -->
-<div class="card">
-<div class="card-header"><span class="dot" style="background:var(--accent-violet)"></span> Domain Service Records</div>
-<p style="font-size:.82rem;color:var(--text-secondary);margin-bottom:14px;line-height:1.5">After verification, these DNS records are needed for Exchange, Teams, and other M365 services.</p>
-<div id="domServiceRecords"><div style="color:var(--text-muted);font-size:.82rem;padding:12px">Verify a domain first to see required service records.</div></div>
+<!-- Step 2: Exchange Online (MX, Autodiscover, SPF) -->
+<div style="margin-bottom:18px;padding:14px;background:var(--bg-elevated);border-radius:var(--radius-lg);border:1px solid var(--border-subtle)">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+    <span style="width:24px;height:24px;border-radius:50%;background:var(--accent-blue);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.78rem;flex-shrink:0">2</span>
+    <span style="font-family:var(--font-display);font-weight:700;font-size:.88rem">Exchange Online Records</span>
+  </div>
+  <div id="domExchangeRecords"></div>
+</div>
+
+<!-- Step 3: Teams / Skype for Business (SRV + CNAME) -->
+<div style="margin-bottom:18px;padding:14px;background:var(--bg-elevated);border-radius:var(--radius-lg);border:1px solid var(--border-subtle)">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+    <span style="width:24px;height:24px;border-radius:50%;background:var(--accent-violet);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.78rem;flex-shrink:0">3</span>
+    <span style="font-family:var(--font-display);font-weight:700;font-size:.88rem">Teams / Skype for Business Records</span>
+  </div>
+  <div id="domTeamsRecords"></div>
+</div>
+
+<!-- Step 4: DKIM -->
+<div id="domDkimSection" style="margin-bottom:18px;padding:14px;background:var(--bg-elevated);border-radius:var(--radius-lg);border:1px solid var(--border-subtle)">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+    <span style="width:24px;height:24px;border-radius:50%;background:var(--accent-green);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.78rem;flex-shrink:0">4</span>
+    <span style="font-family:var(--font-display);font-weight:700;font-size:.88rem">DKIM Signing Records</span>
+    <span class="badge badge-muted" style="font-size:.65rem;margin-left:4px">Recommended</span>
+  </div>
+  <p style="font-size:.78rem;color:var(--text-secondary);margin-bottom:10px;line-height:1.5">DKIM signs outbound email to prove it's from your domain. Create these two CNAME records to enable DKIM signing.</p>
+  <div id="domDkimRecords"></div>
+  <div class="flex gap-sm" style="margin-top:10px">
+    <button class="btn btn-sm btn-secondary" onclick="domEnableDkim()">🔐 Enable DKIM Signing</button>
+    <div id="domDkimResult" style="font-size:.8rem"></div>
+  </div>
+</div>
+
+<!-- Step 5: MDM Auto-Enrolment -->
+<div id="domMdmSection" style="margin-bottom:18px;padding:14px;background:var(--bg-elevated);border-radius:var(--radius-lg);border:1px solid var(--border-subtle)">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+    <span style="width:24px;height:24px;border-radius:50%;background:var(--accent-orange);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.78rem;flex-shrink:0">5</span>
+    <span style="font-family:var(--font-display);font-weight:700;font-size:.88rem">MDM Auto-Enrolment (Intune)</span>
+    <span class="badge badge-muted" style="font-size:.65rem;margin-left:4px">Optional</span>
+  </div>
+  <p style="font-size:.78rem;color:var(--text-secondary);margin-bottom:10px;line-height:1.5">These CNAME records enable automatic MDM enrolment for domain-joined Windows devices.</p>
+  <div id="domMdmRecords"></div>
+</div>
+
+<!-- Copy all records -->
+<div class="flex gap-sm" style="margin-top:6px">
+  <button class="btn btn-secondary btn-sm" onclick="domCopyAll()">📋 Copy All DNS Records</button>
+  <button class="btn btn-secondary btn-sm" onclick="domExportCsv()">📄 Export CSV</button>
+</div>
 </div>
 
 </div></div>
@@ -346,7 +407,7 @@ Jane,Doe,jane.doe,CFO,Finance,LIC — Business Premium"></textarea>
    CORE CONFIG & POLICY DEFINITIONS
    ============================================================ */
 const GE='https://graph.microsoft.com/v1.0',GB='https://graph.microsoft.com/beta';
-const PERMS=[{n:'Directory.ReadWrite.All',id:'_'},{n:'Policy.Read.All',id:'_'},{n:'Policy.ReadWrite.ConditionalAccess',id:'_'},{n:'Policy.ReadWrite.AuthenticationMethod',id:'_'},{n:'Application.ReadWrite.All',id:'_'},{n:'AppRoleAssignment.ReadWrite.All',id:'_'},{n:'DeviceManagementConfiguration.ReadWrite.All',id:'_'},{n:'DeviceManagementManagedDevices.ReadWrite.All',id:'_'},{n:'DeviceManagementApps.ReadWrite.All',id:'_'},{n:'DeviceManagementServiceConfig.ReadWrite.All',id:'_'},{n:'SecurityEvents.ReadWrite.All',id:'_'},{n:'AuditLog.Read.All',id:'_'},{n:'SharePointTenantSettings.ReadWrite.All',id:'_'},{n:'Sites.Read.All',id:'_'},{n:'RoleManagement.ReadWrite.Directory',id:'_'},{n:'Organization.ReadWrite.All',id:'_'},{n:'User.ReadWrite.All',id:'_'},{n:'Group.ReadWrite.All',id:'_'},{n:'Mail.ReadWrite',id:'_'},{n:'InformationProtectionPolicy.Read.All',id:'_'},{n:'RecordsManagement.Read.All',id:'_'},{n:'DelegatedPermissionGrant.ReadWrite.All',id:'_'}];
+const PERMS=[{n:'Directory.ReadWrite.All',id:'_'},{n:'Domain.ReadWrite.All',id:'_'},{n:'Policy.Read.All',id:'_'},{n:'Policy.ReadWrite.ConditionalAccess',id:'_'},{n:'Policy.ReadWrite.AuthenticationMethod',id:'_'},{n:'Application.ReadWrite.All',id:'_'},{n:'AppRoleAssignment.ReadWrite.All',id:'_'},{n:'DeviceManagementConfiguration.ReadWrite.All',id:'_'},{n:'DeviceManagementManagedDevices.ReadWrite.All',id:'_'},{n:'DeviceManagementApps.ReadWrite.All',id:'_'},{n:'DeviceManagementServiceConfig.ReadWrite.All',id:'_'},{n:'SecurityEvents.ReadWrite.All',id:'_'},{n:'AuditLog.Read.All',id:'_'},{n:'SharePointTenantSettings.ReadWrite.All',id:'_'},{n:'Sites.Read.All',id:'_'},{n:'RoleManagement.ReadWrite.Directory',id:'_'},{n:'Organization.ReadWrite.All',id:'_'},{n:'User.ReadWrite.All',id:'_'},{n:'Group.ReadWrite.All',id:'_'},{n:'Mail.ReadWrite',id:'_'},{n:'InformationProtectionPolicy.Read.All',id:'_'},{n:'RecordsManagement.Read.All',id:'_'},{n:'DelegatedPermissionGrant.ReadWrite.All',id:'_'}];
 
 const CEP={accessControl:{cat:'Access Control',icon:'🔐',p:[
 {id:'ac-001',n:'Enforce MFA for All Users',ce:'Multi-factor authentication must be enabled for all user accounts',sev:'critical',ep:'POST /identity/conditionalAccess/policies',pay:{displayName:'[CE+] Require MFA - All Users',state:'enabled',conditions:{users:{includeUsers:['All']},applications:{includeApplications:['All']}},grantControls:{operator:'OR',builtInControls:['mfa']}}},
@@ -420,24 +481,26 @@ const ONBOARD=[
   {n:'Detect Available License SKUs',fn:async(ctx)=>{
     const resp=await G.call('/subscribedSkus?$select=skuId,skuPartNumber,consumedUnits,prepaidUnits');
     ctx._skus=resp.value||[];
-    return`Found ${ctx._skus.length} license SKU(s): ${ctx._skus.map(s=>s.skuPartNumber).join(', ')}`}},
+    return`Found ${ctx._skus.length} license SKU(s): ${ctx._skus.map(s=>skuName(s.skuPartNumber)).join(', ')}`}},
   {n:'Create License Groups per SKU',fn:async(ctx)=>{
     const created=[];
     for(const sku of (ctx._skus||[])){
-      const name=`LIC — ${sku.skuPartNumber}`;
+      const friendly=skuName(sku.skuPartNumber);
+      const name=`LIC — ${friendly}`;
       const nick=`lic-${sku.skuPartNumber.toLowerCase().replace(/[^a-z0-9]/g,'')}`;
       try{
         // Check if exists first
         const existing=await G.call(`/groups?$filter=displayName eq '${name}'&$select=id,displayName`);
         if(existing.value&&existing.value.length>0){created.push(name+' (exists)');continue}
-        const grp=await G.call('/groups','POST',{displayName:name,mailEnabled:false,mailNickname:nick,securityEnabled:true,groupTypes:[],description:`Auto-created license group for ${sku.skuPartNumber}`});
+        const grp=await G.call('/groups','POST',{displayName:name,mailEnabled:false,mailNickname:nick,securityEnabled:true,groupTypes:[],description:`License group for ${friendly} (${sku.skuPartNumber})`});
         created.push(name);
       }catch(e){created.push(name+' (failed: '+e.message+')')}}
     return`License groups: ${created.join(', ')}`}},
   {n:'Assign Licenses to Groups',fn:async(ctx)=>{
     let assigned=0;
     for(const sku of (ctx._skus||[])){
-      const name=`LIC — ${sku.skuPartNumber}`;
+      const friendly=skuName(sku.skuPartNumber);
+      const name=`LIC — ${friendly}`;
       try{
         const resp=await G.call(`/groups?$filter=displayName eq '${name}'&$select=id`);
         if(!resp.value||!resp.value.length)continue;
@@ -618,6 +681,86 @@ const uid=()=>'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{const r
 const delay=ms=>new Promise(r=>setTimeout(r,ms));
 const ts=()=>new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
 
+// M365 License SKU friendly name mapping
+const SKU_MAP={
+  // Microsoft 365 Business
+  'O365_BUSINESS_ESSENTIALS':'Microsoft 365 Business Basic','SMB_BUSINESS_ESSENTIALS':'Microsoft 365 Business Basic',
+  'O365_BUSINESS_PREMIUM':'Microsoft 365 Business Standard','SMB_BUSINESS_PREMIUM':'Microsoft 365 Business Standard','SMB_BUSINESS':'Microsoft 365 Apps for Business',
+  'SPB':'Microsoft 365 Business Premium','MICROSOFT_365_BUSINESS_PREMIUM':'Microsoft 365 Business Premium',
+  'SPE_E3':'Microsoft 365 E3','SPE_E5':'Microsoft 365 E5','SPE_F1':'Microsoft 365 F1','SPE_F3':'Microsoft 365 F3',
+  'MICROSOFT_365_E3':'Microsoft 365 E3 (unified)','MICROSOFT_365_E5':'Microsoft 365 E5 (unified)',
+  // Office 365
+  'ENTERPRISEPACK':'Office 365 E3','ENTERPRISEPREMIUM':'Office 365 E5','ENTERPRISEPREMIUM_NOPSTNCONF':'Office 365 E5 (No PSTN)',
+  'STANDARDPACK':'Office 365 E1','ENTERPRISEWITHSCAL':'Office 365 E4','DESKLESSPACK':'Office 365 F3',
+  'O365_BUSINESS':'Microsoft 365 Apps for Business','OFFICESUBSCRIPTION':'Microsoft 365 Apps for Enterprise',
+  'DEVELOPERPACK':'Office 365 E3 Developer','DEVELOPERPACK_E5':'Office 365 E5 Developer',
+  // Exchange Online
+  'EXCHANGESTANDARD':'Exchange Online Plan 1','EXCHANGEENTERPRISE':'Exchange Online Plan 2',
+  'EXCHANGE_S_ESSENTIALS':'Exchange Online Essentials','EXCHANGEDESKLESS':'Exchange Online Kiosk',
+  'EXCHANGE_ONLINE_ESSENTIALS':'Exchange Online Essentials','EXCHANGEARCHIVE_ADDON':'Exchange Online Archiving',
+  'EOP_ENTERPRISE':'Exchange Online Protection',
+  // Azure AD / Entra ID
+  'AAD_PREMIUM':'Microsoft Entra ID P1','AAD_PREMIUM_P2':'Microsoft Entra ID P2',
+  'AAD_BASIC':'Microsoft Entra ID Basic','AAD_SMB':'Microsoft Entra ID Basic',
+  // EMS / Enterprise Mobility
+  'EMS':'Enterprise Mobility + Security E3','EMSPREMIUM':'Enterprise Mobility + Security E5',
+  'EMS_E3':'Enterprise Mobility + Security E3','EMS_E5':'Enterprise Mobility + Security E5',
+  // Intune
+  'INTUNE_A':'Microsoft Intune Plan 1','INTUNE_EDU':'Microsoft Intune for Education',
+  'INTUNE_SMALL_BUSINESS':'Microsoft Intune','INTUNE_P1':'Microsoft Intune Plan 1',
+  // Defender / Security
+  'ATP_ENTERPRISE':'Microsoft Defender for Office 365 P1','THREAT_INTELLIGENCE':'Microsoft Defender for Office 365 P2',
+  'ATA':'Microsoft Defender for Identity','IDENTITY_THREAT_PROTECTION':'Microsoft 365 E5 Security',
+  'WIN_DEF_ATP':'Microsoft Defender for Endpoint P2','MDATP_XPLAT':'Defender for Endpoint P2 (cross-platform)',
+  'DEFENDER_ENDPOINT_P1':'Microsoft Defender for Endpoint P1',
+  // SharePoint / OneDrive
+  'SHAREPOINTSTANDARD':'SharePoint Online Plan 1','SHAREPOINTENTERPRISE':'SharePoint Online Plan 2',
+  'SHAREPOINTSTORAGE':'SharePoint Online Storage','ONEDRIVE_BASIC':'OneDrive for Business Basic',
+  'WACONEDRIVESTANDARD':'OneDrive for Business Plan 1','WACONEDRIVEENTERPRISE':'OneDrive for Business Plan 2',
+  // Teams / Communication
+  'TEAMS_COMMERCIAL_TRIAL':'Microsoft Teams Trial','TEAMS_EXPLORATORY':'Microsoft Teams Exploratory',
+  'MCOSTANDARD':'Skype for Business Online Plan 2','MCOIMP':'Skype for Business Online Plan 1',
+  'MCOMEETADV':'Microsoft 365 Audio Conferencing','MCOPSTN1':'Microsoft 365 Domestic Calling Plan',
+  'MCOPSTN2':'Microsoft 365 Domestic & International Calling','PHONESYSTEM_VIRTUALUSER':'Phone System Virtual User',
+  'TEAMS_ESSENTIALS_AAD':'Microsoft Teams Essentials',
+  // Power Platform
+  'POWER_BI_STANDARD':'Power BI Free','POWER_BI_PRO':'Power BI Pro','POWER_BI_PREMIUM_PER_USER':'Power BI Premium Per User',
+  'FLOW_FREE':'Power Automate Free','FLOW_P1':'Power Automate Plan 1','FLOW_P2':'Power Automate Plan 2',
+  'POWERAUTOMATE_ATTENDED_RPA':'Power Automate Attended RPA','POWERAPPS_VIRAL':'Power Apps Trial',
+  'POWERAPPS_PER_USER':'Power Apps Per User','POWERAPPS_PER_APP':'Power Apps Per App',
+  // Visio / Project
+  'VISIOCLIENT':'Visio Plan 2','VISIO_PLAN1_DEPT':'Visio Plan 1','VISIOONLINE_PLAN1':'Visio Plan 1',
+  'PROJECTPROFESSIONAL':'Project Plan 3','PROJECTPREMIUM':'Project Plan 5','PROJECTESSENTIALS':'Project Plan 1',
+  'PROJECT_P1':'Project Plan 1',
+  // Windows
+  'WIN10_PRO_ENT_SUB':'Windows 10/11 Enterprise E3','WIN10_VDA_E3':'Windows 10/11 Enterprise E3 VDA',
+  'WIN10_VDA_E5':'Windows 10/11 Enterprise E5','WINDOWS_STORE':'Windows Store for Business',
+  // Copilot
+  'MICROSOFT_COPILOT':'Microsoft 365 Copilot','M365_COPILOT':'Microsoft 365 Copilot',
+  // Other
+  'RIGHTSMANAGEMENT':'Azure Information Protection P1','RIGHTSMANAGEMENT_ADHOC':'Azure Rights Management',
+  'INFORMATION_PROTECTION_COMPLIANCE':'Microsoft 365 E5 Compliance',
+  'STREAM':'Microsoft Stream','FORMS_PRO':'Microsoft Dynamics 365 Customer Voice',
+  'CCIBOTS_PRIVPREV_VIRAL':'Power Virtual Agents Trial','VIRTUAL_AGENT_BASE':'Power Virtual Agents',
+  'MEETING_ROOM':'Microsoft Teams Rooms Standard','MCOEV':'Microsoft 365 Phone System',
+  'MICROSOFT_BUSINESS_CENTER':'Microsoft Business Center',
+  'DYN365_ENTERPRISE_P1':'Dynamics 365 Customer Engagement Plan',
+  'CRMSTANDARD':'Dynamics 365 Professional',
+  'UNIVERSAL_PRINT':'Universal Print'
+};
+
+function skuName(partNumber){
+  if(!partNumber)return'Unknown';
+  const friendly=SKU_MAP[partNumber.toUpperCase()];
+  return friendly||partNumber.replace(/_/g,' ').replace(/\b\w/g,l=>l.toUpperCase());
+}
+
+function skuLabel(partNumber){
+  const friendly=skuName(partNumber);
+  if(friendly===partNumber)return esc(partNumber);
+  return`${esc(friendly)} <span style="color:var(--text-muted);font-size:.72rem">(${esc(partNumber)})</span>`;
+}
+
 class Auth{
   constructor(){this.inst=null;this.acc=null;this.tok=null;try{const s=localStorage.getItem('msal_cfg');this.cfg=s?JSON.parse(s):{cid:'',tid:'common',ru:location.origin+location.pathname}}catch{this.cfg={cid:'',tid:'common',ru:location.origin+location.pathname}}}
   save(c){this.cfg={...this.cfg,...c};localStorage.setItem('msal_cfg',JSON.stringify(this.cfg))}
@@ -634,6 +777,7 @@ class Auth{
 class Graph{
   constructor(a){this.a=a;this.scopes=null}
   async call(ep,m='GET',body=null,beta=false){
+    m=m||'GET';
     const t=await this.a.token(this.scopes);
     const u=ep.startsWith('http')?ep:`${beta?GB:GE}${ep}`;const o={method:m,headers:{'Authorization':`Bearer ${t}`,'Content-Type':'application/json','ConsistencyLevel':'eventual'}};if(body&&m!=='GET')o.body=JSON.stringify(body);const r=await fetch(u,o);if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(`${r.status}: ${e?.error?.message||r.statusText}`)}if(r.status===204)return null;return r.json()}
 }
@@ -947,9 +1091,9 @@ function renderDisc(){
 
   // ───── LICENSE INVENTORY ─────
   if(skus.length){h+=`<div class="disc-section">${errN('subscribedSkus')}<div class="disc-section-head"><div class="sec-icon" style="background:rgba(16,185,129,.1);color:var(--accent-green)">📜</div>License Inventory <span class="badge badge-muted" style="margin-left:auto">${skus.length} SKUs</span></div>
-    <table class="disc-table"><thead><tr><th>License SKU</th><th>Total</th><th>Consumed</th><th>Available</th><th>Usage</th></tr></thead><tbody>
+    <table class="disc-table"><thead><tr><th>License</th><th>SKU</th><th>Total</th><th>Consumed</th><th>Available</th><th>Usage</th></tr></thead><tbody>
     ${skus.map(s=>{const tot=s.prepaidUnits?.enabled||s.total||0;const used=s.consumedUnits||s.used||0;const pct=tot?Math.round(used/tot*100):0;const col=pct>90?'var(--accent-red)':pct>70?'var(--accent-amber)':'var(--accent-green)';
-      return`<tr><td style="font-weight:500">${esc(s.skuPartNumber||'')}</td><td>${tot}</td><td>${used}</td><td>${tot-used}</td><td><div style="display:flex;align-items:center;gap:8px"><div class="mini-bar" style="width:70px"><div class="mini-bar-fill" style="width:${pct}%;background:${col}"></div></div><span style="font-size:.76rem;color:${col};font-weight:600">${pct}%</span></div></td></tr>`}).join('')}
+      return`<tr><td style="font-weight:600">${esc(skuName(s.skuPartNumber))}</td><td style="color:var(--text-muted);font-size:.72rem">${esc(s.skuPartNumber||'')}</td><td>${tot}</td><td>${used}</td><td>${tot-used}</td><td><div style="display:flex;align-items:center;gap:8px"><div class="mini-bar" style="width:70px"><div class="mini-bar-fill" style="width:${pct}%;background:${col}"></div></div><span style="font-size:.76rem;color:${col};font-weight:600">${pct}%</span></div></td></tr>`}).join('')}
     </tbody></table></div>`}
 
   // ───── DOMAINS ─────
@@ -1228,8 +1372,8 @@ footer{margin-top:40px;padding-top:14px;border-top:1px solid #eee;font-size:10px
 <div class="meta">Tenant: <strong>${esc(d.domain)}</strong> | Generated: ${new Date(d.ts).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'})}</div>
 <div class="stat-row">${[{n:u.length,l:'Users'},{n:licU.length,l:'Licensed'},{n:guests.length,l:'Guests'},{n:g.length,l:'Groups'},{n:ca.length,l:'CA Policies'},{n:apps.length,l:'App Regs'},{n:devs.length,l:'Devices'},{n:sites.length,l:'SP Sites'}].map(s=>`<div class="stat-box"><div class="stat-num">${s.n}</div><div class="stat-lab">${s.l}</div></div>`).join('')}</div>`;
   // Licenses
-  if(skus.length){h+=`<h2>License Inventory</h2><table><tr><th>SKU</th><th>Total</th><th>Consumed</th><th>Available</th></tr>`;
-    skus.forEach(s=>{const t=s.prepaidUnits?.enabled||s.total||0;h+=`<tr><td>${esc(s.skuPartNumber||'')}</td><td>${t}</td><td>${s.consumedUnits||s.used||0}</td><td>${t-(s.consumedUnits||s.used||0)}</td></tr>`});h+=`</table>`}
+  if(skus.length){h+=`<h2>License Inventory</h2><table><tr><th>License</th><th>SKU</th><th>Total</th><th>Consumed</th><th>Available</th></tr>`;
+    skus.forEach(s=>{const t=s.prepaidUnits?.enabled||s.total||0;h+=`<tr><td><strong>${esc(skuName(s.skuPartNumber))}</strong><br><small style="color:#888">${esc(s.skuPartNumber||'')}</small></td><td>${t}</td><td>${s.consumedUnits||s.used||0}</td><td>${t-(s.consumedUnits||s.used||0)}</td></tr>`});h+=`</table>`}
   // Users
   h+=`<h2>Users (${u.length})</h2><table><tr><th>Name</th><th>UPN</th><th>Type</th><th>Dept</th><th>Enabled</th><th>Licensed</th></tr>`;
   u.forEach(usr=>{const en=usr.on!==undefined?usr.on:usr.accountEnabled!==false;const li=usr.lic||usr.assignedLicenses?.length>0;
@@ -1268,8 +1412,8 @@ function exITGlue(){if(!DD)return;const d=DD;
 ${[['Users',u.length],['Licensed',licU.length],['Guests',guests.length],['Groups',g.length],['CA Policies',ca.length],['App Registrations',apps.length],['Managed Devices',devs.length],['Security Defaults',(d.securityDefaults?.on||d.securityDefaults?.isEnabled)?'✅ Enabled':'Disabled (CA active)']].map(([k,v])=>`<tr><td style="${kS}">${k}</td><td style="${vS}">${v}</td></tr>`).join('')}
 </table>`;
   // Licenses
-  if(skus.length){h+=`<h3 style="color:#0078d4;margin-top:18px">Licenses</h3><table style="width:100%;border-collapse:collapse;font-size:12px"><tr style="background:#0078d4;color:#fff"><th style="${hS}">SKU</th><th style="${hS}">Total</th><th style="${hS}">Used</th><th style="${hS}">Free</th></tr>`;
-    skus.forEach((s,i)=>{const t=s.prepaidUnits?.enabled||s.total||0;const u=s.consumedUnits||s.used||0;h+=`<tr style="background:${i%2?'#fff':'#f8f9fa'}"><td style="${tS}">${esc(s.skuPartNumber||'')}</td><td style="${tS}">${t}</td><td style="${tS}">${u}</td><td style="${tS}">${t-u}</td></tr>`});h+=`</table>`}
+  if(skus.length){h+=`<h3 style="color:#0078d4;margin-top:18px">Licenses</h3><table style="width:100%;border-collapse:collapse;font-size:12px"><tr style="background:#0078d4;color:#fff"><th style="${hS}">License</th><th style="${hS}">SKU</th><th style="${hS}">Total</th><th style="${hS}">Used</th><th style="${hS}">Free</th></tr>`;
+    skus.forEach((s,i)=>{const t=s.prepaidUnits?.enabled||s.total||0;const u=s.consumedUnits||s.used||0;h+=`<tr style="background:${i%2?'#fff':'#f8f9fa'}"><td style="${tS}"><strong>${esc(skuName(s.skuPartNumber))}</strong><br><small style="color:#888">${esc(s.skuPartNumber||'')}</small></td><td style="${tS}">${t}</td><td style="${tS}">${u}</td><td style="${tS}">${t-u}</td></tr>`});h+=`</table>`}
   // Users
   h+=`<h3 style="color:#0078d4;margin-top:18px">Users</h3><table style="width:100%;border-collapse:collapse;font-size:12px"><tr style="background:#0078d4;color:#fff"><th style="${hS}">Name</th><th style="${hS}">UPN</th><th style="${hS}">Type</th><th style="${hS}">Licensed</th></tr>`;
   u.forEach((usr,i)=>{h+=`<tr style="background:${i%2?'#fff':'#f8f9fa'}"><td style="${tS}">${esc(usr.dn||usr.displayName||'')}</td><td style="${tS};font-size:11px">${esc(usr.upn||usr.userPrincipalName||'')}</td><td style="${tS}">${esc(usr.userType||'Member')}</td><td style="${tS}">${(usr.lic||usr.assignedLicenses?.length>0)?'✅':'—'}</td></tr>`});h+=`</table>`;
@@ -1334,7 +1478,7 @@ async function nuLoadGroups(){
       const sel=$('nuNewGrpSku');sel.innerHTML='<option value="">Assign SKU (optional)</option>';
       (skus.value||[]).forEach(s=>{
         const avail=(s.prepaidUnits?.enabled||0)-s.consumedUnits;
-        sel.innerHTML+=`<option value="${s.skuId}">${esc(s.skuPartNumber)} (${avail} avail)</option>`
+        sel.innerHTML+=`<option value="${s.skuId}">${esc(skuName(s.skuPartNumber))} (${avail} avail)</option>`
       });
     }catch{}
 
@@ -1538,9 +1682,39 @@ async function nuBulkCreate(){
 }
 
 /* ============================================================
-   DOMAINS TAB — Manage tenant domains and DNS verification
+   DOMAINS TAB — Full M365-style domain management with DKIM & MDM
    ============================================================ */
-let DOM_SELECTED=null;
+let DOM_SELECTED=null,DOM_ALL_RECORDS=[];
+
+// Helper: render a DNS record table
+function domRecordTable(records,showCopy=false){
+  if(!records.length)return'<div style="color:var(--text-muted);font-size:.78rem;padding:6px">No records found.</div>';
+  return`<div style="overflow-x:auto"><table style="width:100%;font-size:.76rem;border-collapse:collapse;font-family:var(--font-mono)">
+    <thead><tr style="text-align:left;color:var(--text-muted);font-size:.68rem;text-transform:uppercase;border-bottom:1px solid var(--border-subtle)">
+      <th style="padding:5px 6px">Type</th><th style="padding:5px 6px">Host / Name</th><th style="padding:5px 6px">Points to / Value</th><th style="padding:5px 6px">TTL</th>${showCopy?'<th style="padding:5px 6px">Priority</th>':''}
+    </tr></thead><tbody>
+    ${records.map(r=>`<tr style="border-bottom:1px solid var(--border-subtle)">
+      <td style="padding:5px 6px"><span class="badge badge-cyan" style="font-size:.62rem">${esc(r.type)}</span></td>
+      <td style="padding:5px 6px;color:var(--text-primary);word-break:break-all;user-select:all">${esc(r.host)}</td>
+      <td style="padding:5px 6px;color:var(--accent-amber);word-break:break-all;user-select:all;max-width:400px">${esc(r.value)}</td>
+      <td style="padding:5px 6px;color:var(--text-muted)">${r.ttl||3600}</td>
+      ${showCopy?`<td style="padding:5px 6px;color:var(--text-muted)">${r.priority||'—'}</td>`:''}
+    </tr>`).join('')}
+    </tbody></table></div>`;
+}
+
+// Parse Graph DNS record to unified format
+function domParseRecord(r,purpose){
+  const oType=(r['@odata.type']||'').toLowerCase();
+  let type='TXT',host='',value='',priority=null;
+  if(oType.includes('txt')||r.recordType==='Txt'){type='TXT';host=r.label||r.name||'@';value=r.text||''}
+  else if(oType.includes('mx')||r.recordType==='Mx'){type='MX';host=r.label||r.name||'@';value=r.mailExchange||'';priority=r.preference||0}
+  else if(oType.includes('cname')||r.recordType==='CName'){type='CNAME';host=r.label||r.name||'';value=r.canonicalName||''}
+  else if(oType.includes('srv')||r.recordType==='Srv'){type='SRV';host=r.label||r.name||'';value=r.nameTarget||'';priority=r.priority||r.preference||0}
+  else if(oType.includes('ns')){type='NS';host=r.label||r.name||'@';value=r.nameTarget||''}
+  else{type=r.recordType||(oType.split('.').pop()||'').replace('dnsrecord','').toUpperCase()||'?';host=r.label||r.name||'@';value=r.text||r.nameTarget||r.mailExchange||r.canonicalName||r.address||''}
+  return{type,host,value,ttl:r.ttl||3600,priority,purpose,_raw:r};
+}
 
 async function domRefresh(){
   if(!A.ok()){alert('Sign in first');return}
@@ -1563,10 +1737,10 @@ async function domRefresh(){
         <td style="padding:8px">${d.isVerified?'<span class="badge badge-green">Verified</span>':'<span class="badge badge-amber">Unverified</span>'}</td>
         <td style="padding:8px;color:var(--text-secondary)">${esc(d.authenticationType||'Managed')}</td>
         <td style="padding:8px;font-size:.72rem">${(d.supportedServices||[]).map(s=>`<span class="badge badge-muted" style="font-size:.6rem;margin:1px">${esc(s)}</span>`).join('')||'—'}</td>
-        <td style="padding:8px">
-          ${!d.isVerified?`<button class="btn btn-sm btn-secondary" onclick="domShowVerify('${esc(d.id)}')">Verify</button>`:''}
-          ${d.isVerified&&!d.isDefault&&!d.isInitial?`<button class="btn btn-sm btn-ghost" onclick="domSetDefault('${esc(d.id)}')">Set Default</button>`:''}
-          ${!d.isInitial?`<button class="btn btn-sm btn-ghost" onclick="domShowDns('${esc(d.id)}')" style="color:var(--accent-cyan)">DNS</button>`:''}
+        <td style="padding:8px;white-space:nowrap">
+          <button class="btn btn-sm btn-ghost" onclick="domShowDetail('${esc(d.id)}',${d.isVerified})" style="color:var(--accent-cyan)">DNS Records</button>
+          ${!d.isVerified?`<button class="btn btn-sm btn-secondary" onclick="domShowDetail('${esc(d.id)}',false)" style="margin-left:4px">Verify</button>`:''}
+          ${d.isVerified&&!d.isDefault&&!d.isInitial?`<button class="btn btn-sm btn-ghost" onclick="domSetDefault('${esc(d.id)}')" style="margin-left:4px">Set Default</button>`:''}
         </td>
       </tr>`).join('')}
       </tbody></table></div>`;
@@ -1587,60 +1761,155 @@ async function domAdd(){
   const res=$('domAddResult');
   res.innerHTML='<div style="color:var(--text-muted);font-size:.82rem">Adding domain...</div>';
   try{
+    G.scopes=Auth.DISCOVERY_SCOPES;
     await G.call('/domains','POST',{id:name});
-    res.innerHTML=`<div style="color:var(--accent-green);font-size:.82rem;padding:8px">✓ Domain <strong>${esc(name)}</strong> added. Now configure the DNS verification records below.</div>`;
+    res.innerHTML=`<div style="color:var(--accent-green);font-size:.82rem;padding:8px">✓ Domain <strong>${esc(name)}</strong> added successfully. DNS records are shown below.</div>`;
     $('domNew').value='';
     domRefresh();
-    // Auto-show verification
-    setTimeout(()=>domShowVerify(name),500);
+    // Auto-show the full detail panel with all records
+    setTimeout(()=>domShowDetail(name,false),600);
+    G.scopes=null;
   }catch(e){
     res.innerHTML=`<div style="color:var(--accent-red);font-size:.82rem;padding:8px">✗ ${esc(e.message)}</div>`;
+    G.scopes=null;
   }
 }
 
-async function domShowVerify(domain){
+async function domShowDetail(domain,isVerified){
   DOM_SELECTED=domain;
-  $('domVerifyCard').classList.remove('hidden');
-  domFetchRecords();
-}
+  DOM_ALL_RECORDS=[];
+  const card=$('domDetailCard');card.classList.remove('hidden');
+  $('domDetailName').textContent=domain;
+  $('domDetailStatus').innerHTML=isVerified?'<span class="badge badge-green">Verified</span>':'<span class="badge badge-amber">Unverified</span>';
+  $('domVerifyBadge').className=isVerified?'badge badge-green':'badge badge-amber';
+  $('domVerifyBadge').textContent=isVerified?'Verified':'Pending';
 
-async function domFetchRecords(){
-  if(!DOM_SELECTED||!A.ok())return;
-  const el=$('domDnsRecords');
-  el.innerHTML='<div style="color:var(--text-muted);font-size:.82rem">Loading DNS records...</div>';
+  // Show/hide DKIM and MDM sections based on checkboxes
+  $('domDkimSection').style.display=$('domDkimOpt').checked?'':'none';
+  $('domMdmSection').style.display=$('domAutoEnroll').checked?'':'none';
+
+  // Loading states
+  ['domVerifyRecords','domExchangeRecords','domTeamsRecords','domDkimRecords','domMdmRecords'].forEach(id=>{
+    $(id).innerHTML='<div style="color:var(--text-muted);font-size:.78rem">Loading...</div>'});
+  $('domVerifyResult').innerHTML='';$('domDkimResult').innerHTML='';
+
   try{
-    const resp=await G.call(`/domains/${DOM_SELECTED}/verificationDnsRecords`);
-    const records=resp.value||[];
+    G.scopes=Auth.DISCOVERY_SCOPES;
 
-    if(!records.length){el.innerHTML='<div style="color:var(--text-muted);font-size:.82rem">No verification records returned — domain may already be verified.</div>';return}
+    // Fetch verification and service records in parallel
+    const[vResp,sResp]=await Promise.all([
+      G.call(`/domains/${domain}/verificationDnsRecords`).catch(()=>({value:[]})),
+      G.call(`/domains/${domain}/serviceConfigurationRecords`).catch(()=>({value:[]}))
+    ]);
 
-    el.innerHTML=`<div style="font-size:.78rem;font-weight:600;color:var(--accent-cyan);margin-bottom:8px">DNS records for: ${esc(DOM_SELECTED)}</div>
-    <div style="overflow-x:auto"><table style="width:100%;font-size:.78rem;border-collapse:collapse;font-family:var(--font-mono)">
-      <thead><tr style="text-align:left;color:var(--text-muted);font-size:.7rem;text-transform:uppercase;border-bottom:1px solid var(--border-subtle)">
-        <th style="padding:6px">Type</th><th style="padding:6px">Name</th><th style="padding:6px">Value</th><th style="padding:6px">TTL</th>
-      </tr></thead><tbody>
-      ${records.map(r=>`<tr style="border-bottom:1px solid var(--border-subtle)">
-        <td style="padding:6px"><span class="badge badge-cyan" style="font-size:.65rem">${esc(r.recordType||r['@odata.type']?.split('.')?.pop()||'')}</span></td>
-        <td style="padding:6px;color:var(--text-primary)">${esc(r.label||r.name||DOM_SELECTED)}</td>
-        <td style="padding:6px;color:var(--accent-amber);word-break:break-all;user-select:all">${esc(r.text||r.nameTarget||r.mailExchange||r.canonicalName||'')}</td>
-        <td style="padding:6px;color:var(--text-muted)">${r.ttl||3600}</td>
-      </tr>`).join('')}
-      </tbody></table></div>`;
+    const vRecords=(vResp.value||[]).map(r=>domParseRecord(r,'Verification'));
+    const sRecords=(sResp.value||[]).map(r=>domParseRecord(r,'Service'));
+
+    // Categorise service records
+    const exchange=[],teams=[];
+    sRecords.forEach(r=>{
+      const h=(r.host+' '+r.value).toLowerCase();
+      if(h.includes('_sip')||h.includes('_sipfederationtls')||h.includes('lyncdiscover')||h.includes('sip.')){teams.push(r)}
+      else{exchange.push(r)}
+    });
+
+    // 1. Verification records
+    $('domVerifyRecords').innerHTML=vRecords.length?domRecordTable(vRecords):
+      `<div style="color:${isVerified?'var(--accent-green)':'var(--text-muted)'};font-size:.78rem">${isVerified?'✓ Domain already verified — no verification record needed.':'No verification records returned.'}</div>`;
+
+    // 2. Exchange records (MX, autodiscover CNAME, SPF TXT)
+    $('domExchangeRecords').innerHTML=exchange.length?domRecordTable(exchange,true):
+      '<div style="color:var(--text-muted);font-size:.78rem">No Exchange records returned. Verify the domain first to generate service records.</div>';
+
+    // 3. Teams / Skype records (SRV + CNAME)
+    $('domTeamsRecords').innerHTML=teams.length?domRecordTable(teams,true):
+      '<div style="color:var(--text-muted);font-size:.78rem">No Teams/Skype records returned. These appear after domain verification.</div>';
+
+    // 4. DKIM records — need the tenant's .onmicrosoft.com domain for CNAME targets
+    const domBase=domain.replace(/\./g,'-');
+    // Find the initial .onmicrosoft.com domain from the loaded domains list
+    let tenantInitial='';
+    try{
+      const allDoms=await G.call('/domains?$filter=isInitial eq true&$select=id');
+      tenantInitial=(allDoms.value&&allDoms.value[0])?allDoms.value[0].id.replace('.onmicrosoft.com',''):'';
+    }catch{}
+    if(!tenantInitial)tenantInitial=domain.split('.')[0]; // fallback
+    const dkimRecords=[
+      {type:'CNAME',host:`selector1._domainkey`,value:`selector1-${domBase}._domainkey.${tenantInitial}.onmicrosoft.com`,ttl:3600,priority:null,purpose:'DKIM'},
+      {type:'CNAME',host:`selector2._domainkey`,value:`selector2-${domBase}._domainkey.${tenantInitial}.onmicrosoft.com`,ttl:3600,priority:null,purpose:'DKIM'}
+    ];
+    // Try to get real DKIM config from beta API
+    try{
+      const dkimResp=await G.call(`/admin/exchange/customDkimSigningConfigs?$filter=domainName eq '${domain}'`,'GET',null,true);
+      if(dkimResp.value&&dkimResp.value.length>0){
+        const dk=dkimResp.value[0];
+        if(dk.selector1CNAME)dkimRecords[0].value=dk.selector1CNAME;
+        if(dk.selector2CNAME)dkimRecords[1].value=dk.selector2CNAME;
+        if(dk.enabled){$('domDkimResult').innerHTML='<span style="color:var(--accent-green)">✓ DKIM signing is already enabled for this domain.</span>'}
+      }
+    }catch{}
+    $('domDkimRecords').innerHTML=domRecordTable(dkimRecords);
+
+    // 5. MDM auto-enrolment records
+    const mdmRecords=[
+      {type:'CNAME',host:'enterpriseregistration',value:'enterpriseregistration.windows.net',ttl:3600,priority:null,purpose:'MDM'},
+      {type:'CNAME',host:'enterpriseenrollment',value:'enterpriseenrollment.manage.microsoft.com',ttl:3600,priority:null,purpose:'MDM'}
+    ];
+    $('domMdmRecords').innerHTML=domRecordTable(mdmRecords);
+
+    // Store all for export
+    DOM_ALL_RECORDS=[...vRecords,...exchange,...teams,...dkimRecords,...mdmRecords];
+    G.scopes=null;
+
+    // Scroll to detail card
+    card.scrollIntoView({behavior:'smooth',block:'start'});
   }catch(e){
-    el.innerHTML=`<div style="color:var(--accent-red);font-size:.82rem">Error: ${esc(e.message)}</div>`;
+    $('domVerifyRecords').innerHTML=`<div style="color:var(--accent-red);font-size:.78rem">Error loading records: ${esc(e.message)}</div>`;
+    G.scopes=null;
   }
 }
 
 async function domVerify(){
   if(!DOM_SELECTED||!A.ok())return;
   const res=$('domVerifyResult');
-  res.innerHTML='<div style="color:var(--text-muted);font-size:.82rem">Verifying...</div>';
+  res.innerHTML='<span style="color:var(--text-muted);font-size:.82rem">Verifying...</span>';
   try{
+    G.scopes=Auth.DISCOVERY_SCOPES;
     await G.call(`/domains/${DOM_SELECTED}/verify`,'POST');
-    res.innerHTML=`<div style="color:var(--accent-green);font-size:.82rem;padding:8px">✓ Domain <strong>${esc(DOM_SELECTED)}</strong> verified successfully!</div>`;
+    res.innerHTML='<span style="color:var(--accent-green);font-size:.82rem">✓ Verified successfully!</span>';
+    $('domVerifyBadge').className='badge badge-green';$('domVerifyBadge').textContent='Verified';
+    $('domDetailStatus').innerHTML='<span class="badge badge-green">Verified</span>';
+    G.scopes=null;
     domRefresh();
   }catch(e){
-    res.innerHTML=`<div style="color:var(--accent-red);font-size:.82rem;padding:8px">✗ Verification failed: ${esc(e.message)}<br><span style="color:var(--text-muted);font-size:.76rem">Ensure DNS records are created and have propagated. This can take up to 48 hours.</span></div>`;
+    res.innerHTML=`<span style="color:var(--accent-red);font-size:.82rem">✗ ${esc(e.message)}</span><br><span style="color:var(--text-muted);font-size:.76rem">Ensure DNS records have been created and propagated (can take up to 48hrs).</span>`;
+    G.scopes=null;
+  }
+}
+
+async function domEnableDkim(){
+  if(!DOM_SELECTED||!A.ok())return;
+  const res=$('domDkimResult');
+  res.innerHTML='<span style="color:var(--text-muted);font-size:.82rem">Enabling DKIM...</span>';
+  try{
+    G.scopes=Auth.DISCOVERY_SCOPES;
+    // Try to enable DKIM via beta Exchange admin API
+    try{
+      await G.call(`/admin/exchange/customDkimSigningConfigs('${DOM_SELECTED}')`,'PATCH',{enabled:true},true);
+      res.innerHTML='<span style="color:var(--accent-green);font-size:.82rem">✓ DKIM signing enabled!</span>';
+    }catch(e1){
+      // If config doesn't exist, try to create it first
+      try{
+        await G.call('/admin/exchange/customDkimSigningConfigs','POST',{domainName:DOM_SELECTED,enabled:true},true);
+        res.innerHTML='<span style="color:var(--accent-green);font-size:.82rem">✓ DKIM signing configured and enabled!</span>';
+      }catch(e2){
+        res.innerHTML=`<span style="color:var(--accent-amber);font-size:.82rem">⚠ DKIM requires CNAME records to propagate first. Create the records above, wait for propagation, then retry.<br><span style="font-size:.76rem;color:var(--text-muted)">Or enable via Exchange Admin Center → DKIM. Error: ${esc(e2.message)}</span></span>`;
+      }
+    }
+    G.scopes=null;
+  }catch(e){
+    res.innerHTML=`<span style="color:var(--accent-red);font-size:.82rem">✗ ${esc(e.message)}</span>`;
+    G.scopes=null;
   }
 }
 
@@ -1648,52 +1917,42 @@ async function domSetDefault(domain){
   if(!A.ok())return;
   if(!confirm(`Set ${domain} as the default domain? This will be used for new user UPNs.`))return;
   try{
+    G.scopes=Auth.DISCOVERY_SCOPES;
     await G.call(`/domains/${domain}`,'PATCH',{isDefault:true});
+    G.scopes=null;
     domRefresh();
-  }catch(e){alert('Failed: '+e.message)}
+  }catch(e){alert('Failed: '+e.message);G.scopes=null}
 }
 
-async function domShowDns(domain){
-  DOM_SELECTED=domain;
-  $('domVerifyCard').classList.remove('hidden');
-  const el=$('domDnsRecords');
-  el.innerHTML='<div style="color:var(--text-muted);font-size:.82rem">Loading service records...</div>';
-  try{
-    // Fetch both verification and service DNS records
-    const[vResp,sResp]=await Promise.all([
-      G.call(`/domains/${domain}/verificationDnsRecords`).catch(()=>({value:[]})),
-      G.call(`/domains/${domain}/serviceConfigurationRecords`).catch(()=>({value:[]}))
-    ]);
-    const allRecords=[...(vResp.value||[]).map(r=>({...r,_type:'Verification'})),...(sResp.value||[]).map(r=>({...r,_type:'Service'}))];
+function domCopyAll(){
+  if(!DOM_ALL_RECORDS.length){alert('No records to copy');return}
+  let txt=`DNS Records for ${DOM_SELECTED}\n${'═'.repeat(60)}\n\n`;
+  const grouped={};
+  DOM_ALL_RECORDS.forEach(r=>{
+    const p=r.purpose||'Other';
+    if(!grouped[p])grouped[p]=[];
+    grouped[p].push(r);
+  });
+  Object.entries(grouped).forEach(([purpose,recs])=>{
+    txt+=`── ${purpose} ${'─'.repeat(40)}\n`;
+    recs.forEach(r=>{
+      txt+=`${r.type.padEnd(6)} ${r.host.padEnd(35)} → ${r.value}${r.priority!=null?' (Priority: '+r.priority+')':''}  TTL: ${r.ttl}\n`;
+    });
+    txt+='\n';
+  });
+  navigator.clipboard.writeText(txt).then(()=>alert('Copied to clipboard!')).catch(()=>{
+    const ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);alert('Copied to clipboard!')});
+}
 
-    if(!allRecords.length){el.innerHTML='<div style="color:var(--text-muted);font-size:.82rem">No DNS records found for this domain.</div>';return}
-
-    el.innerHTML=`<div style="font-size:.78rem;font-weight:600;color:var(--accent-cyan);margin-bottom:8px">DNS records for: ${esc(domain)}</div>
-    <div style="overflow-x:auto"><table style="width:100%;font-size:.78rem;border-collapse:collapse;font-family:var(--font-mono)">
-      <thead><tr style="text-align:left;color:var(--text-muted);font-size:.7rem;text-transform:uppercase;border-bottom:1px solid var(--border-subtle)">
-        <th style="padding:6px">Purpose</th><th style="padding:6px">Type</th><th style="padding:6px">Name</th><th style="padding:6px">Value</th><th style="padding:6px">TTL</th><th style="padding:6px">Priority</th>
-      </tr></thead><tbody>
-      ${allRecords.map(r=>{
-        const rType=r.recordType||(r['@odata.type']||'').split('.').pop().replace('DnsRecord','').replace('dns','');
-        const val=r.text||r.nameTarget||r.mailExchange||r.canonicalName||r.address||'';
-        return `<tr style="border-bottom:1px solid var(--border-subtle)">
-          <td style="padding:6px"><span class="badge ${r._type==='Service'?'badge-green':'badge-amber'}" style="font-size:.6rem">${r._type}</span></td>
-          <td style="padding:6px"><span class="badge badge-cyan" style="font-size:.65rem">${esc(rType)}</span></td>
-          <td style="padding:6px;color:var(--text-primary)">${esc(r.label||r.name||domain)}</td>
-          <td style="padding:6px;color:var(--accent-amber);word-break:break-all;max-width:360px;user-select:all">${esc(val)}</td>
-          <td style="padding:6px;color:var(--text-muted)">${r.ttl||3600}</td>
-          <td style="padding:6px;color:var(--text-muted)">${r.preference||r.priority||'—'}</td>
-        </tr>`}).join('')}
-      </tbody></table></div>`;
-
-    // Also show service records in the bottom card
-    const sRecords=sResp.value||[];
-    if(sRecords.length){
-      $('domServiceRecords').innerHTML=$('domDnsRecords').innerHTML.replace('DNS records for:','Service configuration records for:');
-    }
-  }catch(e){
-    el.innerHTML=`<div style="color:var(--accent-red);font-size:.82rem">Error: ${esc(e.message)}</div>`;
-  }
+function domExportCsv(){
+  if(!DOM_ALL_RECORDS.length){alert('No records to export');return}
+  let csv='Purpose,Type,Host,Value,TTL,Priority\n';
+  DOM_ALL_RECORDS.forEach(r=>{
+    csv+=`"${r.purpose||''}","${r.type}","${r.host}","${r.value}","${r.ttl||3600}","${r.priority||''}"\n`;
+  });
+  const blob=new Blob([csv],{type:'text/csv'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download=`dns-records-${DOM_SELECTED}-${new Date().toISOString().slice(0,10)}.csv`;a.click();
 }
 
 /* ============================================================
