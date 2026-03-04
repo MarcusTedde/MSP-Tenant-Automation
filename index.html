@@ -42,6 +42,32 @@ if(typeof msal==='undefined'){
 [data-theme="light"] code{background:var(--bg-elevated);color:var(--accent-blue)}
 [data-theme="light"] ::-webkit-scrollbar-track{background:var(--bg-root)}
 [data-theme="light"] ::-webkit-scrollbar-thumb{background:var(--border-default)}
+[data-theme="light"] .guide-overlay{background:rgba(255,255,255,.92)}
+/* Guide Overlay */
+.guide-overlay{position:fixed;inset:0;z-index:10000;background:rgba(6,10,17,.94);backdrop-filter:blur(20px);display:flex;align-items:center;justify-content:center;animation:fadeIn .4s ease}
+.guide-overlay.hidden{display:none}
+.guide-card{max-width:680px;width:90%;max-height:90vh;overflow-y:auto;background:var(--bg-surface);border:1px solid var(--border-subtle);border-radius:var(--radius-xl);padding:0;animation:slideUp .4s ease;box-shadow:0 24px 80px rgba(0,0,0,.5)}
+.guide-header{padding:32px 36px 0;text-align:center}
+.guide-logo{width:64px;height:64px;border-radius:16px;background:linear-gradient(135deg,var(--accent-blue),var(--accent-cyan));display:flex;align-items:center;justify-content:center;font-size:1.8rem;font-weight:900;color:#fff;margin:0 auto 16px;font-family:var(--font-display)}
+.guide-title{font-family:var(--font-display);font-size:1.5rem;font-weight:800;color:var(--text-primary);margin-bottom:6px}
+.guide-sub{font-size:.88rem;color:var(--text-secondary);font-family:var(--font-display);line-height:1.6;max-width:520px;margin:0 auto}
+.guide-body{padding:24px 36px 32px}
+.guide-steps{display:flex;gap:4px;justify-content:center;margin-bottom:24px}
+.guide-dot{width:8px;height:8px;border-radius:50%;background:var(--border-subtle);transition:all .3s ease}
+.guide-dot.active{background:var(--accent-blue);width:24px;border-radius:4px}
+.guide-dot.done{background:var(--accent-green)}
+.guide-step-card{padding:18px;background:var(--bg-elevated);border-radius:var(--radius-lg);border:1px solid var(--border-subtle);margin-bottom:16px}
+.guide-step-num{width:32px;height:32px;border-radius:50%;background:var(--accent-blue);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:800;font-size:.92rem;flex-shrink:0}
+.guide-step-title{font-family:var(--font-display);font-weight:700;font-size:.95rem;color:var(--text-primary)}
+.guide-step-desc{font-size:.84rem;color:var(--text-secondary);line-height:1.7;font-family:var(--font-display)}
+.guide-feat{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:16px}
+.guide-feat-item{padding:14px;background:var(--bg-elevated);border-radius:var(--radius-md);border:1px solid var(--border-subtle);text-align:center}
+.guide-feat-icon{font-size:1.5rem;margin-bottom:6px}
+.guide-feat-label{font-family:var(--font-display);font-size:.78rem;font-weight:600;color:var(--text-secondary)}
+.guide-nav{display:flex;justify-content:space-between;align-items:center;padding-top:8px;border-top:1px solid var(--border-subtle);margin-top:8px}
+.guide-skip{font-size:.8rem;color:var(--text-muted);cursor:pointer;font-family:var(--font-display);background:none;border:none;padding:6px 12px}
+.guide-skip:hover{color:var(--text-secondary)}
+@media(max-width:600px){.guide-feat{grid-template-columns:1fr 1fr}.guide-card{padding:0}.guide-header{padding:24px 20px 0}.guide-body{padding:16px 20px 24px}}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{font-size:14px;-webkit-font-smoothing:antialiased}
 body{background:var(--bg-root);color:var(--text-primary);font-family:var(--font-mono);min-height:100vh;overflow-x:hidden}
@@ -488,6 +514,219 @@ Jane,Doe,jane.doe,CFO,Finance,LIC — Business Premium"></textarea>
 <!-- Remediate Modal -->
 <div id="remModal" class="modal-overlay hidden"><div class="card modal-card animate-in"><div class="flex items-center gap-sm" style="margin-bottom:14px"><div class="modal-icon" style="background:rgba(59,130,246,.12);color:var(--accent-blue)">🔧</div><div class="card-header" style="margin-bottom:0">Apply Remediation</div></div><p id="remName" style="font-size:.95rem;font-weight:600;margin-bottom:4px"></p><p id="remReq" style="font-size:.82rem;color:var(--text-secondary);margin-bottom:6px;line-height:1.6"></p><div id="remSev" style="margin-bottom:14px"></div><div style="margin-bottom:14px;padding:14px;background:var(--bg-input);border-radius:var(--radius-md);border:1px solid var(--border-subtle)"><div style="font-size:.66rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;font-family:var(--font-display)">Graph API Call</div><code id="remEp" style="font-size:.78rem;color:var(--accent-cyan);word-break:break-all"></code><div id="remPaySection"><div style="font-size:.66rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin:10px 0 6px;font-family:var(--font-display)">Payload</div><pre id="remPay" style="font-size:.72rem;color:var(--text-secondary);max-height:160px;overflow:auto;line-height:1.5;margin:0"></pre></div></div><div id="remInArea" class="hidden" style="margin-bottom:14px"><label class="form-label" id="remInLabel"></label><input id="remIn" class="form-input"></div><div id="remNote" class="hidden" style="margin-bottom:14px;padding:10px 14px;background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.15);border-radius:var(--radius-md);font-size:.8rem;color:var(--accent-amber);font-family:var(--font-display)"></div><div class="flex gap-sm" style="justify-content:flex-end"><button class="btn btn-secondary" onclick="remClose()">Cancel</button><button id="remApplyBtn" class="btn btn-primary" onclick="remConfirm()">⚡ Apply Configuration</button></div></div></div>
 
+<!-- ═══════ GUIDED ONBOARDING OVERLAY ═══════ -->
+<div id="guideOverlay" class="guide-overlay hidden">
+<div class="guide-card">
+
+<!-- Page 0: Welcome -->
+<div class="guide-page" data-page="0">
+<div class="guide-header">
+  <div class="guide-logo">M</div>
+  <div class="guide-title">Welcome to M365 Tenant Automation</div>
+  <div class="guide-sub">The MSP toolkit for onboarding Microsoft 365 tenants, provisioning users, managing domains, and running Cyber Essentials Plus compliance — all powered by Microsoft Graph API.</div>
+</div>
+<div class="guide-body">
+  <div class="guide-feat">
+    <div class="guide-feat-item"><div class="guide-feat-icon">⚡</div><div class="guide-feat-label">Automated Tenant Onboarding</div></div>
+    <div class="guide-feat-item"><div class="guide-feat-icon">🔍</div><div class="guide-feat-label">Full Tenant Discovery</div></div>
+    <div class="guide-feat-item"><div class="guide-feat-icon">👤</div><div class="guide-feat-label">User Provisioning & Management</div></div>
+    <div class="guide-feat-item"><div class="guide-feat-icon">🌐</div><div class="guide-feat-label">Domain & DNS Management</div></div>
+    <div class="guide-feat-item"><div class="guide-feat-icon">✅</div><div class="guide-feat-label">CE+ Compliance Scanning</div></div>
+    <div class="guide-feat-item"><div class="guide-feat-icon">🏷️</div><div class="guide-feat-label">License Group Automation</div></div>
+  </div>
+  <div class="guide-nav">
+    <button class="guide-skip" onclick="guideClose()">Skip setup — I've used this before</button>
+    <button class="btn btn-primary" onclick="guideNext()">Get Started →</button>
+  </div>
+</div>
+</div>
+
+<!-- Page 1: Overview of what's needed -->
+<div class="guide-page hidden" data-page="1">
+<div class="guide-header">
+  <div style="font-size:2.4rem;margin-bottom:12px">🔧</div>
+  <div class="guide-title">Before You Begin</div>
+  <div class="guide-sub">This tool connects to your Microsoft 365 tenant via the Graph API. To make that work, you need three things — and this wizard will walk you through each one.</div>
+</div>
+<div class="guide-body">
+  <div class="guide-step-card">
+    <div style="display:flex;align-items:center;gap:12px">
+      <div class="guide-step-num">1</div>
+      <div><div class="guide-step-title">Create an App Registration</div>
+      <div class="guide-step-desc">A one-time 60-second task in the Azure Portal. This gives the tool an identity in your tenant.</div></div>
+    </div>
+  </div>
+  <div class="guide-step-card">
+    <div style="display:flex;align-items:center;gap:12px">
+      <div class="guide-step-num">2</div>
+      <div><div class="guide-step-title">Paste the Client ID & Sign In</div>
+      <div class="guide-step-desc">Copy the Application ID from Azure, paste it here, and sign in as Global Admin.</div></div>
+    </div>
+  </div>
+  <div class="guide-step-card">
+    <div style="display:flex;align-items:center;gap:12px">
+      <div class="guide-step-num">3</div>
+      <div><div class="guide-step-title">Run the Permission Bootstrap</div>
+      <div class="guide-step-desc">One click — the tool automatically configures all 23 Graph API permissions and generates a client secret.</div></div>
+    </div>
+  </div>
+  <div style="padding:12px 16px;background:rgba(6,182,212,.06);border:1px solid rgba(6,182,212,.15);border-radius:var(--radius-md);font-size:.82rem;color:var(--accent-cyan);font-family:var(--font-display);line-height:1.6;margin-top:4px">
+    💡 <strong>You'll need:</strong> Global Administrator access to the target Microsoft 365 tenant.
+  </div>
+  <div class="guide-nav">
+    <button class="guide-skip" onclick="guidePrev()">← Back</button>
+    <button class="btn btn-primary" onclick="guideNext()">Start Setup →</button>
+  </div>
+</div>
+</div>
+
+<!-- Page 2: Create App Registration -->
+<div class="guide-page hidden" data-page="2">
+<div class="guide-header" style="padding-bottom:8px">
+  <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:12px">
+    <div class="guide-step-num" style="width:28px;height:28px;font-size:.82rem">1</div>
+    <span class="badge badge-blue" style="font-size:.7rem">STEP 1 OF 3</span>
+  </div>
+  <div class="guide-title" style="font-size:1.25rem">Create an App Registration</div>
+</div>
+<div class="guide-body">
+  <div class="guide-step-desc" style="margin-bottom:16px;text-align:center">Open the Azure Portal, create a new App Registration with the settings below, then come back.</div>
+
+  <div class="guide-step-card" style="margin-bottom:12px">
+    <div style="font-size:.82rem;line-height:2;color:var(--text-secondary);font-family:var(--font-display)">
+      <span style="color:var(--accent-cyan);font-weight:600">a.</span> Click the button below to open <strong style="color:var(--text-primary)">Azure Portal → App Registrations</strong><br>
+      <span style="color:var(--accent-cyan);font-weight:600">b.</span> Click <strong style="color:var(--text-primary)">+ New registration</strong><br>
+      <span style="color:var(--accent-cyan);font-weight:600">c.</span> Name: <code style="background:var(--bg-input);padding:2px 8px;border-radius:4px;color:var(--accent-cyan);font-size:.82rem">MSP Tenant Automation</code><br>
+      <span style="color:var(--accent-cyan);font-weight:600">d.</span> Account type: <strong style="color:var(--text-primary)">Single tenant</strong> (this org only)<br>
+      <span style="color:var(--accent-cyan);font-weight:600">e.</span> Redirect URI platform: <strong style="color:var(--text-primary)">Single-page application (SPA)</strong><br>
+      <span style="color:var(--accent-cyan);font-weight:600">f.</span> Redirect URI value:
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;margin-top:8px">
+      <code id="guideRedirectUri" style="flex:1;padding:8px 14px;background:var(--bg-input);border:1px solid var(--border-subtle);border-radius:var(--radius-md);font-size:.82rem;color:var(--accent-green);user-select:all;word-break:break-all"></code>
+      <button class="btn btn-secondary btn-sm" onclick="navigator.clipboard.writeText(location.origin+location.pathname);this.textContent='✓ Copied';setTimeout(()=>this.textContent='Copy',1500)">Copy</button>
+    </div>
+  </div>
+
+  <div style="text-align:center;margin-bottom:16px">
+    <button class="btn btn-primary" onclick="window.open('https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps/CreateApplicationBlade/quickStartType~/null/isMSAAccount~/false','_blank')" style="padding:11px 28px;font-size:.9rem">🌐 Open Azure Portal</button>
+    <div style="font-size:.76rem;color:var(--text-muted);margin-top:6px;font-family:var(--font-display)">Opens in a new tab — come back here when done</div>
+  </div>
+
+  <div class="guide-nav">
+    <button class="guide-skip" onclick="guidePrev()">← Back</button>
+    <button class="btn btn-primary" onclick="guideNext()">I've Created It →</button>
+  </div>
+</div>
+</div>
+
+<!-- Page 3: Paste Client ID & Sign In -->
+<div class="guide-page hidden" data-page="3">
+<div class="guide-header" style="padding-bottom:8px">
+  <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:12px">
+    <div class="guide-step-num" style="width:28px;height:28px;font-size:.82rem">2</div>
+    <span class="badge badge-blue" style="font-size:.7rem">STEP 2 OF 3</span>
+  </div>
+  <div class="guide-title" style="font-size:1.25rem">Connect to Your Tenant</div>
+</div>
+<div class="guide-body">
+  <div class="guide-step-desc" style="margin-bottom:16px;text-align:center">Copy the <strong>Application (client) ID</strong> from the Overview page of your new app registration and paste it below.</div>
+
+  <div class="guide-step-card">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+      <div><label class="form-label">Application (Client) ID *</label><input id="guideClientId" class="form-input" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"></div>
+      <div><label class="form-label">Tenant Domain *</label><input id="guideTenantDomain" class="form-input" placeholder="contoso.onmicrosoft.com"></div>
+    </div>
+    <div style="text-align:center">
+      <button class="btn btn-primary" id="guideSignInBtn" onclick="guideSaveAndSignIn()" style="padding:10px 28px">💾 Save & Sign In</button>
+      <div id="guideSignInStatus" style="font-size:.82rem;margin-top:8px;min-height:1.2em;font-family:var(--font-display)"></div>
+    </div>
+  </div>
+
+  <div style="padding:12px 16px;background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.15);border-radius:var(--radius-md);font-size:.8rem;color:var(--accent-amber);font-family:var(--font-display);line-height:1.6;margin-top:4px">
+    ⚠ A Microsoft consent prompt will appear — you must <strong>Accept</strong> it. This grants the initial Directory.ReadWrite.All and Application.ReadWrite.All permissions needed for the bootstrap step.
+  </div>
+
+  <div class="guide-nav">
+    <button class="guide-skip" onclick="guidePrev()">← Back</button>
+    <button class="btn btn-primary" id="guideToStep3" onclick="guideNext()" disabled style="opacity:.5">Signed In — Continue →</button>
+  </div>
+</div>
+</div>
+
+<!-- Page 4: Bootstrap Permissions -->
+<div class="guide-page hidden" data-page="4">
+<div class="guide-header" style="padding-bottom:8px">
+  <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:12px">
+    <div class="guide-step-num" style="width:28px;height:28px;font-size:.82rem">3</div>
+    <span class="badge badge-blue" style="font-size:.7rem">STEP 3 OF 3</span>
+  </div>
+  <div class="guide-title" style="font-size:1.25rem">Bootstrap Permissions</div>
+</div>
+<div class="guide-body">
+  <div class="guide-step-desc" style="margin-bottom:16px;text-align:center">One click — the tool will automatically add all 23 required Graph API permissions, grant admin consent, and generate a client secret.</div>
+
+  <div class="guide-step-card" style="text-align:center">
+    <button class="btn btn-success" id="guideBootstrapBtn" onclick="guideRunBootstrap()" style="padding:12px 32px;font-size:.95rem">⚡ Configure Permissions & Consent</button>
+    <div id="guideBootstrapStatus" style="font-size:.82rem;margin-top:10px;min-height:1.4em;font-family:var(--font-display)"></div>
+    <div id="guideBootstrapLog" class="hidden" style="margin-top:14px;padding:12px;background:var(--bg-input);border-radius:var(--radius-md);font-size:.74rem;line-height:1.7;max-height:180px;overflow-y:auto;text-align:left"></div>
+  </div>
+
+  <div style="padding:12px 16px;background:rgba(16,185,129,.06);border:1px solid rgba(16,185,129,.15);border-radius:var(--radius-md);font-size:.8rem;color:var(--accent-green);font-family:var(--font-display);line-height:1.6;margin-top:4px">
+    💡 This takes 10–30 seconds. A consent popup may appear — <strong>accept it</strong>. After completion, save the client secret shown in the log — it cannot be retrieved later.
+  </div>
+
+  <div class="guide-nav">
+    <button class="guide-skip" onclick="guidePrev()">← Back</button>
+    <button class="btn btn-primary" id="guideFinishBtn" onclick="guideNext()" disabled style="opacity:.5">Complete Setup →</button>
+  </div>
+</div>
+</div>
+
+<!-- Page 5: All Done -->
+<div class="guide-page hidden" data-page="5">
+<div class="guide-header">
+  <div style="font-size:3rem;margin-bottom:12px">🎉</div>
+  <div class="guide-title">You're All Set!</div>
+  <div class="guide-sub">Your tenant is connected and all permissions are in place. Here's what you can do now:</div>
+</div>
+<div class="guide-body">
+  <div class="guide-feat" style="grid-template-columns:1fr 1fr">
+    <div class="guide-feat-item" style="cursor:pointer;transition:border-color .2s" onclick="guideGoTo('setup')" onmouseenter="this.style.borderColor='var(--accent-blue)'" onmouseleave="this.style.borderColor='var(--border-subtle)'">
+      <div class="guide-feat-icon">⚡</div>
+      <div class="guide-feat-label">New Tenant Setup</div>
+      <div style="font-size:.72rem;color:var(--text-muted);margin-top:4px">Automated onboarding with branding, groups, admin accounts & policies</div>
+    </div>
+    <div class="guide-feat-item" style="cursor:pointer;transition:border-color .2s" onclick="guideGoTo('discovery')" onmouseenter="this.style.borderColor='var(--accent-blue)'" onmouseleave="this.style.borderColor='var(--border-subtle)'">
+      <div class="guide-feat-icon">🔍</div>
+      <div class="guide-feat-label">Tenant Discovery</div>
+      <div style="font-size:.72rem;color:var(--text-muted);margin-top:4px">Full audit of users, groups, policies, devices & licenses</div>
+    </div>
+    <div class="guide-feat-item" style="cursor:pointer;transition:border-color .2s" onclick="guideGoTo('users')" onmouseenter="this.style.borderColor='var(--accent-blue)'" onmouseleave="this.style.borderColor='var(--border-subtle)'">
+      <div class="guide-feat-icon">👤</div>
+      <div class="guide-feat-label">Users & Licensing</div>
+      <div style="font-size:.72rem;color:var(--text-muted);margin-top:4px">Create, modify & bulk import users with group-based licensing</div>
+    </div>
+    <div class="guide-feat-item" style="cursor:pointer;transition:border-color .2s" onclick="guideGoTo('compliance')" onmouseenter="this.style.borderColor='var(--accent-blue)'" onmouseleave="this.style.borderColor='var(--border-subtle)'">
+      <div class="guide-feat-icon">✅</div>
+      <div class="guide-feat-label">CE+ Compliance</div>
+      <div style="font-size:.72rem;color:var(--text-muted);margin-top:4px">Scan against Cyber Essentials Plus requirements with remediation</div>
+    </div>
+  </div>
+  <div class="guide-nav" style="justify-content:center;gap:12px">
+    <button class="btn btn-primary" onclick="guideClose()" style="padding:10px 32px;font-size:.92rem">🚀 Start Using the Tool</button>
+  </div>
+  <div style="text-align:center;margin-top:12px">
+    <label style="display:inline-flex;align-items:center;gap:6px;font-size:.78rem;color:var(--text-muted);cursor:pointer;font-family:var(--font-display)"><input type="checkbox" id="guideDontShow" checked> Don't show this guide again</label>
+  </div>
+</div>
+</div>
+
+<!-- Dot indicator -->
+<div class="guide-steps" style="padding:0 0 20px" id="guideDots"></div>
+
+</div>
+</div>
+
 <script>
 /* ============================================================
    CORE CONFIG & POLICY DEFINITIONS
@@ -897,6 +1136,167 @@ function initTheme(){
 }
 
 /* ============================================================
+   GUIDED ONBOARDING WIZARD
+   ============================================================ */
+let GUIDE_PAGE=0;
+const GUIDE_TOTAL=6; // pages 0-5
+
+function guideInit(){
+  // Show guide if no client ID configured (first time) and not dismissed
+  const dismissed=localStorage.getItem('m365_guide_dismissed');
+  const hasConfig=A.cfg&&A.cfg.cid;
+  if(!dismissed&&!hasConfig){
+    guideShow();
+  }
+}
+
+function guideShow(){
+  GUIDE_PAGE=0;
+  $('guideOverlay').classList.remove('hidden');
+  $('guideRedirectUri').textContent=location.origin+location.pathname;
+  guideRenderPage();
+}
+
+function guideRenderPage(){
+  document.querySelectorAll('.guide-page').forEach(p=>{
+    p.classList.toggle('hidden',parseInt(p.dataset.page)!==GUIDE_PAGE);
+  });
+  // Render dots
+  let dots='';
+  for(let i=0;i<GUIDE_TOTAL;i++){
+    const cls=i===GUIDE_PAGE?'active':i<GUIDE_PAGE?'done':'';
+    dots+=`<div class="guide-dot ${cls}"></div>`;
+  }
+  $('guideDots').innerHTML=dots;
+
+  // Pre-fill fields if we have config
+  if(GUIDE_PAGE===3){
+    if(A.cfg.cid)$('guideClientId').value=A.cfg.cid;
+    if(A.cfg.tid&&A.cfg.tid!=='common')$('guideTenantDomain').value=A.cfg.tid;
+    // Check if already signed in
+    if(A.ok()){
+      $('guideSignInStatus').innerHTML='<span style="color:var(--accent-green)">✓ Already signed in as '+esc(A.acc.username)+'</span>';
+      $('guideToStep3').disabled=false;$('guideToStep3').style.opacity='1';
+    }
+  }
+}
+
+function guideNext(){
+  if(GUIDE_PAGE<GUIDE_TOTAL-1){
+    GUIDE_PAGE++;
+    guideRenderPage();
+  } else {
+    guideClose();
+  }
+}
+
+function guidePrev(){
+  if(GUIDE_PAGE>0){
+    GUIDE_PAGE--;
+    guideRenderPage();
+  }
+}
+
+function guideClose(){
+  $('guideOverlay').classList.add('hidden');
+  if($('guideDontShow')&&$('guideDontShow').checked){
+    localStorage.setItem('m365_guide_dismissed','1');
+  }
+}
+
+function guideGoTo(tab){
+  guideClose();
+  const btn=document.querySelector(`[data-tab="${tab}"]`);
+  if(btn)switchTab(tab,btn);
+}
+
+async function guideSaveAndSignIn(){
+  const cid=$('guideClientId').value.trim();
+  const tid=$('guideTenantDomain').value.trim();
+  if(!cid){$('guideSignInStatus').innerHTML='<span style="color:var(--accent-red)">Please enter the Client ID</span>';return}
+  if(!tid){$('guideSignInStatus').innerHTML='<span style="color:var(--accent-red)">Please enter the Tenant Domain</span>';return}
+
+  // Save config
+  A.save({cid,tid,ru:location.origin+location.pathname});
+  $('cfgClientId').value=cid;
+  $('cfgTenantId').value=tid;
+
+  $('guideSignInBtn').disabled=true;
+  $('guideSignInStatus').innerHTML='<span style="color:var(--text-muted)">Launching Microsoft sign-in...</span>';
+
+  try{
+    if(!A.inst)A.init();
+    await A.login();
+    $('guideSignInStatus').innerHTML='<span style="color:var(--accent-green)">✓ Signed in as <strong>'+esc(A.acc.username)+'</strong></span>';
+    $('guideToStep3').disabled=false;$('guideToStep3').style.opacity='1';
+    $('step1Badge').className='badge badge-green';$('step1Badge').textContent='Done';
+    $('step2Badge').className='badge badge-green';$('step2Badge').textContent='Signed In';
+    authUI(1,A.acc.username);
+  }catch(e){
+    $('guideSignInStatus').innerHTML='<span style="color:var(--accent-red)">✗ Sign-in failed: '+esc(e.message)+'</span>';
+  }
+  $('guideSignInBtn').disabled=false;
+}
+
+async function guideRunBootstrap(){
+  if(!A.ok()){
+    $('guideBootstrapStatus').innerHTML='<span style="color:var(--accent-red)">Please sign in first (Step 2)</span>';
+    return;
+  }
+  $('guideBootstrapBtn').disabled=true;
+  $('guideBootstrapBtn').textContent='Working...';
+  $('guideBootstrapLog').classList.remove('hidden');
+  $('guideBootstrapLog').innerHTML='';
+  $('guideBootstrapStatus').innerHTML='<span style="color:var(--text-muted)">Configuring permissions — this takes 10–30 seconds...</span>';
+
+  // Mirror log entries to guide log
+  const origBsLog=window._origBsLogForGuide;
+  const guideLog=$('guideBootstrapLog');
+  const addGuideLine=(msg,type)=>{
+    if(!msg)return;
+    const col=type==='success'?'var(--accent-green)':type==='error'?'var(--accent-red)':type==='warning'?'var(--accent-amber)':'var(--text-secondary)';
+    guideLog.innerHTML+=`<div style="color:${col}">${esc(msg)}</div>`;
+    guideLog.scrollTop=guideLog.scrollHeight;
+  };
+
+  // Intercept bsLog to mirror here
+  const realBsLog=window.bsLog;
+  window.bsLog=function(msg,type){
+    realBsLog(msg,type);
+    addGuideLine(msg,type);
+  };
+
+  try{
+    // Run the actual bootstrap
+    await bootstrap();
+    $('guideBootstrapStatus').innerHTML='<span style="color:var(--accent-green)">✓ Bootstrap complete! All permissions configured.</span>';
+    $('guideFinishBtn').disabled=false;$('guideFinishBtn').style.opacity='1';
+  }catch(e){
+    $('guideBootstrapStatus').innerHTML='<span style="color:var(--accent-red)">✗ Error: '+esc(e.message)+'</span>';
+  }
+
+  window.bsLog=realBsLog;
+  $('guideBootstrapBtn').disabled=false;
+  $('guideBootstrapBtn').textContent='⚡ Configure Permissions & Consent';
+}
+
+// Add a "relaunch guide" button to header
+function guideAddHeaderBtn(){
+  // Only add if not already there
+  if(document.getElementById('guideRelaunchBtn'))return;
+  const meta=document.querySelector('.header-meta');
+  if(!meta)return;
+  const btn=document.createElement('button');
+  btn.id='guideRelaunchBtn';
+  btn.className='btn btn-ghost btn-sm';
+  btn.style.cssText='font-size:.82rem;padding:4px 10px';
+  btn.textContent='❓ Guide';
+  btn.title='Relaunch the setup guide';
+  btn.onclick=()=>{localStorage.removeItem('m365_guide_dismissed');guideShow()};
+  meta.insertBefore(btn,meta.firstChild);
+}
+
+/* ============================================================
    INIT
    ============================================================ */
 document.addEventListener('DOMContentLoaded',()=>{
@@ -916,6 +1316,8 @@ document.addEventListener('DOMContentLoaded',()=>{
   if(c.cid){$('step1Badge').className='badge badge-green';$('step1Badge').textContent='Done'}
   renderPhases();$('setupTotal').textContent=TOTAL_P;
   $('permList').innerHTML=PERMS.map(p=>`<div style="padding:3px 0"><span class="badge badge-violet" style="margin-right:8px">Role</span> ${p.n}</div>`).join('');
+  guideAddHeaderBtn();
+  guideInit();
 });
 
 function switchTab(t,b){document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));$('panel-'+t).classList.add('active');b.classList.add('active');if(t==='users'&&A.ok())nuLoadGroups()}
