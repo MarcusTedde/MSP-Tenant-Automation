@@ -109,7 +109,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 </head>
 <body>
 <div id="app">
-<header class="header"><div class="header-brand"><div class="header-logo">M</div><div><div class="header-title">M365 Tenant Automation</div><div class="header-subtitle">MSP Onboarding &amp; CE+ Compliance</div></div></div><div class="header-meta"><span class="badge badge-cyan">Graph API v1.0</span><span class="badge badge-green" style="margin-left:4px">v3.1</span><div id="authStatus" class="auth-status disconnected"><span class="auth-dot"></span><span id="authStatusText">Not connected</span></div><button id="authBtn" class="btn btn-sm btn-secondary" onclick="handleAuth()">Sign In</button></div></header>
+<header class="header"><div class="header-brand"><div class="header-logo">M</div><div><div class="header-title">M365 Tenant Automation</div><div class="header-subtitle">MSP Onboarding &amp; CE+ Compliance</div></div></div><div class="header-meta"><span class="badge badge-cyan">Graph API v1.0</span><span class="badge badge-green" style="margin-left:4px">v3.2</span><div id="authStatus" class="auth-status disconnected"><span class="auth-dot"></span><span id="authStatusText">Not connected</span></div><button id="authBtn" class="btn btn-sm btn-secondary" onclick="handleAuth()">Sign In</button></div></header>
 <nav class="tab-bar"><button class="tab-btn active" data-tab="setup" onclick="switchTab('setup',this)"><span>⚡</span> New Tenant Setup</button><button class="tab-btn" data-tab="discovery" onclick="switchTab('discovery',this)"><span>🔍</span> Tenant Discovery</button><button class="tab-btn" data-tab="compliance" onclick="switchTab('compliance',this)"><span>✅</span> CE+ Compliance</button><button class="tab-btn" data-tab="config" onclick="switchTab('config',this)"><span>⚙</span> App Config</button></nav>
 <main class="main-content">
 
@@ -281,6 +281,7 @@ class Auth{
   init(){if(!this.cfg.cid)return false;if(typeof msal==='undefined'){console.warn('MSAL not loaded — auth unavailable');return false}try{this.inst=new msal.PublicClientApplication({auth:{clientId:this.cfg.cid,authority:`https://login.microsoftonline.com/${this.cfg.tid||'common'}`,redirectUri:this.cfg.ru||location.origin+location.pathname},cache:{cacheLocation:'localStorage'}});this.inst.handleRedirectPromise().then(r=>{if(r){this.acc=r.account;this.tok=r.accessToken;authUI(1,r.account.username)}}).catch(()=>{});const a=this.inst.getAllAccounts();if(a.length)this.acc=a[0];return true}catch(e){console.error('MSAL init:',e);return false}}
   // Request specific delegated scopes — .default on a new app with no permissions returns an empty token
   static BOOTSTRAP_SCOPES=['https://graph.microsoft.com/Application.ReadWrite.All','https://graph.microsoft.com/AppRoleAssignment.ReadWrite.All','https://graph.microsoft.com/Directory.ReadWrite.All','https://graph.microsoft.com/DelegatedPermissionGrant.ReadWrite.All'];
+  static DISCOVERY_SCOPES=['https://graph.microsoft.com/.default'];
   async login(tid){const r=await this.inst.loginPopup({scopes:Auth.BOOTSTRAP_SCOPES,prompt:'select_account',...(tid?{authority:`https://login.microsoftonline.com/${tid}`}:{})});this.acc=r.account;this.tok=r.accessToken;authUI(1,r.account.username);return r}
   async token(sc){if(!this.acc)throw new Error('Not authenticated');const scopes=sc||Auth.BOOTSTRAP_SCOPES;try{const r=await this.inst.acquireTokenSilent({scopes,account:this.acc});this.tok=r.accessToken;return r.accessToken}catch{const r=await this.inst.acquireTokenPopup({scopes});this.tok=r.accessToken;return r.accessToken}}
   async logout(){if(this.inst){await this.inst.logoutPopup();this.acc=null;this.tok=null;authUI(0)}}
@@ -288,9 +289,9 @@ class Auth{
 }
 
 class Graph{
-  constructor(a){this.a=a}
+  constructor(a){this.a=a;this.scopes=null}
   async call(ep,m='GET',body=null,beta=false){
-    const t=await this.a.token();
+    const t=await this.a.token(this.scopes);
     const u=ep.startsWith('http')?ep:`${beta?GB:GE}${ep}`;const o={method:m,headers:{'Authorization':`Bearer ${t}`,'Content-Type':'application/json','ConsistencyLevel':'eventual'}};if(body&&m!=='GET')o.body=JSON.stringify(body);const r=await fetch(u,o);if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(`${r.status}: ${e?.error?.message||r.statusText}`)}if(r.status===204)return null;return r.json()}
 }
 
@@ -368,10 +369,20 @@ function cleanup(){SS.run=0;$('setupStartBtn').classList.remove('hidden');$('set
    DISCOVERY TAB — Professional presentation
    ============================================================ */
 async function startDiscovery(){
-  console.log('🚀 startDiscovery v3.1 — scanning 33 sections');
+  console.log('🚀 startDiscovery v3.2 — scanning 33 sections');
   const dom=$('discDomain').value.trim();if(!dom)return;
   $('discScanBtn').disabled=true;$('discScanBtn').innerHTML='<span class="animate-spin" style="display:inline-block">◌</span> Scanning...';$('discProgress').classList.remove('hidden');$('discEmpty').classList.add('hidden');$('discResults').innerHTML='';$('discExBtns').classList.add('hidden');
   DD={domain:dom,ts:new Date().toISOString()};const live=A.ok();
+
+  // Acquire token with .default scope to get all admin-consented delegated permissions
+  if(live){
+    try{
+      G.scopes=Auth.DISCOVERY_SCOPES;
+      await A.token(Auth.DISCOVERY_SCOPES);
+      // Decode to show scopes in console
+      try{const p=JSON.parse(atob(A.tok.split('.')[1]));console.log('🔑 Discovery token scopes:',p.scp||'(none — check delegated consent)')}catch{}
+    }catch(e){console.warn('⚠ Could not acquire discovery token:',e.message)}
+  }
   const secs=[
     {k:'organization',l:'Organisation'},
     {k:'subscribedSkus',l:'License Inventory'},
@@ -447,11 +458,12 @@ async function startDiscovery(){
     };const r=await fns[s.k]();DD[s.k]=r?.value||r}catch(e){DD[s.k]={_error:e.message}}}
     else{await delay(80+Math.random()*150);DD[s.k]=mockD(s.k,dom)}}
   $('discProgress').classList.add('hidden');$('discScanBtn').disabled=false;$('discScanBtn').innerHTML='🔍 Run Discovery';$('discExBtns').classList.remove('hidden');
+  G.scopes=null; // Reset to default scopes
   console.log('📦 Discovery complete. Sections:',Object.keys(DD).filter(k=>k!=='domain'&&k!=='ts').length,'Keys:',Object.keys(DD));
   renderDisc()}
 
 function renderDisc(){
-  console.log('🔍 renderDisc v3.1 — 33 section discovery');
+  console.log('🔍 renderDisc v3.2 — 33 section discovery');
   try{
   if(!DD)return;const d=DD,c=$('discResults');
   const arr=k=>Array.isArray(d[k])?d[k]:[];
@@ -1082,37 +1094,42 @@ async function bootstrap(){
     // This avoids hardcoded GUIDs which differ between delegated and application permission types
     bsLog('Fetching Microsoft Graph permission catalogue...','info');
     status.textContent='Resolving permission IDs...';
-    const graphSp=await G.call("/servicePrincipals?$filter=appId eq '00000003-0000-0000-c000-000000000000'&$select=id,appRoles");
+    const graphSp=await G.call("/servicePrincipals?$filter=appId eq '00000003-0000-0000-c000-000000000000'&$select=id,appRoles,oauth2PermissionScopes");
     const graphSpId=graphSp.value[0].id;
     const appRoles=graphSp.value[0].appRoles||[];
-    bsLog('✓ Catalogue loaded: '+appRoles.length+' available app roles','success');
+    const delegatedScopes=graphSp.value[0].oauth2PermissionScopes||[];
+    bsLog('✓ Catalogue loaded: '+appRoles.length+' app roles, '+delegatedScopes.length+' delegated scopes','success');
 
-    // Build lookup: permission name → correct appRole ID
-    const roleMap={};
-    appRoles.forEach(r=>{if(r.value)roleMap[r.value]=r.id});
+    // Build lookups: permission name → ID for both types
+    const roleMap={};appRoles.forEach(r=>{if(r.value)roleMap[r.value]=r.id});
+    const scopeMap={};delegatedScopes.forEach(s=>{if(s.value)scopeMap[s.value]=s.id});
+
     const permNames=PERMS.map(p=>p.n);
-    const resolved=[];const notFound=[];
+    const resolvedRoles=[];const resolvedScopes=[];const notFound=[];
+    const resourceAccess=[];
     for(const name of permNames){
-      if(roleMap[name]){resolved.push({n:name,id:roleMap[name]})}
-      else{notFound.push(name)}
+      let found=false;
+      if(roleMap[name]){resolvedRoles.push({n:name,id:roleMap[name]});resourceAccess.push({id:roleMap[name],type:'Role'});found=true}
+      if(scopeMap[name]){resolvedScopes.push({n:name,id:scopeMap[name]});resourceAccess.push({id:scopeMap[name],type:'Scope'});found=true}
+      if(!found)notFound.push(name);
     }
     if(notFound.length>0){
       bsLog('⚠ '+notFound.length+' permissions not in catalogue: '+notFound.join(', '),'warning');
     }
-    bsLog('✓ Resolved '+resolved.length+'/'+permNames.length+' permission IDs','success');
+    bsLog('✓ Resolved '+resolvedRoles.length+' app roles + '+resolvedScopes.length+' delegated scopes','success');
 
-    // Update the app manifest with correct IDs
+    // Update the app manifest with BOTH Role and Scope permissions
     if(appObjId){
-      bsLog('Declaring '+resolved.length+' application permissions on app manifest...','info');
+      bsLog('Declaring '+resourceAccess.length+' permissions on app manifest (Role + Scope)...','info');
       status.textContent='Updating app manifest...';
       try{
         await G.call(`/applications/${appObjId}`,'PATCH',{
           requiredResourceAccess:[{
             resourceAppId:'00000003-0000-0000-c000-000000000000',
-            resourceAccess:resolved.map(p=>({id:p.id,type:'Role'}))
+            resourceAccess:resourceAccess
           }]
         });
-        bsLog('✓ App manifest updated with correct permission IDs','success');
+        bsLog('✓ App manifest updated','success');
       }catch(e){bsLog('⚠ Could not update app manifest: '+e.message,'warning')}
     }
 
@@ -1130,24 +1147,49 @@ async function bootstrap(){
         spId=sp.id;bsLog('✓ Service Principal created: '+spId,'success');
       }catch(e){bsLog('✗ Failed to create SP: '+e.message,'error');throw e}}
 
-    // Grant admin consent using dynamically resolved IDs
-    bsLog('Granting admin consent for '+resolved.length+' application permissions...','info');
-    status.textContent='Granting admin consent...';
-    let consented=0,failed=0;
-    for(const p of resolved){
+    // Grant admin consent for APPLICATION permissions (appRoleAssignments — for future client credential flow)
+    bsLog('Granting admin consent for '+resolvedRoles.length+' application permissions...','info');
+    status.textContent='Granting application permissions...';
+    let consented=0,failed=0,skipped=0;
+    for(const p of resolvedRoles){
       try{
         await G.call(`/servicePrincipals/${spId}/appRoleAssignments`,'POST',{
           principalId:spId,resourceId:graphSpId,appRoleId:p.id});
-        consented++;bsLog('  ✓ '+p.n,'success');
+        consented++;bsLog('  ✓ '+p.n+' (app)','success');
       }catch(e){
-        if(e.message.includes('already exists')||e.message.includes('Permission being assigned already exists')){
-          consented++;bsLog('  ✓ '+p.n+' (already granted)','success');
+        const msg=e.message||'';
+        if(msg.includes('already exists')||msg.includes('Permission being assigned already')||msg.includes('conflicting object')){
+          skipped++;bsLog('  ✓ '+p.n+' (already granted)','success');
         } else {
-          failed++;bsLog('  ✗ '+p.n+': '+e.message,'error');
+          failed++;bsLog('  ⚠ '+p.n+': '+msg,'warning');
         }
       }
     }
-    bsLog(`Admin consent result: ${consented} granted, ${failed} failed, ${notFound.length} unavailable — of ${PERMS.length} requested`,'info');
+    bsLog(`Application permissions: ${consented} new, ${skipped} existing, ${failed} failed`,'info');
+
+    // Grant admin consent for DELEGATED permissions (oauth2PermissionGrants — for user-signed-in discovery)
+    bsLog('Granting admin consent for delegated scopes (for discovery)...','info');
+    status.textContent='Granting delegated permissions...';
+    const scopeString=resolvedScopes.map(s=>s.n).join(' ');
+    try{
+      // Check for existing grant
+      const existingGrants=await G.call(`/oauth2PermissionGrants?$filter=clientId eq '${spId}' and resourceId eq '${graphSpId}'`);
+      if(existingGrants.value&&existingGrants.value.length>0){
+        // Update existing grant with all scopes
+        const grantId=existingGrants.value[0].id;
+        await G.call(`/oauth2PermissionGrants/${grantId}`,'PATCH',{scope:scopeString});
+        bsLog('✓ Updated existing delegated consent with '+resolvedScopes.length+' scopes','success');
+      } else {
+        // Create new grant
+        await G.call('/oauth2PermissionGrants','POST',{
+          clientId:spId,consentType:'AllPrincipals',resourceId:graphSpId,scope:scopeString
+        });
+        bsLog('✓ Created delegated consent with '+resolvedScopes.length+' scopes','success');
+      }
+      bsLog('  Scopes: '+scopeString,'info');
+    }catch(e){
+      bsLog('⚠ Delegated consent failed: '+e.message+' — you may need to grant admin consent manually in Azure Portal → Enterprise Apps → '+A.cfg.cid+' → Permissions','warning');
+    }
 
     // Generate client secret
     let secretText='';
