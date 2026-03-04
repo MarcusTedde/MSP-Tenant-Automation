@@ -233,22 +233,22 @@ const CEP={accessControl:{cat:'Access Control',icon:'🔐',p:[
 {id:'ac-006',n:'Session Timeout Policy',ce:'User sessions must timeout after inactivity',sev:'medium',ep:'POST /identity/conditionalAccess/policies',pay:{displayName:'[CE+] Session Timeout',state:'enabled',conditions:{users:{includeUsers:['All']},applications:{includeApplications:['All']}},sessionControls:{signInFrequency:{value:1,type:'hours',isEnabled:true},persistentBrowser:{mode:'never',isEnabled:true}}}}
 ]},secureConfig:{cat:'Secure Configuration',icon:'⚙️',p:[
 {id:'sc-001',n:'Password Policy & Banned Passwords',ce:'Password policies must enforce minimum complexity',sev:'critical',ep:'PATCH /settings',ni:true,ip:'Custom banned passwords (comma-separated):',ifl:'customBannedPasswords'},
-{id:'sc-002',n:'SSPR Registration Campaign',ce:'SSPR configured with strong authentication methods',sev:'medium',ep:'PATCH /policies/authenticationMethodsPolicy',pay:{registrationEnforcement:{authenticationMethodsRegistrationCampaign:{state:'enabled',snoozeDurationInDays:3}}}},
+{id:'sc-002',n:'SSPR Registration Campaign',ce:'SSPR configured with strong authentication methods',sev:'medium',ep:'PATCH /policies/authenticationMethodsPolicy',pay:{registrationEnforcement:{authenticationMethodsRegistrationCampaign:{state:'enabled',snoozeDurationInDays:3,includeTargets:[{id:'all_users',targetType:'group',targetedAuthenticationMethod:'microsoftAuthenticator'}]}}}},
 {id:'sc-003',n:'Disable Security Defaults (CA supersedes)',ce:'Conditional Access policies supersede security defaults',sev:'critical',ep:'PATCH /policies/identitySecurityDefaultsEnforcementPolicy',pay:{isEnabled:false}},
 {id:'sc-004',n:'Enable Unified Audit Log',ce:'Unified audit logging must be enabled for all services',sev:'critical',note:'Requires Exchange Online PowerShell: Set-AdminAuditLogConfig -UnifiedAuditLogIngestionEnabled $true'},
-{id:'sc-005',n:'Disable User Consent to Apps',ce:'Users must not consent to third-party applications uncontrolled',sev:'high',ep:'PATCH /policies/authorizationPolicy',pay:{defaultUserRolePermissions:{permissionGrantPoliciesAssigned:[]}}},
-{id:'sc-006',n:'Restrict Azure AD Portal',ce:'Non-admin users should not access Azure AD administration',sev:'medium',ep:'PATCH /policies/authorizationPolicy',pay:{defaultUserRolePermissions:{allowedToReadOtherUsers:false}}}
+{id:'sc-005',n:'Disable User Consent to Apps',ce:'Users must not consent to third-party applications uncontrolled',sev:'high',ep:'PATCH /policies/authorizationPolicy/authorizationPolicy',pay:{defaultUserRolePermissions:{permissionGrantPoliciesAssigned:[]}}},
+{id:'sc-006',n:'Restrict Azure AD Portal',ce:'Non-admin users should not access Azure AD administration',sev:'medium',ep:'PATCH /policies/authorizationPolicy/authorizationPolicy',pay:{defaultUserRolePermissions:{allowedToReadOtherUsers:false}}}
 ]},malware:{cat:'Malware Protection',icon:'🛡️',p:[
 {id:'mp-001',n:'Anti-Malware Policy',ce:'Anti-malware must be configured and kept current',sev:'critical',note:'Configure via Defender for Office 365 portal — not fully available via Graph API'},
 {id:'mp-002',n:'Safe Attachments Policy',ce:'Email attachments must be scanned for malware',sev:'critical',note:'Requires Defender for Office 365 P1 licence'},
 {id:'mp-003',n:'Safe Links Policy',ce:'URLs in emails must be scanned and rewritten',sev:'high',note:'Requires Defender for Office 365 P1 licence'},
-{id:'mp-004',n:'Windows Defender AV Compliance',ce:'All managed devices must have active antivirus',sev:'critical',ep:'POST /deviceManagement/deviceCompliancePolicies',pay:{displayName:'[CE+] Defender AV','@odata.type':'#microsoft.graph.windows10CompliancePolicy',defenderEnabled:true,antivirusRequired:true,rtpEnabled:true}}
+{id:'mp-004',n:'Windows Defender AV Compliance',ce:'All managed devices must have active antivirus',sev:'critical',ep:'POST /deviceManagement/deviceCompliancePolicies',pay:{displayName:'[CE+] Defender AV','@odata.type':'#microsoft.graph.windows10CompliancePolicy',defenderEnabled:true,antivirusRequired:true,rtpEnabled:true,scheduledActionsForRule:[{ruleName:'PasswordRequired',scheduledActionConfigurations:[{actionType:'block',gracePeriodHours:0,notificationTemplateId:''}]}]}}
 ]},patch:{cat:'Patch Management',icon:'📦',p:[
 {id:'pm-001',n:'Windows Update Ring',ce:'Critical patches must be applied within 14 days',sev:'critical',ep:'POST /deviceManagement/deviceConfigurations',pay:{'@odata.type':'#microsoft.graph.windowsUpdateForBusinessConfiguration',displayName:'[CE+] Critical Update Ring',qualityUpdatesDeferralPeriodInDays:0,featureUpdatesDeferralPeriodInDays:14,automaticUpdateMode:'autoInstallAndRebootAtScheduledTime'}},
-{id:'pm-002',n:'Device Compliance - OS Version',ce:'Devices must run supported OS versions',sev:'high',ep:'POST /deviceManagement/deviceCompliancePolicies',ni:true,ip:'Min Windows build:',ifl:'osMinimumVersion',dv:'10.0.19045.0'},
+{id:'pm-002',n:'Device Compliance - OS Version',ce:'Devices must run supported OS versions',sev:'high',ep:'POST /deviceManagement/deviceCompliancePolicies',pay:{displayName:'[CE+] OS Version','@odata.type':'#microsoft.graph.windows10CompliancePolicy',osMinimumVersion:'10.0.19045.0',scheduledActionsForRule:[{ruleName:'PasswordRequired',scheduledActionConfigurations:[{actionType:'block',gracePeriodHours:72,notificationTemplateId:''}]}]},ni:true,ip:'Min Windows build:',ifl:'osMinimumVersion',dv:'10.0.19045.0'},
 {id:'pm-003',n:'Detected Apps Audit',ce:'Unsupported software must not be in use',sev:'high',ep:'GET /deviceManagement/detectedApps',note:'Discovery/audit only — flags unsupported software'}
 ]},firewall:{cat:'Firewalls & Network',icon:'🔥',p:[
-{id:'fw-001',n:'Windows Firewall Compliance',ce:'Host-based firewall must be enabled on all devices',sev:'critical',ep:'POST /deviceManagement/deviceCompliancePolicies',pay:{displayName:'[CE+] Firewall','@odata.type':'#microsoft.graph.windows10CompliancePolicy',activeFirewallRequired:true}},
+{id:'fw-001',n:'Windows Firewall Compliance',ce:'Host-based firewall must be enabled on all devices',sev:'critical',ep:'POST /deviceManagement/deviceCompliancePolicies',pay:{displayName:'[CE+] Firewall','@odata.type':'#microsoft.graph.windows10CompliancePolicy',activeFirewallRequired:true,scheduledActionsForRule:[{ruleName:'PasswordRequired',scheduledActionConfigurations:[{actionType:'block',gracePeriodHours:0,notificationTemplateId:''}]}]}},
 {id:'fw-002',n:'Firewall Config Profile',ce:'Firewall must block inbound connections by default',sev:'critical',ep:'POST /deviceManagement/deviceConfigurations'},
 {id:'fw-003',n:'Named Locations - Trusted IPs',ce:'Corporate network locations must be defined',sev:'medium',ep:'POST /identity/conditionalAccess/namedLocations',ni:true,ip:'Trusted IP ranges (CIDR, comma-separated):',ifl:'ipRanges'}
 ]},dataProtection:{cat:'Data Protection',icon:'📋',p:[
@@ -974,7 +974,13 @@ async function remConfirm(){
   if(live&&p.ep&&p.pay&&!p.ep.startsWith('GET')){
     try{
       const[method,path]=p.ep.split(' ');
-      await G.call(path,method,p.pay,path.includes('sharepoint'));
+      // Merge user input into payload if this is a dynamic-input policy
+      let payload={...p.pay};
+      if(p.ni&&p.ifl){
+        const inputVal=$('remIn').value.trim()||p.dv||'';
+        if(inputVal)payload[p.ifl]=inputVal;
+      }
+      await G.call(path,method,payload,path.includes('sharepoint'));
       applyBtn.innerHTML='✓ Applied!';applyBtn.style.background='var(--accent-green)';
     }catch(e){
       applyBtn.innerHTML='✗ Error';applyBtn.style.background='var(--accent-red)';
