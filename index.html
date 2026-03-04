@@ -34,8 +34,8 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .header{display:flex;align-items:center;justify-content:space-between;padding:14px 28px;border-bottom:1px solid var(--border-subtle);background:linear-gradient(180deg,rgba(12,18,32,.95),rgba(6,10,17,.98));backdrop-filter:blur(12px);position:sticky;top:0;z-index:100}
 .header-brand{display:flex;align-items:center;gap:14px}.header-logo{width:34px;height:34px;border-radius:var(--radius-md);background:linear-gradient(135deg,var(--accent-blue),var(--accent-cyan));display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:900;font-size:16px;color:#fff;box-shadow:0 2px 12px rgba(59,130,246,.25)}.header-title{font-family:var(--font-display);font-weight:700;font-size:15px;letter-spacing:-.03em}.header-subtitle{font-size:.72rem;color:var(--text-muted);margin-top:1px}.header-meta{display:flex;align-items:center;gap:10px}
 .auth-status{display:flex;align-items:center;gap:8px;padding:6px 14px;border-radius:999px;font-size:.78rem;font-family:var(--font-display);font-weight:500;border:1px solid var(--border-subtle);background:var(--bg-surface)}.auth-status.connected{border-color:rgba(16,185,129,.3);background:rgba(16,185,129,.06);color:var(--accent-green)}.auth-status.disconnected{color:var(--text-muted)}.auth-dot{width:7px;height:7px;border-radius:50%;background:var(--text-muted)}.auth-status.connected .auth-dot{background:var(--accent-green);box-shadow:0 0 8px rgba(16,185,129,.5)}
-.tab-bar{display:flex;border-bottom:1px solid var(--border-subtle);padding-left:28px;background:rgba(12,18,32,.6);backdrop-filter:blur(8px);position:sticky;top:53px;z-index:99}
-.tab-btn{font-family:var(--font-display);padding:13px 22px;background:0 0;border:none;color:var(--text-muted);font-size:.92rem;font-weight:500;cursor:pointer;border-bottom:2px solid transparent;transition:all var(--t-fast);display:flex;align-items:center;gap:8px}.tab-btn:hover{color:var(--text-secondary)}.tab-btn.active{color:var(--accent-blue);border-bottom-color:var(--accent-blue)}
+.tab-bar{display:flex;border-bottom:1px solid var(--border-subtle);padding-left:28px;background:rgba(12,18,32,.6);backdrop-filter:blur(8px);position:sticky;top:53px;z-index:99;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none}.tab-bar::-webkit-scrollbar{display:none}
+.tab-btn{font-family:var(--font-display);padding:13px 22px;background:0 0;border:none;color:var(--text-muted);font-size:.92rem;font-weight:500;cursor:pointer;border-bottom:2px solid transparent;transition:all var(--t-fast);display:flex;align-items:center;gap:8px;white-space:nowrap;flex-shrink:0}.tab-btn:hover{color:var(--text-secondary)}.tab-btn.active{color:var(--accent-blue);border-bottom-color:var(--accent-blue)}
 .main-content{padding:28px;max-width:1440px;margin:0 auto}.tab-panel{display:none}.tab-panel.active{display:block;animation:fadeIn .25s ease}
 .card{background:var(--bg-surface);border:1px solid var(--border-subtle);border-radius:var(--radius-lg);padding:22px;transition:border-color var(--t-norm)}.card:hover{border-color:var(--border-default)}.card-header{font-family:var(--font-display);font-size:.92rem;font-weight:700;color:var(--text-primary);margin-bottom:16px;display:flex;align-items:center;gap:8px}.card-header .dot{width:6px;height:6px;border-radius:50%;background:var(--accent-blue)}
 .form-label{display:block;font-family:var(--font-display);font-size:.7rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px}
@@ -109,17 +109,141 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 </head>
 <body>
 <div id="app">
-<header class="header"><div class="header-brand"><div class="header-logo">M</div><div><div class="header-title">M365 Tenant Automation</div><div class="header-subtitle">MSP Onboarding &amp; CE+ Compliance</div></div></div><div class="header-meta"><span class="badge badge-cyan">Graph API v1.0</span><span class="badge badge-green" style="margin-left:4px">v3.2</span><div id="authStatus" class="auth-status disconnected"><span class="auth-dot"></span><span id="authStatusText">Not connected</span></div><button id="authBtn" class="btn btn-sm btn-secondary" onclick="handleAuth()">Sign In</button></div></header>
-<nav class="tab-bar"><button class="tab-btn active" data-tab="setup" onclick="switchTab('setup',this)"><span>⚡</span> New Tenant Setup</button><button class="tab-btn" data-tab="discovery" onclick="switchTab('discovery',this)"><span>🔍</span> Tenant Discovery</button><button class="tab-btn" data-tab="compliance" onclick="switchTab('compliance',this)"><span>✅</span> CE+ Compliance</button><button class="tab-btn" data-tab="config" onclick="switchTab('config',this)"><span>⚙</span> App Config</button></nav>
+<header class="header"><div class="header-brand"><div class="header-logo">M</div><div><div class="header-title">M365 Tenant Automation</div><div class="header-subtitle">MSP Onboarding, Provisioning &amp; CE+ Compliance</div></div></div><div class="header-meta"><span class="badge badge-cyan">Graph API v1.0</span><span class="badge badge-green" style="margin-left:4px">v3.3</span><div id="authStatus" class="auth-status disconnected"><span class="auth-dot"></span><span id="authStatusText">Not connected</span></div><button id="authBtn" class="btn btn-sm btn-secondary" onclick="handleAuth()">Sign In</button></div></header>
+<nav class="tab-bar"><button class="tab-btn active" data-tab="setup" onclick="switchTab('setup',this)"><span>⚡</span> New Tenant Setup</button><button class="tab-btn" data-tab="discovery" onclick="switchTab('discovery',this)"><span>🔍</span> Tenant Discovery</button><button class="tab-btn" data-tab="users" onclick="switchTab('users',this)"><span>👤</span> Users</button><button class="tab-btn" data-tab="domains" onclick="switchTab('domains',this)"><span>🌐</span> Domains</button><button class="tab-btn" data-tab="compliance" onclick="switchTab('compliance',this)"><span>✅</span> CE+ Compliance</button><button class="tab-btn" data-tab="config" onclick="switchTab('config',this)"><span>⚙</span> App Config</button></nav>
 <main class="main-content">
 
 <!-- SETUP -->
-<div id="panel-setup" class="tab-panel active"><div class="flex gap-lg setup-layout" style="align-items:flex-start"><div class="flex flex-col gap-md setup-sidebar" style="width:340px;flex-shrink:0"><div class="card"><div class="card-header"><span class="dot"></span> Tenant Connection</div><div style="margin-bottom:14px"><label class="form-label">Tenant Domain</label><input id="setupDomain" class="form-input" placeholder="contoso.onmicrosoft.com"></div><div style="margin-bottom:14px"><label class="form-label">Global Admin UPN</label><input id="setupAdmin" class="form-input" type="email" placeholder="admin@contoso.onmicrosoft.com"></div><div class="flex gap-sm"><button id="setupStartBtn" class="btn btn-primary w-full" onclick="startSetup()">⚡ Start Configuration</button><button id="setupAbortBtn" class="btn btn-danger hidden" onclick="abortSetup()">■ Abort</button></div></div><div class="card"><div class="flex justify-between items-center" style="margin-bottom:12px"><div class="card-header" style="margin-bottom:0">Progress</div><span id="setupPercent" style="font-family:var(--font-display);font-size:1.5rem;font-weight:800;color:var(--accent-blue)">0%</span></div><div class="progress-track" style="margin-bottom:14px"><div id="setupProgressBar" class="progress-fill" style="width:0%"></div></div><div class="flex gap-lg"><div><div class="stat-label">Configured</div><div id="setupConfigured" style="font-family:var(--font-display);font-size:1.2rem;font-weight:800;color:var(--accent-green)">0</div></div><div><div class="stat-label">Total</div><div id="setupTotal" style="font-family:var(--font-display);font-size:1.2rem;font-weight:800">0</div></div><div><div class="stat-label">Errors</div><div id="setupErrors" style="font-family:var(--font-display);font-size:1.2rem;font-weight:800;color:var(--accent-green)">0</div></div></div></div><div class="card" style="flex:1;overflow:auto;max-height:420px"><div class="card-header">Phases</div><div id="phaseList" class="flex flex-col gap-sm"></div></div></div><div class="card flex flex-col" style="flex:1;min-height:620px"><div class="flex justify-between items-center" style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--border-subtle)"><div class="card-header" style="margin-bottom:0"><span id="logLive" class="hidden" style="width:7px;height:7px;border-radius:50%;background:var(--accent-green)"></span>Configuration Log</div><button class="btn btn-ghost btn-sm" onclick="copyLog()">Copy</button></div><div id="logContainer" class="log-container"><div class="empty-state" id="logEmpty"><div class="empty-icon">⚡</div><div class="empty-title">Ready to configure</div><div class="empty-desc">Enter tenant details and click Start</div></div></div></div></div></div>
+<div id="panel-setup" class="tab-panel active"><div class="flex gap-lg setup-layout" style="align-items:flex-start"><div class="flex flex-col gap-md setup-sidebar" style="width:340px;flex-shrink:0"><div class="card"><div class="card-header"><span class="dot"></span> Tenant Connection</div><div style="margin-bottom:14px"><label class="form-label">Tenant Domain</label><input id="setupDomain" class="form-input" placeholder="contoso.onmicrosoft.com"></div><div style="margin-bottom:14px"><label class="form-label">Global Admin UPN</label><input id="setupAdmin" class="form-input" type="email" placeholder="admin@contoso.onmicrosoft.com"></div><div class="flex gap-sm"><button id="setupStartBtn" class="btn btn-primary w-full" onclick="startSetup()">⚡ Start Configuration</button><button id="setupAbortBtn" class="btn btn-danger hidden" onclick="abortSetup()">■ Abort</button></div></div>
+
+<!-- Company Details -->
+<div class="card"><div class="card-header"><span class="dot" style="background:var(--accent-cyan)"></span> Company Details</div>
+<div style="margin-bottom:10px"><label class="form-label">Company Name</label><input id="setupCompany" class="form-input" placeholder="Contoso Ltd"></div>
+<div style="margin-bottom:10px"><label class="form-label">Support Email</label><input id="setupSupportEmail" class="form-input" type="email" placeholder="support@contoso.com"></div>
+<div style="margin-bottom:10px"><label class="form-label">Support Phone</label><input id="setupSupportPhone" class="form-input" placeholder="+44 1234 567890"></div>
+<div style="margin-bottom:10px"><label class="form-label">Support URL</label><input id="setupSupportUrl" class="form-input" placeholder="https://support.contoso.com"></div>
+<div style="margin-bottom:10px"><label class="form-label">Privacy URL</label><input id="setupPrivacyUrl" class="form-input" placeholder="https://contoso.com/privacy"></div>
+<div style="margin-bottom:10px"><label class="form-label">Brand Colour</label><div class="flex gap-sm"><input id="setupColour" class="form-input" placeholder="#0078D4" style="flex:1"><input type="color" id="setupColourPick" value="#0078D4" style="width:38px;height:38px;border:none;cursor:pointer;border-radius:var(--radius-sm)" onchange="$('setupColour').value=this.value"></div></div>
+<div style="margin-bottom:10px"><label class="form-label">Usage Location (ISO)</label><input id="setupUsageLoc" class="form-input" value="GB" placeholder="GB" style="max-width:80px"></div>
+</div><div class="card"><div class="flex justify-between items-center" style="margin-bottom:12px"><div class="card-header" style="margin-bottom:0">Progress</div><span id="setupPercent" style="font-family:var(--font-display);font-size:1.5rem;font-weight:800;color:var(--accent-blue)">0%</span></div><div class="progress-track" style="margin-bottom:14px"><div id="setupProgressBar" class="progress-fill" style="width:0%"></div></div><div class="flex gap-lg"><div><div class="stat-label">Configured</div><div id="setupConfigured" style="font-family:var(--font-display);font-size:1.2rem;font-weight:800;color:var(--accent-green)">0</div></div><div><div class="stat-label">Total</div><div id="setupTotal" style="font-family:var(--font-display);font-size:1.2rem;font-weight:800">0</div></div><div><div class="stat-label">Errors</div><div id="setupErrors" style="font-family:var(--font-display);font-size:1.2rem;font-weight:800;color:var(--accent-green)">0</div></div></div></div><div class="card" style="flex:1;overflow:auto;max-height:600px"><div class="card-header">Phases</div><div id="phaseList" class="flex flex-col gap-sm"></div></div></div><div class="card flex flex-col" style="flex:1;min-height:620px"><div class="flex justify-between items-center" style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--border-subtle)"><div class="card-header" style="margin-bottom:0"><span id="logLive" class="hidden" style="width:7px;height:7px;border-radius:50%;background:var(--accent-green)"></span>Configuration Log</div><button class="btn btn-ghost btn-sm" onclick="copyLog()">Copy</button></div><div id="logContainer" class="log-container"><div class="empty-state" id="logEmpty"><div class="empty-icon">⚡</div><div class="empty-title">Ready to configure</div><div class="empty-desc">Enter tenant details and click Start</div></div></div></div></div></div>
 
 <!-- DISCOVERY -->
 <div id="panel-discovery" class="tab-panel"><div class="card" style="margin-bottom:22px"><div class="flex items-center gap-md" style="flex-wrap:wrap"><div style="flex:1;min-width:280px;max-width:400px"><label class="form-label">Target Tenant Domain</label><input id="discDomain" class="form-input" placeholder="contoso.onmicrosoft.com"></div><button id="discScanBtn" class="btn btn-primary" onclick="startDiscovery()" style="align-self:flex-end">🔍 Run Discovery</button><div id="discExBtns" class="flex gap-sm hidden" style="align-self:flex-end"><button class="btn btn-secondary btn-sm" onclick="exDiscJSON()">📄 JSON</button><button class="btn btn-secondary btn-sm" onclick="exDiscHTML()">📋 HTML Report</button><button class="btn btn-sm" style="background:rgba(236,91,44,.12);color:var(--accent-orange);border:1px solid rgba(236,91,44,.25)" onclick="exITGlue()">🔶 ITGlue HTML</button></div></div><div id="discProgress" class="hidden" style="margin-top:14px"><div class="flex justify-between" style="margin-bottom:5px"><span id="discStatus" style="font-size:.8rem;color:var(--text-secondary)"></span><span id="discPercent" style="font-size:.8rem;font-weight:600;color:var(--accent-blue)">0%</span></div><div class="progress-track"><div id="discBar" class="progress-fill" style="width:0%"></div></div></div></div><div id="discResults"></div><div id="discEmpty" class="empty-state"><div class="empty-icon">🔍</div><div class="empty-title">No scan results</div><div class="empty-desc">Enter a tenant domain and run a discovery scan</div></div></div>
 
 <!-- COMPLIANCE -->
+<!-- ═══════ USERS TAB ═══════ -->
+<div id="panel-users" class="tab-panel"><div style="max-width:1200px">
+
+<!-- Create User Form -->
+<div class="card" style="margin-bottom:22px">
+<div class="card-header"><span class="dot" style="background:var(--accent-blue)"></span> Create New User</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+  <div><label class="form-label">First Name *</label><input id="nuFirst" class="form-input" placeholder="John"></div>
+  <div><label class="form-label">Last Name *</label><input id="nuLast" class="form-input" placeholder="Smith"></div>
+  <div><label class="form-label">Display Name</label><input id="nuDisplay" class="form-input" placeholder="Auto-generated from name"></div>
+  <div><label class="form-label">Username (UPN) *</label><div class="flex gap-sm"><input id="nuUser" class="form-input" placeholder="john.smith" style="flex:1"><select id="nuDomainSel" class="form-input" style="width:auto;min-width:180px"><option>Loading domains...</option></select></div></div>
+  <div><label class="form-label">Job Title</label><input id="nuTitle" class="form-input" placeholder="IT Manager"></div>
+  <div><label class="form-label">Department</label><input id="nuDept" class="form-input" placeholder="IT"></div>
+  <div><label class="form-label">Usage Location *</label><input id="nuLoc" class="form-input" placeholder="GB" value="GB" style="max-width:80px"></div>
+  <div><label class="form-label">Password</label><div class="flex gap-sm"><input id="nuPass" class="form-input" type="text" placeholder="Auto-generate" style="flex:1"><button class="btn btn-secondary btn-sm" onclick="nuGenPass()" title="Generate strong password">🎲</button></div></div>
+</div>
+
+<!-- License Groups -->
+<div style="margin-bottom:14px">
+  <div class="flex justify-between items-center" style="margin-bottom:8px">
+    <label class="form-label" style="margin-bottom:0">License Groups</label>
+    <button class="btn btn-ghost btn-sm" onclick="nuLoadGroups()">↻ Refresh</button>
+  </div>
+  <div id="nuLicGroups" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:6px;padding:12px;background:var(--bg-input);border-radius:var(--radius-md);border:1px solid var(--border-subtle);max-height:180px;overflow-y:auto">
+    <div style="color:var(--text-muted);font-size:.82rem;padding:8px">Click "Refresh" to load license groups from tenant, or create them below</div>
+  </div>
+</div>
+
+<!-- Create License Group inline -->
+<div style="margin-bottom:16px;padding:12px;background:rgba(59,130,246,.03);border:1px solid rgba(59,130,246,.1);border-radius:var(--radius-md)">
+  <div style="font-size:.78rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;font-family:var(--font-display)">Quick Create License Group</div>
+  <div class="flex gap-sm items-center">
+    <input id="nuNewGrpName" class="form-input" placeholder="e.g. LIC — Business Premium" style="flex:1">
+    <select id="nuNewGrpSku" class="form-input" style="width:auto;min-width:200px"><option value="">Assign SKU (optional)</option></select>
+    <button class="btn btn-secondary btn-sm" onclick="nuCreateGroup()">+ Create Group</button>
+  </div>
+</div>
+
+<div class="flex gap-sm">
+  <button class="btn btn-primary" onclick="nuCreateUser()">👤 Create User</button>
+  <button class="btn btn-secondary" onclick="nuBulkToggle()">📋 Bulk Import (CSV)</button>
+</div>
+
+<!-- Bulk CSV area -->
+<div id="nuBulkArea" class="hidden" style="margin-top:14px;padding:14px;background:var(--bg-input);border-radius:var(--radius-md);border:1px solid var(--border-subtle)">
+  <div style="font-size:.78rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;font-family:var(--font-display)">Bulk Import from CSV</div>
+  <p style="font-size:.8rem;color:var(--text-secondary);margin-bottom:10px;line-height:1.5">Paste CSV with headers: <code style="color:var(--accent-cyan)">FirstName,LastName,Username,JobTitle,Department,LicenseGroups</code><br>LicenseGroups can be comma-separated group names. Leave blank to skip licensing.</p>
+  <textarea id="nuBulkCsv" style="width:100%;min-height:100px;background:var(--bg-card);color:var(--text-primary);border:1px solid var(--border-subtle);border-radius:var(--radius-md);padding:10px;font-size:.78rem;font-family:var(--font-mono);resize:vertical" placeholder="FirstName,LastName,Username,JobTitle,Department,LicenseGroups
+John,Smith,john.smith,IT Manager,IT,LIC — Business Premium
+Jane,Doe,jane.doe,CFO,Finance,LIC — Business Premium"></textarea>
+  <div class="flex gap-sm" style="margin-top:10px">
+    <button class="btn btn-primary btn-sm" onclick="nuBulkCreate()">⚡ Create All Users</button>
+    <button class="btn btn-ghost btn-sm" onclick="nuBulkTemplate()">📥 Download Template</button>
+  </div>
+</div>
+</div>
+
+<!-- Created Users Log -->
+<div class="card">
+<div class="flex justify-between items-center" style="margin-bottom:12px">
+  <div class="card-header" style="margin-bottom:0"><span class="dot" style="background:var(--accent-green)"></span> Created Users</div>
+  <span id="nuCount" style="font-family:var(--font-display);font-size:.82rem;color:var(--text-muted)">0 users</span>
+</div>
+<div id="nuLog"></div>
+<div id="nuEmpty" class="empty-state" style="padding:40px"><div class="empty-icon">👤</div><div class="empty-title">No users created yet</div><div class="empty-desc">Fill in the form above and click Create User</div></div>
+</div>
+
+</div></div>
+
+<!-- ═══════ DOMAINS TAB ═══════ -->
+<div id="panel-domains" class="tab-panel"><div style="max-width:1000px">
+
+<!-- Current Domains -->
+<div class="card" style="margin-bottom:22px">
+<div class="flex justify-between items-center" style="margin-bottom:12px">
+  <div class="card-header" style="margin-bottom:0"><span class="dot" style="background:var(--accent-cyan)"></span> Tenant Domains</div>
+  <button class="btn btn-secondary btn-sm" onclick="domRefresh()">↻ Refresh</button>
+</div>
+<div id="domList"><div class="empty-state" style="padding:30px"><div class="empty-icon">🌐</div><div class="empty-title">Click Refresh to load domains</div></div></div>
+</div>
+
+<!-- Add Domain -->
+<div class="card" style="margin-bottom:22px">
+<div class="card-header"><span class="dot" style="background:var(--accent-green)"></span> Add Custom Domain</div>
+<p style="font-size:.82rem;color:var(--text-secondary);margin-bottom:14px;line-height:1.5">Add a custom domain to the tenant. After adding, you'll need to create the required DNS records at your DNS provider, then verify the domain.</p>
+<div class="flex gap-sm items-center" style="margin-bottom:14px">
+  <input id="domNew" class="form-input" placeholder="contoso.com" style="flex:1;max-width:400px">
+  <button class="btn btn-primary" onclick="domAdd()">+ Add Domain</button>
+</div>
+<div id="domAddResult"></div>
+</div>
+
+<!-- DNS Records / Verification -->
+<div id="domVerifyCard" class="card hidden" style="margin-bottom:22px">
+<div class="card-header"><span class="dot" style="background:var(--accent-amber)"></span> DNS Verification Records</div>
+<p style="font-size:.82rem;color:var(--text-secondary);margin-bottom:14px;line-height:1.5">Add these DNS records at your domain registrar, then click Verify. DNS propagation can take up to 48 hours.</p>
+<div id="domDnsRecords" style="margin-bottom:14px"></div>
+<div class="flex gap-sm">
+  <button class="btn btn-primary" onclick="domVerify()">✓ Verify Domain</button>
+  <button class="btn btn-secondary" onclick="domFetchRecords()">↻ Refresh DNS Records</button>
+</div>
+<div id="domVerifyResult" style="margin-top:10px"></div>
+</div>
+
+<!-- Domain Services Config -->
+<div class="card">
+<div class="card-header"><span class="dot" style="background:var(--accent-violet)"></span> Domain Service Records</div>
+<p style="font-size:.82rem;color:var(--text-secondary);margin-bottom:14px;line-height:1.5">After verification, these DNS records are needed for Exchange, Teams, and other M365 services.</p>
+<div id="domServiceRecords"><div style="color:var(--text-muted);font-size:.82rem;padding:12px">Verify a domain first to see required service records.</div></div>
+</div>
+
+</div></div>
+
 <div id="panel-compliance" class="tab-panel"><div class="card" style="margin-bottom:22px"><div class="flex items-center gap-md" style="flex-wrap:wrap"><div style="flex:1;min-width:280px;max-width:400px"><label class="form-label">Target Tenant Domain</label><input id="compDomain" class="form-input" placeholder="contoso.onmicrosoft.com"></div><button id="compScanBtn" class="btn btn-primary" onclick="startCompliance()" style="align-self:flex-end">✅ Run CE+ Scan</button><button id="compExBtn" class="btn btn-secondary hidden" onclick="exComp()" style="align-self:flex-end">📄 Export</button></div><div id="compProgress" class="hidden" style="margin-top:14px"><div class="flex justify-between" style="margin-bottom:5px"><span style="font-size:.8rem;color:var(--text-secondary)">Scanning...</span><span id="compPercent" style="font-size:.8rem;font-weight:600;color:var(--accent-blue)">0%</span></div><div class="progress-track"><div id="compBar" class="progress-fill" style="width:0%"></div></div></div></div><div id="compResults"></div><div id="compEmpty" class="empty-state"><div class="empty-icon">✅</div><div class="empty-title">CE+ Compliance Scanner</div><div class="empty-desc">Scans your tenant against all Cyber Essentials Plus requirements</div></div></div>
 
 <!-- CONFIG -->
@@ -222,7 +346,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
    CORE CONFIG & POLICY DEFINITIONS
    ============================================================ */
 const GE='https://graph.microsoft.com/v1.0',GB='https://graph.microsoft.com/beta';
-const PERMS=[{n:'Directory.ReadWrite.All',id:'_'},{n:'Policy.Read.All',id:'_'},{n:'Policy.ReadWrite.ConditionalAccess',id:'_'},{n:'Policy.ReadWrite.AuthenticationMethod',id:'_'},{n:'Application.ReadWrite.All',id:'_'},{n:'AppRoleAssignment.ReadWrite.All',id:'_'},{n:'DeviceManagementConfiguration.ReadWrite.All',id:'_'},{n:'DeviceManagementManagedDevices.ReadWrite.All',id:'_'},{n:'DeviceManagementApps.ReadWrite.All',id:'_'},{n:'DeviceManagementServiceConfig.ReadWrite.All',id:'_'},{n:'SecurityEvents.ReadWrite.All',id:'_'},{n:'AuditLog.Read.All',id:'_'},{n:'SharePointTenantSettings.ReadWrite.All',id:'_'},{n:'Sites.Read.All',id:'_'},{n:'RoleManagement.ReadWrite.Directory',id:'_'},{n:'Organization.ReadWrite.All',id:'_'},{n:'User.ReadWrite.All',id:'_'},{n:'Group.ReadWrite.All',id:'_'},{n:'Mail.ReadWrite',id:'_'},{n:'InformationProtection.Read.All',id:'_'},{n:'RecordsManagement.Read.All',id:'_'}];
+const PERMS=[{n:'Directory.ReadWrite.All',id:'_'},{n:'Policy.Read.All',id:'_'},{n:'Policy.ReadWrite.ConditionalAccess',id:'_'},{n:'Policy.ReadWrite.AuthenticationMethod',id:'_'},{n:'Application.ReadWrite.All',id:'_'},{n:'AppRoleAssignment.ReadWrite.All',id:'_'},{n:'DeviceManagementConfiguration.ReadWrite.All',id:'_'},{n:'DeviceManagementManagedDevices.ReadWrite.All',id:'_'},{n:'DeviceManagementApps.ReadWrite.All',id:'_'},{n:'DeviceManagementServiceConfig.ReadWrite.All',id:'_'},{n:'SecurityEvents.ReadWrite.All',id:'_'},{n:'AuditLog.Read.All',id:'_'},{n:'SharePointTenantSettings.ReadWrite.All',id:'_'},{n:'Sites.Read.All',id:'_'},{n:'RoleManagement.ReadWrite.Directory',id:'_'},{n:'Organization.ReadWrite.All',id:'_'},{n:'User.ReadWrite.All',id:'_'},{n:'Group.ReadWrite.All',id:'_'},{n:'Mail.ReadWrite',id:'_'},{n:'InformationProtectionPolicy.Read.All',id:'_'},{n:'RecordsManagement.Read.All',id:'_'},{n:'DelegatedPermissionGrant.ReadWrite.All',id:'_'}];
 
 const CEP={accessControl:{cat:'Access Control',icon:'🔐',p:[
 {id:'ac-001',n:'Enforce MFA for All Users',ce:'Multi-factor authentication must be enabled for all user accounts',sev:'critical',ep:'POST /identity/conditionalAccess/policies',pay:{displayName:'[CE+] Require MFA - All Users',state:'enabled',conditions:{users:{includeUsers:['All']},applications:{includeApplications:['All']}},grantControls:{operator:'OR',builtInControls:['mfa']}}},
@@ -262,8 +386,227 @@ const CEP={accessControl:{cat:'Access Control',icon:'🔐',p:[
 {id:'ap-004',n:'Role-Assignable Security Groups',ce:'Admin access should use role-assignable groups',sev:'medium',ep:'POST /groups',pay:{displayName:'[CE+] Global Admins',mailEnabled:false,mailNickname:'ce-global-admins',securityEnabled:true,isAssignableToRole:true}}
 ]}};
 
-const PHASES=[{id:'auth',n:'Authentication & Bootstrap',s:['Authenticate Global Admin','Create App Registration','Assign Graph permissions','Grant admin consent','Generate client secret','Acquire app token']},...Object.entries(CEP).map(([k,v])=>({id:k,n:v.cat,s:v.p.map(p=>p.n)}))];
-const TOTAL_P=Object.values(CEP).reduce((s,c)=>s+c.p.length,0);
+/* ── Onboarding Setup Phases (run before CE+ compliance) ── */
+const ONBOARD=[
+{id:'ob-org',cat:'Company Branding & Identity',icon:'🎨',steps:[
+  {n:'Set Organisation Details',fn:async(ctx)=>{
+    const org=await G.call('/organization');const orgId=org.value[0].id;
+    const pay={};
+    if(ctx.supportEmail)pay.technicalNotificationMails=[ctx.supportEmail];
+    if(ctx.privacyUrl)pay.privacyProfile={contactEmail:ctx.supportEmail||'',statement:ctx.privacyUrl};
+    if(Object.keys(pay).length)await G.call(`/organization/${orgId}`,'PATCH',pay);
+    return'Organisation details updated'}},
+  {n:'Configure Login Page Branding',fn:async(ctx)=>{
+    const org=await G.call('/organization');const orgId=org.value[0].id;
+    const pay={};
+    if(ctx.company)pay.signInPageText=`Welcome to ${ctx.company}. Please sign in with your company account.`;
+    if(ctx.colour)pay.customAccountResetCredentialsUrl=ctx.supportUrl||undefined;
+    if(ctx.company)pay.usernameHintText=`Use your ${ctx.company} email address`;
+    try{await G.call(`/organization/${orgId}/branding/localizations/default`,'PATCH',pay)}
+    catch{await G.call(`/organization/${orgId}/branding/localizations/default`,'PUT',pay)}
+    return'Login page branding configured'}},
+  {n:'Set Custom Helpdesk Information',fn:async(ctx)=>{
+    const org=await G.call('/organization');const orgId=org.value[0].id;
+    // helpdesk info goes into branding customisation
+    const pay={};
+    if(ctx.supportPhone||ctx.supportUrl||ctx.supportEmail){
+      pay.customCannotAccessYourAccountText=`Contact your IT helpdesk: ${[ctx.supportPhone,ctx.supportEmail,ctx.supportUrl].filter(Boolean).join(' | ')}`;
+      try{await G.call(`/organization/${orgId}/branding/localizations/default`,'PATCH',pay)}
+      catch{await G.call(`/organization/${orgId}/branding/localizations/default`,'PUT',pay)}
+    }
+    return'Helpdesk information configured'}}
+]},
+{id:'ob-lic',cat:'License Assignment Groups',icon:'🏷️',steps:[
+  {n:'Detect Available License SKUs',fn:async(ctx)=>{
+    const resp=await G.call('/subscribedSkus?$select=skuId,skuPartNumber,consumedUnits,prepaidUnits');
+    ctx._skus=resp.value||[];
+    return`Found ${ctx._skus.length} license SKU(s): ${ctx._skus.map(s=>s.skuPartNumber).join(', ')}`}},
+  {n:'Create License Groups per SKU',fn:async(ctx)=>{
+    const created=[];
+    for(const sku of (ctx._skus||[])){
+      const name=`LIC — ${sku.skuPartNumber}`;
+      const nick=`lic-${sku.skuPartNumber.toLowerCase().replace(/[^a-z0-9]/g,'')}`;
+      try{
+        // Check if exists first
+        const existing=await G.call(`/groups?$filter=displayName eq '${name}'&$select=id,displayName`);
+        if(existing.value&&existing.value.length>0){created.push(name+' (exists)');continue}
+        const grp=await G.call('/groups','POST',{displayName:name,mailEnabled:false,mailNickname:nick,securityEnabled:true,groupTypes:[],description:`Auto-created license group for ${sku.skuPartNumber}`});
+        created.push(name);
+      }catch(e){created.push(name+' (failed: '+e.message+')')}}
+    return`License groups: ${created.join(', ')}`}},
+  {n:'Assign Licenses to Groups',fn:async(ctx)=>{
+    let assigned=0;
+    for(const sku of (ctx._skus||[])){
+      const name=`LIC — ${sku.skuPartNumber}`;
+      try{
+        const resp=await G.call(`/groups?$filter=displayName eq '${name}'&$select=id`);
+        if(!resp.value||!resp.value.length)continue;
+        const gid=resp.value[0].id;
+        await G.call(`/groups/${gid}/assignLicense`,'POST',{addLicenses:[{skuId:sku.skuId,disabledPlans:[]}],removeLicenses:[]});
+        assigned++;
+      }catch{}}
+    return`Assigned licenses to ${assigned} group(s)`}}
+]},
+{id:'ob-shared',cat:'Standard Shared Resources',icon:'📧',steps:[
+  {n:'Create Shared Mailboxes',fn:async(ctx)=>{
+    const boxes=['info','support','accounts','invoices'];
+    const domain=ctx.domain.replace('.onmicrosoft.com','');
+    const primaryDom=ctx.domain;
+    const created=[];
+    for(const box of boxes){
+      const upn=`${box}@${primaryDom}`;
+      try{
+        const existing=await G.call(`/users?$filter=userPrincipalName eq '${upn}'&$select=id`);
+        if(existing.value&&existing.value.length>0){created.push(box+'@ (exists)');continue}
+        await G.call('/users','POST',{
+          accountEnabled:false,displayName:box.charAt(0).toUpperCase()+box.slice(1),
+          userPrincipalName:upn,mailNickname:box,usageLocation:ctx.loc||'GB',
+          passwordProfile:{password:'Sh@red'+uid().slice(0,12)+'!',forceChangePasswordNextSignIn:false}});
+        // Convert to shared mailbox — requires Exchange, may fail without Exchange Online PowerShell
+        created.push(box+'@');
+      }catch(e){created.push(box+'@ ('+e.message.slice(0,40)+')')}}
+    return`Shared mailboxes: ${created.join(', ')}<br><span style="color:var(--accent-amber);font-size:.76rem">Note: Convert to shared via Exchange Admin → Mailboxes → Convert to shared</span>`}},
+  {n:'Create Distribution Lists',fn:async(ctx)=>{
+    const lists=[{name:'All Staff',nick:'all-staff'},{name:'Management',nick:'management'},{name:'Finance',nick:'finance'},{name:'IT',nick:'it-team'}];
+    const created=[];
+    for(const dl of lists){
+      try{
+        const existing=await G.call(`/groups?$filter=displayName eq '${dl.name}' and mailEnabled eq true&$select=id`);
+        if(existing.value&&existing.value.length>0){created.push(dl.name+' (exists)');continue}
+        await G.call('/groups','POST',{
+          displayName:dl.name,mailEnabled:true,mailNickname:dl.nick,securityEnabled:true,
+          groupTypes:[],description:'Auto-created distribution list'});
+        created.push(dl.name);
+      }catch(e){created.push(dl.name+' ('+e.message.slice(0,30)+')')}}
+    return`Distribution lists: ${created.join(', ')}`}},
+  {n:'Create M365 Groups for Teams',fn:async(ctx)=>{
+    const teams=[{name:'All Company',nick:'all-company',desc:'Company-wide communication'},{name:'IT Support',nick:'it-support',desc:'Internal IT support channel'},{name:'Management',nick:'mgmt-team',desc:'Management team'}];
+    const created=[];
+    for(const t of teams){
+      try{
+        const existing=await G.call(`/groups?$filter=displayName eq '${t.name}' and groupTypes/any(g:g eq 'Unified')&$select=id`);
+        if(existing.value&&existing.value.length>0){created.push(t.name+' (exists)');continue}
+        await G.call('/groups','POST',{
+          displayName:t.name,mailEnabled:true,mailNickname:t.nick,securityEnabled:false,
+          groupTypes:['Unified'],description:t.desc,visibility:'Private'});
+        created.push(t.name);
+      }catch(e){created.push(t.name+' ('+e.message.slice(0,30)+')')}}
+    return`M365 Groups: ${created.join(', ')}<br><span style="color:var(--text-muted);font-size:.76rem">Teams channels will auto-provision within ~24hrs</span>`}}
+]},
+{id:'ob-admin',cat:'Admin & Helpdesk Setup',icon:'🛡️',steps:[
+  {n:'Create Dedicated Admin Accounts',fn:async(ctx)=>{
+    const admName=ctx.admin.split('@')[0];const domain=ctx.admin.split('@')[1]||ctx.domain;
+    const firstName=admName.replace(/[._-]/g,' ').replace(/admin\s*/i,'').trim()||'Primary';
+    const accts=[{upn:`admin-primary@${domain}`,display:'Admin — Primary',desc:'Primary dedicated admin'},{upn:`admin-secondary@${domain}`,display:'Admin — Secondary',desc:'Secondary dedicated admin'}];
+    const created=[];
+    for(const a of accts){
+      try{
+        const existing=await G.call(`/users?$filter=userPrincipalName eq '${a.upn}'&$select=id`);
+        if(existing.value&&existing.value.length>0){created.push(a.display+' (exists)');continue}
+        const pass='Adm!n'+uid().slice(0,10)+'#1';
+        await G.call('/users','POST',{
+          accountEnabled:true,displayName:a.display,userPrincipalName:a.upn,
+          mailNickname:a.upn.split('@')[0],usageLocation:ctx.loc||'GB',
+          passwordProfile:{password:pass,forceChangePasswordNextSignIn:true}});
+        created.push(`${a.display} (${a.upn})`);
+      }catch(e){created.push(a.display+' ('+e.message.slice(0,30)+')')}}
+    return`Admin accounts: ${created.join(', ')}`}},
+  {n:'Create Break Glass Accounts',fn:async(ctx)=>{
+    const domain=ctx.admin.split('@')[1]||ctx.domain;
+    const accts=[{upn:`breakglass1@${domain}`,display:'Break Glass 1'},{upn:`breakglass2@${domain}`,display:'Break Glass 2'}];
+    const created=[];
+    for(const a of accts){
+      try{
+        const existing=await G.call(`/users?$filter=userPrincipalName eq '${a.upn}'&$select=id`);
+        if(existing.value&&existing.value.length>0){created.push(a.display+' (exists)');continue}
+        const pass='BG!'+uid()+'#'+Math.floor(Math.random()*99);
+        await G.call('/users','POST',{
+          accountEnabled:true,displayName:a.display,userPrincipalName:a.upn,
+          mailNickname:a.upn.split('@')[0],usageLocation:ctx.loc||'GB',
+          passwordProfile:{password:pass,forceChangePasswordNextSignIn:false}});
+        created.push(`${a.display} — password: ${pass}`);
+      }catch(e){created.push(a.display+' ('+e.message.slice(0,30)+')')}}
+    return`Break glass: ${created.join(', ')}<br><span style="color:var(--accent-amber);font-size:.76rem">⚠ Store passwords in secure vault immediately. Exclude from CA policies.</span>`}},
+  {n:'Configure Access Denied Custom Text',fn:async(ctx)=>{
+    const org=await G.call('/organization');const orgId=org.value[0].id;
+    const helpText=`Access denied. Contact your IT helpdesk: ${[ctx.supportPhone,ctx.supportEmail,ctx.supportUrl].filter(Boolean).join(' | ')||'your administrator'}`;
+    try{await G.call(`/organization/${orgId}/branding/localizations/default`,'PATCH',{customCannotAccessYourAccountText:helpText})}
+    catch{await G.call(`/organization/${orgId}/branding/localizations/default`,'PUT',{customCannotAccessYourAccountText:helpText})}
+    return'Custom access denied text configured'}}
+]},
+{id:'ob-email',cat:'Email Security Foundations',icon:'📬',steps:[
+  {n:'Configure Anti-Phishing Baseline',fn:async(ctx)=>{
+    // Anti-phishing policies require Security & Compliance — note for manual config
+    return{note:true,msg:'Anti-phishing policies require Defender for Office 365. Configure in Security Admin Center → Policies → Anti-phishing.'}}},
+  {n:'Safe Links Policy Guidance',fn:async(ctx)=>{
+    return{note:true,msg:'Safe Links requires Defender for Office 365 P1. Configure in Security Admin Center → Policies → Safe Links → Create policy for all users.'}}},
+  {n:'Safe Attachments Policy Guidance',fn:async(ctx)=>{
+    return{note:true,msg:'Safe Attachments requires Defender for Office 365 P1. Configure in Security Admin Center → Policies → Safe Attachments → Enable for all users.'}}},
+  {n:'Outbound Spam Filter Guidance',fn:async(ctx)=>{
+    return{note:true,msg:'Configure via Exchange Admin Center → Mail flow → Rules → Add auto-forward blocking rule. PowerShell: Set-HostedOutboundSpamFilterPolicy -AutoForwardingMode Off'}}}
+]},
+{id:'ob-intune',cat:'Intune Baseline Enrolment',icon:'📱',steps:[
+  {n:'Set MDM Authority to Intune',fn:async(ctx)=>{
+    // MDM authority is usually already Intune for new tenants, but let's verify
+    try{
+      const mgmt=await G.call('/deviceManagement?$select=intuneAccountId');
+      return`MDM authority confirmed — Intune Account: ${mgmt.intuneAccountId||'active'}`
+    }catch{return{note:true,msg:'Set MDM authority in Intune Admin Center → Devices → Enroll devices → MDM authority'}}
+  }},
+  {n:'Configure Default Enrolment Restrictions',fn:async(ctx)=>{
+    try{
+      const resp=await G.call('/deviceManagement/deviceEnrollmentConfigurations?$select=id,displayName');
+      return`Found ${(resp.value||[]).length} existing enrolment configs. Review in Intune Admin Center → Devices → Enrol devices → Enrolment restrictions.`
+    }catch{return{note:true,msg:'Configure enrolment restrictions in Intune Admin Center'}}}},
+  {n:'Create Default Windows Compliance Policy',fn:async(ctx)=>{
+    try{
+      await G.call('/deviceManagement/deviceCompliancePolicies','POST',{
+        displayName:'[MSP] Baseline Windows Compliance','@odata.type':'#microsoft.graph.windows10CompliancePolicy',
+        passwordRequired:true,passwordMinimumLength:8,osMinimumVersion:'10.0.19045.0',
+        defenderEnabled:true,activeFirewallRequired:true,bitLockerEnabled:true,
+        scheduledActionsForRule:[{ruleName:'PasswordRequired',scheduledActionConfigurations:[{actionType:'block',gracePeriodHours:168,notificationTemplateId:''}]}]});
+      return'Baseline compliance policy created with 7-day grace period'
+    }catch(e){return'⚠ '+e.message}}},
+  {n:'Create Windows Autopilot Default Profile',fn:async(ctx)=>{
+    try{
+      await G.call('/deviceManagement/windowsAutopilotDeploymentProfiles','POST',{
+        '@odata.type':'#microsoft.graph.azureADWindowsAutopilotDeploymentProfile',
+        displayName:'[MSP] Default Autopilot Profile',description:'Standard OOBE deployment',
+        language:'os-default',extractHardwareHash:true,
+        outOfBoxExperienceSettings:{hidePrivacySettings:true,hideEULA:true,
+          userType:'standard',skipKeyboardSelectionPage:true,hideEscapeLink:true}
+      },true);
+      return'Autopilot deployment profile created'
+    }catch(e){return'⚠ '+e.message+' (requires Intune licence)'}}}
+]},
+{id:'ob-sp',cat:'SharePoint & OneDrive Defaults',icon:'📂',steps:[
+  {n:'Restrict External Sharing (Org-Only)',fn:async(ctx)=>{
+    try{
+      await G.call('/admin/sharepoint/settings','PATCH',{
+        sharingCapability:'externalUserSharingOnly',
+        isResharingByExternalUsersEnabled:false
+      });
+      return'SharePoint sharing restricted to existing external users only'
+    }catch(e){return'⚠ '+e.message}}},
+  {n:'Restrict OneDrive Sync to Managed Devices',fn:async(ctx)=>{
+    try{
+      await G.call('/admin/sharepoint/settings','PATCH',{
+        isUnmanagedSyncAppForTenantRestricted:true
+      });
+      return'OneDrive sync restricted to managed/domain-joined devices'
+    }catch(e){return'⚠ '+e.message}}},
+  {n:'Disable User Site Creation',fn:async(ctx)=>{
+    try{
+      await G.call('/admin/sharepoint/settings','PATCH',{
+        isSiteCreationEnabled:false
+      });
+      return'User self-service site creation disabled — admins only'
+    }catch(e){return'⚠ '+e.message}}}
+]}
+];
+
+const PHASES=[{id:'auth',n:'Authentication & Bootstrap',s:['Authenticate Global Admin','Create App Registration','Assign Graph permissions','Grant admin consent','Generate client secret','Acquire app token']},...ONBOARD.map(o=>({id:o.id,n:o.cat,s:o.steps.map(s=>s.n)})),...Object.entries(CEP).map(([k,v])=>({id:k,n:v.cat,s:v.p.map(p=>p.n)}))];
+const TOTAL_P=PHASES.reduce((s,p)=>s+p.s.length,0);
 
 /* ============================================================
    MSAL AUTH SERVICE
@@ -344,23 +687,99 @@ async function startSetup(){
   SS={run:1,abort:0,ph:0,st:0,cfg:0,err:0,logs:[]};$('logContainer').innerHTML='';
   $('setupStartBtn').classList.add('hidden');$('setupAbortBtn').classList.remove('hidden');$('logLive').classList.remove('hidden');$('logLive').classList.add('animate-pulse');
   document.querySelectorAll('#panel-setup .form-input').forEach(i=>i.disabled=true);upProg();
-  addLog('Starting configuration for '+dom,'info');addLog('Admin: '+adm,'info');addLog(live?'Mode: LIVE — Graph API':'Mode: SIMULATION','info');addLog('','info');
+
+  // Build context from sidebar inputs
+  const ctx={
+    domain:dom,admin:adm,
+    company:$('setupCompany').value.trim(),
+    supportEmail:$('setupSupportEmail').value.trim(),
+    supportPhone:$('setupSupportPhone').value.trim(),
+    supportUrl:$('setupSupportUrl').value.trim(),
+    privacyUrl:$('setupPrivacyUrl').value.trim(),
+    colour:$('setupColour').value.trim(),
+    loc:$('setupUsageLoc').value.trim()||'GB'
+  };
+
+  addLog('Starting configuration for '+dom,'info');addLog('Admin: '+adm,'info');addLog(live?'Mode: LIVE — Graph API':'Mode: SIMULATION','info');
+  if(ctx.company)addLog('Company: '+ctx.company,'info');
+  addLog('','info');
+
   try{
+    // Phase 0: Authentication & Bootstrap
     SS.ph=0;const as=PHASES[0].s;
     for(let i=0;i<as.length;i++){if(SS.abort)return cleanup();SS.st=i;upProg();addLog(as[i]+'...','info');
       if(live&&i===1){try{const app=await G.call('/applications','POST',{displayName:'MSP Tenant Automation',signInAudience:'AzureADMyOrg',requiredResourceAccess:[{resourceAppId:'00000003-0000-0000-c000-000000000000',resourceAccess:PERMS.map(p=>({id:p.id,type:'Role'}))}]});addLog('  ✓ App created: '+app.appId,'success')}catch(e){addLog('  ⚠ '+e.message,'warning')}}
       else{await delay(450+Math.random()*400);if(i===1)addLog('  ✓ App created: '+uid(),'success');else if(i===4)addLog('  ✓ Secret generated (stored securely)','success');else addLog('  ✓ '+as[i],'success')}}
-    SS.st=as.length;upProg();addLog('','info');addLog('═══════════════════════════════════════════','info');addLog('  Bootstrap complete. Configuring policies...','info');addLog('═══════════════════════════════════════════','info');
+    SS.st=as.length;upProg();addLog('','info');addLog('═══════════════════════════════════════════','info');addLog('  Bootstrap complete. Running onboarding...','info');addLog('═══════════════════════════════════════════','info');
+
+    // Acquire .default token for onboarding phases
+    if(live){try{G.scopes=Auth.DISCOVERY_SCOPES;await A.token(Auth.DISCOVERY_SCOPES)}catch(e){addLog('  ⚠ Token: '+e.message,'warning')}}
+
+    // ONBOARD phases (real Graph API calls)
+    for(let oi=0;oi<ONBOARD.length;oi++){
+      if(SS.abort)return cleanup();
+      const ob=ONBOARD[oi];SS.ph=oi+1;SS.st=0;upProg();
+      addLog('','info');addLog(ob.icon+' '+ob.cat,'info');addLog('─'.repeat(40),'info');
+
+      for(let si=0;si<ob.steps.length;si++){
+        if(SS.abort)return cleanup();SS.st=si;upProg();
+        const step=ob.steps[si];
+        addLog('  Configuring: '+step.n+'...','pending');
+
+        if(live&&step.fn){
+          try{
+            const result=await step.fn(ctx);
+            if(typeof result==='object'&&result.note){
+              addLog('    ⚠ '+result.msg,'warning');SS.cfg++;
+            } else {
+              addLog('  ✓ '+result,'success');SS.cfg++;
+            }
+          }catch(e){
+            addLog('  ✗ '+step.n+': '+e.message,'error');SS.err++;
+          }
+        } else {
+          // Simulation mode
+          await delay(350+Math.random()*500);
+          addLog('  ✓ '+step.n+' (simulated)','success');SS.cfg++;
+        }
+        upProg();
+      }
+      SS.st=ob.steps.length;upProg();
+    }
+
+    addLog('','info');addLog('═══════════════════════════════════════════','info');addLog('  Onboarding complete. Applying CE+ policies...','info');addLog('═══════════════════════════════════════════','info');
+
+    // CEP phases (existing compliance policies)
     const cats=Object.entries(CEP);
-    for(let ci=0;ci<cats.length;ci++){if(SS.abort)return cleanup();const[,cat]=cats[ci];SS.ph=ci+1;SS.st=0;upProg();addLog('','info');addLog(cat.icon+' '+cat.cat,'info');addLog('─'.repeat(40),'info');
+    const obLen=ONBOARD.length;
+    for(let ci=0;ci<cats.length;ci++){if(SS.abort)return cleanup();const[,cat]=cats[ci];SS.ph=obLen+ci+1;SS.st=0;upProg();addLog('','info');addLog(cat.icon+' '+cat.cat,'info');addLog('─'.repeat(40),'info');
       for(let pi=0;pi<cat.p.length;pi++){if(SS.abort)return cleanup();SS.st=pi;upProg();const p=cat.p[pi];
         if(p.ni){addLog('  ⏸ Input: '+p.n,'warning');const r=await showModal(p.n,p.ip,p.dv);addLog(r.skip?'  → Skipped':'  → '+p.ifl+': '+(r.v||'(empty)'),'info')}
         addLog('  Configuring: '+p.n+'...','pending');if(p.ep)addLog('    → '+p.ep,'info');
-        await delay(350+Math.random()*500);if(p.note)addLog('    ⚠ '+p.note,'warning');
-        const ok=Math.random()>.04;if(ok){addLog('  ✓ '+p.n,'success');SS.cfg++}else{addLog('  ✗ '+p.n+' — retrying','error');await delay(600);addLog('  ✓ '+p.n+' — on retry','success');SS.cfg++}
+
+        if(live&&p.ep&&p.pay&&!p.ep.startsWith('GET')){
+          try{
+            const[method,path]=p.ep.split(' ');
+            let payload={...p.pay};
+            if(p.ni&&p.ifl){const iv=$('mInput')?.value?.trim()||p.dv||'';if(iv)payload[p.ifl]=iv}
+            await G.call(path,method,payload,path.includes('sharepoint'));
+            addLog('  ✓ '+p.n,'success');SS.cfg++;
+          }catch(e){
+            addLog('  ✗ '+p.n+': '+e.message,'error');SS.err++;
+          }
+        } else if(p.note){
+          addLog('    ⚠ '+p.note,'warning');SS.cfg++;
+        } else {
+          await delay(350+Math.random()*500);
+          addLog('  ✓ '+p.n+(live?'':' (simulated)'),'success');SS.cfg++;
+        }
         upProg()}SS.st=cat.p.length;upProg()}
-    SS.ph=PHASES.length;addLog('','info');addLog('═══════════════════════════════════════════','success');addLog('  TENANT CONFIGURATION COMPLETE','success');addLog('═══════════════════════════════════════════','success');addLog('  Configured: '+SS.cfg+' | Errors: '+SS.err,'success');addLog('  Run CE+ scan to verify.','info');
-  }catch(e){addLog('FATAL: '+e.message,'error');SS.err++}
+
+    // Reset scopes
+    if(live)G.scopes=null;
+
+    SS.ph=PHASES.length;addLog('','info');addLog('═══════════════════════════════════════════','success');addLog('  TENANT CONFIGURATION COMPLETE','success');addLog('═══════════════════════════════════════════','success');addLog('  Configured: '+SS.cfg+' | Errors: '+SS.err,'success');addLog('  Run CE+ scan to verify security posture.','info');
+  }catch(e){addLog('FATAL: '+e.message,'error');SS.err++;if(live)G.scopes=null}
   cleanup()}
 function abortSetup(){SS.abort=1;SS.run=0;addLog('Aborted','error');cleanup();$('inputModal').classList.add('hidden');if(MR){MR({skip:1,v:''});MR=null}}
 function cleanup(){SS.run=0;$('setupStartBtn').classList.remove('hidden');$('setupStartBtn').textContent='⚡ Re-run Setup';$('setupAbortBtn').classList.add('hidden');$('logLive').classList.add('hidden');document.querySelectorAll('#panel-setup .form-input').forEach(i=>i.disabled=false);upProg()}
@@ -369,7 +788,7 @@ function cleanup(){SS.run=0;$('setupStartBtn').classList.remove('hidden');$('set
    DISCOVERY TAB — Professional presentation
    ============================================================ */
 async function startDiscovery(){
-  console.log('🚀 startDiscovery v3.2 — scanning 33 sections');
+  console.log('🚀 startDiscovery v3.3 — scanning 33 sections');
   const dom=$('discDomain').value.trim();if(!dom)return;
   $('discScanBtn').disabled=true;$('discScanBtn').innerHTML='<span class="animate-spin" style="display:inline-block">◌</span> Scanning...';$('discProgress').classList.remove('hidden');$('discEmpty').classList.add('hidden');$('discResults').innerHTML='';$('discExBtns').classList.add('hidden');
   DD={domain:dom,ts:new Date().toISOString()};const live=A.ok();
@@ -447,7 +866,7 @@ async function startDiscovery(){
       groupPolicyConfig:async()=>{try{return await G.call('/deviceManagement/groupPolicyConfigurations?$select=displayName,description,createdDateTime,lastModifiedDateTime','GET',null,true)}catch{return{_note:'Group Policy configs require beta API and DeviceManagementConfiguration.Read.All'}}},
       managedDevices:()=>G.call('/deviceManagement/managedDevices?$select=deviceName,operatingSystem,osVersion,complianceState,managementAgent,enrolledDateTime,lastSyncDateTime,userPrincipalName,model,manufacturer,serialNumber,isEncrypted&$top=999'),
       intuneApps:async()=>{try{return await G.call('/deviceAppManagement/mobileApps?$select=displayName,publisher,createdDateTime&$top=200')}catch{return{_note:'Intune apps require DeviceManagementApps.Read.All'}}},
-      sensitivityLabels:async()=>{try{return await G.call('/security/informationProtection/sensitivityLabels','GET',null,true)}catch{try{return await G.call('/informationProtection/sensitivityLabels','GET',null,true)}catch{return{_note:'Sensitivity labels require beta API + InformationProtection.Read.All. May need E3/E5 licence.'}}}},
+      sensitivityLabels:async()=>{try{return await G.call('/security/informationProtection/sensitivityLabels','GET',null,true)}catch{try{return await G.call('/informationProtection/sensitivityLabels','GET',null,true)}catch{return{_note:'Sensitivity labels require beta API + InformationProtectionPolicy.Read.All. May need E3/E5 licence.'}}}},
       retentionLabels:async()=>{try{return await G.call('/security/labels/retentionLabels?$select=displayName,isInUse,createdDateTime,retentionDuration,actionAfterRetentionPeriod')}catch{return{_note:'Retention labels require RecordsManagement.Read.All. May need compliance licence.'}}},
       dlpPolicies:async()=>({_note:'DLP policies are not available via Microsoft Graph. Use PowerShell: Get-DlpCompliancePolicy | Select Name, Mode, CreatedDate'}),
       mailboxes:async()=>{const users=DD.users;if(!users||users._error)return{_note:'Mailbox data derived from users — users query must succeed first'};return(Array.isArray(users)?users:[]).filter(u=>u.assignedLicenses?.length>0&&(u.userType||'').toLowerCase()!=='guest')},
@@ -463,7 +882,7 @@ async function startDiscovery(){
   renderDisc()}
 
 function renderDisc(){
-  console.log('🔍 renderDisc v3.2 — 33 section discovery');
+  console.log('🔍 renderDisc v3.3 — 33 section discovery');
   try{
   if(!DD)return;const d=DD,c=$('discResults');
   const arr=k=>Array.isArray(d[k])?d[k]:[];
@@ -865,6 +1284,417 @@ ${[['Users',u.length],['Licensed',licU.length],['Guests',guests.length],['Groups
     devs.forEach((dv,i)=>{h+=`<tr style="background:${i%2?'#fff':'#f8f9fa'}"><td style="${tS}">${esc(dv.deviceName||'')}</td><td style="${tS}">${esc(dv.operatingSystem||'')} ${esc(dv.osVersion||'')}</td><td style="${tS};font-size:11px">${esc(dv.userPrincipalName||'—')}</td><td style="${tS}">${dv.complianceState==='compliant'?'✅':'❌'} ${esc(dv.complianceState||'')}</td></tr>`});h+=`</table>`}
   h+=`<p style="color:#999;font-size:10px;margin-top:24px;border-top:1px solid #eee;padding-top:8px">M365 Tenant Automation — MSP Edition | ${new Date().toISOString()}</p></div>`;
   dl(h,`ITGlue_M365_${d.domain.split('.')[0]}.html`,'text/html')}
+
+/* ============================================================
+   USERS TAB — Create users with license group assignment
+   ============================================================ */
+let NU_GROUPS=[],NU_CREATED=[];
+
+// Auto-fill display name from first+last
+['nuFirst','nuLast'].forEach(id=>{
+  const el=$(id);if(el)el.addEventListener('input',()=>{
+    const f=$('nuFirst').value.trim(),l=$('nuLast').value.trim();
+    if(f||l){$('nuDisplay').placeholder=`${f} ${l}`.trim();if(!$('nuDisplay').value)$('nuUser').placeholder=`${f.toLowerCase()}.${l.toLowerCase()}`}
+  })
+});
+
+function nuGenPass(){
+  const chars='ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%&*';
+  let p='';for(let i=0;i<16;i++)p+=chars[Math.floor(Math.random()*chars.length)];
+  // Ensure at least one of each required type
+  p=p.slice(0,12)+'A'+'a'+'3'+'!';
+  $('nuPass').value=p;
+}
+
+async function nuLoadGroups(){
+  if(!A.ok()){alert('Sign in first');return}
+  const el=$('nuLicGroups');
+  el.innerHTML='<div style="color:var(--text-muted);font-size:.82rem;padding:8px">Loading groups...</div>';
+  try{
+    G.scopes=Auth.DISCOVERY_SCOPES;
+    // Fetch security groups — look for license-related groups
+    const resp=await G.call("/groups?$filter=securityEnabled eq true and mailEnabled eq false&$select=id,displayName,description,groupTypes&$top=200");
+    const groups=(resp.value||[]).sort((a,b)=>(a.displayName||'').localeCompare(b.displayName||''));
+    NU_GROUPS=groups;
+
+    if(!groups.length){el.innerHTML='<div style="color:var(--text-muted);font-size:.82rem;padding:8px">No security groups found. Create one below.</div>';return}
+
+    el.innerHTML=groups.map(g=>{
+      const isLic=/^(LIC|License|M365|Lic\s)/i.test(g.displayName);
+      return `<label style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:var(--radius-sm);cursor:pointer;font-size:.82rem;color:var(--text-primary);background:${isLic?'rgba(59,130,246,.05)':'transparent'};border:1px solid ${isLic?'rgba(59,130,246,.15)':'transparent'}">
+        <input type="checkbox" class="nu-grp-chk" value="${g.id}" data-name="${esc(g.displayName)}" ${isLic?'checked':''}>
+        <span style="flex:1">${esc(g.displayName)}</span>
+        ${isLic?'<span class="badge badge-cyan" style="font-size:.65rem">License</span>':''}
+      </label>`
+    }).join('');
+
+    // Also load SKUs for the quick-create dropdown
+    try{
+      const skus=await G.call("/subscribedSkus?$select=skuId,skuPartNumber,consumedUnits,prepaidUnits");
+      const sel=$('nuNewGrpSku');sel.innerHTML='<option value="">Assign SKU (optional)</option>';
+      (skus.value||[]).forEach(s=>{
+        const avail=(s.prepaidUnits?.enabled||0)-s.consumedUnits;
+        sel.innerHTML+=`<option value="${s.skuId}">${esc(s.skuPartNumber)} (${avail} avail)</option>`
+      });
+    }catch{}
+
+    // Load domains for UPN dropdown
+    nuLoadDomains();
+    G.scopes=null;
+  }catch(e){
+    el.innerHTML=`<div style="color:var(--accent-red);font-size:.82rem;padding:8px">Error loading groups: ${esc(e.message)}</div>`;
+    G.scopes=null;
+  }
+}
+
+async function nuLoadDomains(){
+  try{
+    const resp=await G.call("/domains?$select=id,isDefault,isVerified");
+    const doms=(resp.value||[]).filter(d=>d.isVerified);
+    const sel=$('nuDomainSel');
+    sel.innerHTML=doms.map(d=>`<option value="${esc(d.id)}" ${d.isDefault?'selected':''}>${esc(d.id)}</option>`).join('');
+  }catch{}
+}
+
+async function nuCreateGroup(){
+  if(!A.ok()){alert('Sign in first');return}
+  const name=$('nuNewGrpName').value.trim();
+  if(!name){alert('Enter a group name');return}
+  const nick=name.replace(/[^a-zA-Z0-9]/g,'').substring(0,50)||'licgroup';
+  try{
+    const grp=await G.call('/groups','POST',{
+      displayName:name,mailEnabled:false,mailNickname:nick,securityEnabled:true,groupTypes:[]
+    });
+    // Assign license to group if SKU selected
+    const skuId=$('nuNewGrpSku').value;
+    if(skuId&&grp.id){
+      try{
+        await G.call(`/groups/${grp.id}/assignLicense`,'POST',{
+          addLicenses:[{skuId:skuId,disabledPlans:[]}],removeLicenses:[]
+        });
+      }catch(e){alert('Group created but license assignment failed: '+e.message)}
+    }
+    $('nuNewGrpName').value='';
+    nuLoadGroups(); // Refresh the list
+  }catch(e){alert('Failed to create group: '+e.message)}
+}
+
+async function nuCreateUser(){
+  if(!A.ok()){alert('Sign in first');return}
+  const first=$('nuFirst').value.trim(),last=$('nuLast').value.trim();
+  const display=$('nuDisplay').value.trim()||`${first} ${last}`;
+  const user=$('nuUser').value.trim(),domain=$('nuDomainSel').value;
+  const title=$('nuTitle').value.trim(),dept=$('nuDept').value.trim();
+  const loc=$('nuLoc').value.trim()||'GB';
+  let pass=$('nuPass').value.trim();
+
+  if(!first||!last){alert('First and Last name are required');return}
+  if(!user){alert('Username is required');return}
+  if(!pass){nuGenPass();pass=$('nuPass').value}
+
+  const upn=user.includes('@')?user:`${user}@${domain}`;
+  const selectedGroups=[...document.querySelectorAll('.nu-grp-chk:checked')].map(c=>({id:c.value,name:c.dataset.name}));
+
+  try{
+    G.scopes=Auth.DISCOVERY_SCOPES;
+    // Create the user
+    const payload={
+      accountEnabled:true,displayName:display,givenName:first,surname:last,
+      userPrincipalName:upn,mailNickname:user.split('@')[0],
+      usageLocation:loc,
+      passwordProfile:{password:pass,forceChangePasswordNextSignIn:true}
+    };
+    if(title)payload.jobTitle=title;
+    if(dept)payload.department=dept;
+
+    const created=await G.call('/users','POST',payload);
+
+    // Add to selected groups
+    let groupResults=[];
+    for(const grp of selectedGroups){
+      try{
+        await G.call(`/groups/${grp.id}/members/$ref`,'POST',{'@odata.id':`https://graph.microsoft.com/v1.0/directoryObjects/${created.id}`});
+        groupResults.push({name:grp.name,ok:true});
+      }catch(e){
+        groupResults.push({name:grp.name,ok:false,err:e.message});
+      }
+    }
+
+    // Log result
+    NU_CREATED.push({id:created.id,upn,display,pass,title,dept,groups:groupResults,ts:new Date().toISOString()});
+    nuRenderLog();
+
+    // Clear form
+    ['nuFirst','nuLast','nuDisplay','nuUser','nuTitle','nuDept','nuPass'].forEach(id=>$(id).value='');
+    G.scopes=null;
+  }catch(e){
+    alert('Failed to create user: '+e.message);
+    G.scopes=null;
+  }
+}
+
+function nuRenderLog(){
+  const el=$('nuLog'),empty=$('nuEmpty');
+  $('nuCount').textContent=NU_CREATED.length+' user'+(NU_CREATED.length!==1?'s':'');
+  if(!NU_CREATED.length){el.innerHTML='';empty.style.display='';return}
+  empty.style.display='none';
+  el.innerHTML=`<div style="overflow-x:auto"><table style="width:100%;font-size:.8rem;border-collapse:collapse">
+    <thead><tr style="text-align:left;color:var(--text-muted);font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border-subtle)">
+      <th style="padding:8px">User</th><th style="padding:8px">UPN</th><th style="padding:8px">Password</th><th style="padding:8px">Groups</th><th style="padding:8px">Status</th>
+    </tr></thead><tbody>
+    ${NU_CREATED.map(u=>`<tr style="border-bottom:1px solid var(--border-subtle)">
+      <td style="padding:8px"><strong>${esc(u.display)}</strong>${u.title?`<br><span style="color:var(--text-muted);font-size:.72rem">${esc(u.title)}${u.dept?' · '+esc(u.dept):''}</span>`:''}</td>
+      <td style="padding:8px;color:var(--accent-cyan);font-family:var(--font-mono);font-size:.76rem">${esc(u.upn)}</td>
+      <td style="padding:8px"><code style="background:var(--bg-input);padding:2px 6px;border-radius:3px;font-size:.72rem;user-select:all">${esc(u.pass)}</code></td>
+      <td style="padding:8px;font-size:.72rem">${u.groups.map(g=>g.ok?`<span class="badge badge-green" style="font-size:.65rem;margin:1px">${esc(g.name)}</span>`:`<span class="badge badge-red" style="font-size:.65rem;margin:1px" title="${esc(g.err||'')}">${esc(g.name)} ✗</span>`).join('')||'<span style="color:var(--text-muted)">None</span>'}</td>
+      <td style="padding:8px"><span class="badge badge-green">Created</span></td>
+    </tr>`).join('')}
+    </tbody></table></div>
+    <div class="flex gap-sm" style="margin-top:12px;justify-content:flex-end">
+      <button class="btn btn-secondary btn-sm" onclick="nuExportCreds()">📋 Export Credentials</button>
+    </div>`;
+}
+
+function nuExportCreds(){
+  if(!NU_CREATED.length)return;
+  let csv='DisplayName,UPN,Password,JobTitle,Department,Groups,Created\n';
+  NU_CREATED.forEach(u=>{
+    csv+=`"${u.display}","${u.upn}","${u.pass}","${u.title||''}","${u.dept||''}","${u.groups.filter(g=>g.ok).map(g=>g.name).join('; ')}","${u.ts}"\n`;
+  });
+  const blob=new Blob([csv],{type:'text/csv'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download=`user-credentials-${new Date().toISOString().slice(0,10)}.csv`;a.click();
+}
+
+function nuBulkToggle(){$('nuBulkArea').classList.toggle('hidden')}
+
+function nuBulkTemplate(){
+  const csv='FirstName,LastName,Username,JobTitle,Department,LicenseGroups\nJohn,Smith,john.smith,IT Manager,IT,LIC — Business Premium\nJane,Doe,jane.doe,CFO,Finance,"LIC — Business Premium,LIC — E5 Add-on"\n';
+  const blob=new Blob([csv],{type:'text/csv'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='user-import-template.csv';a.click();
+}
+
+async function nuBulkCreate(){
+  if(!A.ok()){alert('Sign in first');return}
+  const raw=$('nuBulkCsv').value.trim();if(!raw){alert('Paste CSV data first');return}
+  const lines=raw.split('\n').filter(l=>l.trim());
+  if(lines.length<2){alert('Need at least a header row and one data row');return}
+
+  const headers=lines[0].split(',').map(h=>h.trim().toLowerCase());
+  const fi=headers.indexOf('firstname'),li=headers.indexOf('lastname'),ui=headers.indexOf('username');
+  if(fi<0||li<0||ui<0){alert('CSV must have FirstName, LastName, Username columns');return}
+  const ti=headers.indexOf('jobtitle'),di=headers.indexOf('department'),gi=headers.indexOf('licensegroups');
+
+  const domain=$('nuDomainSel').value;
+  G.scopes=Auth.DISCOVERY_SCOPES;
+
+  for(let i=1;i<lines.length;i++){
+    // Simple CSV parse (handles quoted fields with commas)
+    const cols=[];let cur='',inQ=false;
+    for(const ch of lines[i]){
+      if(ch==='"'){inQ=!inQ}else if(ch===','&&!inQ){cols.push(cur.trim());cur=''}else{cur+=ch}
+    }
+    cols.push(cur.trim());
+
+    const first=cols[fi],last=cols[li],user=cols[ui];
+    if(!first||!last||!user)continue;
+    const title=ti>=0?cols[ti]||'':'';
+    const dept=di>=0?cols[di]||'':'';
+    const grpNames=gi>=0?(cols[gi]||'').split(/[,;]/).map(s=>s.trim()).filter(Boolean):[];
+
+    // Generate password
+    const chars='ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%&*';
+    let pass='';for(let j=0;j<12;j++)pass+=chars[Math.floor(Math.random()*chars.length)];
+    pass+='A1!';
+
+    const upn=user.includes('@')?user:`${user}@${domain}`;
+    try{
+      const payload={accountEnabled:true,displayName:`${first} ${last}`,givenName:first,surname:last,
+        userPrincipalName:upn,mailNickname:user.split('@')[0],usageLocation:$('nuLoc').value.trim()||'GB',
+        passwordProfile:{password:pass,forceChangePasswordNextSignIn:true}};
+      if(title)payload.jobTitle=title;if(dept)payload.department=dept;
+
+      const created=await G.call('/users','POST',payload);
+
+      // Resolve group names to IDs and add membership
+      const groupResults=[];
+      for(const gn of grpNames){
+        const match=NU_GROUPS.find(g=>g.displayName.toLowerCase()===gn.toLowerCase());
+        if(match){
+          try{
+            await G.call(`/groups/${match.id}/members/$ref`,'POST',{'@odata.id':`https://graph.microsoft.com/v1.0/directoryObjects/${created.id}`});
+            groupResults.push({name:match.displayName,ok:true});
+          }catch(e){groupResults.push({name:match.displayName,ok:false,err:e.message})}
+        } else {groupResults.push({name:gn,ok:false,err:'Group not found'})}
+      }
+      NU_CREATED.push({id:created.id,upn,display:`${first} ${last}`,pass,title,dept,groups:groupResults,ts:new Date().toISOString()});
+    }catch(e){
+      NU_CREATED.push({id:null,upn,display:`${first} ${last}`,pass:'—',title,dept,groups:[{name:'CREATE FAILED',ok:false,err:e.message}],ts:new Date().toISOString()});
+    }
+    nuRenderLog();
+  }
+  G.scopes=null;
+}
+
+/* ============================================================
+   DOMAINS TAB — Manage tenant domains and DNS verification
+   ============================================================ */
+let DOM_SELECTED=null;
+
+async function domRefresh(){
+  if(!A.ok()){alert('Sign in first');return}
+  const el=$('domList');
+  el.innerHTML='<div style="color:var(--text-muted);font-size:.82rem;padding:12px">Loading domains...</div>';
+  try{
+    G.scopes=Auth.DISCOVERY_SCOPES;
+    const resp=await G.call("/domains?$select=id,authenticationType,isDefault,isInitial,isVerified,supportedServices");
+    const doms=resp.value||[];
+    G.scopes=null;
+
+    if(!doms.length){el.innerHTML='<div style="color:var(--text-muted);font-size:.82rem;padding:12px">No domains found.</div>';return}
+
+    el.innerHTML=`<div style="overflow-x:auto"><table style="width:100%;font-size:.82rem;border-collapse:collapse">
+      <thead><tr style="text-align:left;color:var(--text-muted);font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border-subtle)">
+        <th style="padding:8px">Domain</th><th style="padding:8px">Status</th><th style="padding:8px">Type</th><th style="padding:8px">Services</th><th style="padding:8px">Actions</th>
+      </tr></thead><tbody>
+      ${doms.map(d=>`<tr style="border-bottom:1px solid var(--border-subtle)">
+        <td style="padding:8px;font-weight:600;color:var(--accent-cyan)">${esc(d.id)} ${d.isDefault?'<span class="badge badge-green" style="font-size:.6rem">Default</span>':''} ${d.isInitial?'<span class="badge badge-muted" style="font-size:.6rem">Initial</span>':''}</td>
+        <td style="padding:8px">${d.isVerified?'<span class="badge badge-green">Verified</span>':'<span class="badge badge-amber">Unverified</span>'}</td>
+        <td style="padding:8px;color:var(--text-secondary)">${esc(d.authenticationType||'Managed')}</td>
+        <td style="padding:8px;font-size:.72rem">${(d.supportedServices||[]).map(s=>`<span class="badge badge-muted" style="font-size:.6rem;margin:1px">${esc(s)}</span>`).join('')||'—'}</td>
+        <td style="padding:8px">
+          ${!d.isVerified?`<button class="btn btn-sm btn-secondary" onclick="domShowVerify('${esc(d.id)}')">Verify</button>`:''}
+          ${d.isVerified&&!d.isDefault&&!d.isInitial?`<button class="btn btn-sm btn-ghost" onclick="domSetDefault('${esc(d.id)}')">Set Default</button>`:''}
+          ${!d.isInitial?`<button class="btn btn-sm btn-ghost" onclick="domShowDns('${esc(d.id)}')" style="color:var(--accent-cyan)">DNS</button>`:''}
+        </td>
+      </tr>`).join('')}
+      </tbody></table></div>`;
+
+    // Also populate the Users tab domain dropdown
+    const sel=$('nuDomainSel');
+    sel.innerHTML=doms.filter(d=>d.isVerified).map(d=>`<option value="${esc(d.id)}" ${d.isDefault?'selected':''}>${esc(d.id)}</option>`).join('');
+  }catch(e){
+    el.innerHTML=`<div style="color:var(--accent-red);font-size:.82rem;padding:12px">Error: ${esc(e.message)}</div>`;
+    G.scopes=null;
+  }
+}
+
+async function domAdd(){
+  if(!A.ok()){alert('Sign in first');return}
+  const name=$('domNew').value.trim().toLowerCase();
+  if(!name||!name.includes('.')){alert('Enter a valid domain name');return}
+  const res=$('domAddResult');
+  res.innerHTML='<div style="color:var(--text-muted);font-size:.82rem">Adding domain...</div>';
+  try{
+    await G.call('/domains','POST',{id:name});
+    res.innerHTML=`<div style="color:var(--accent-green);font-size:.82rem;padding:8px">✓ Domain <strong>${esc(name)}</strong> added. Now configure the DNS verification records below.</div>`;
+    $('domNew').value='';
+    domRefresh();
+    // Auto-show verification
+    setTimeout(()=>domShowVerify(name),500);
+  }catch(e){
+    res.innerHTML=`<div style="color:var(--accent-red);font-size:.82rem;padding:8px">✗ ${esc(e.message)}</div>`;
+  }
+}
+
+async function domShowVerify(domain){
+  DOM_SELECTED=domain;
+  $('domVerifyCard').classList.remove('hidden');
+  domFetchRecords();
+}
+
+async function domFetchRecords(){
+  if(!DOM_SELECTED||!A.ok())return;
+  const el=$('domDnsRecords');
+  el.innerHTML='<div style="color:var(--text-muted);font-size:.82rem">Loading DNS records...</div>';
+  try{
+    const resp=await G.call(`/domains/${DOM_SELECTED}/verificationDnsRecords`);
+    const records=resp.value||[];
+
+    if(!records.length){el.innerHTML='<div style="color:var(--text-muted);font-size:.82rem">No verification records returned — domain may already be verified.</div>';return}
+
+    el.innerHTML=`<div style="font-size:.78rem;font-weight:600;color:var(--accent-cyan);margin-bottom:8px">DNS records for: ${esc(DOM_SELECTED)}</div>
+    <div style="overflow-x:auto"><table style="width:100%;font-size:.78rem;border-collapse:collapse;font-family:var(--font-mono)">
+      <thead><tr style="text-align:left;color:var(--text-muted);font-size:.7rem;text-transform:uppercase;border-bottom:1px solid var(--border-subtle)">
+        <th style="padding:6px">Type</th><th style="padding:6px">Name</th><th style="padding:6px">Value</th><th style="padding:6px">TTL</th>
+      </tr></thead><tbody>
+      ${records.map(r=>`<tr style="border-bottom:1px solid var(--border-subtle)">
+        <td style="padding:6px"><span class="badge badge-cyan" style="font-size:.65rem">${esc(r.recordType||r['@odata.type']?.split('.')?.pop()||'')}</span></td>
+        <td style="padding:6px;color:var(--text-primary)">${esc(r.label||r.name||DOM_SELECTED)}</td>
+        <td style="padding:6px;color:var(--accent-amber);word-break:break-all;user-select:all">${esc(r.text||r.nameTarget||r.mailExchange||r.canonicalName||'')}</td>
+        <td style="padding:6px;color:var(--text-muted)">${r.ttl||3600}</td>
+      </tr>`).join('')}
+      </tbody></table></div>`;
+  }catch(e){
+    el.innerHTML=`<div style="color:var(--accent-red);font-size:.82rem">Error: ${esc(e.message)}</div>`;
+  }
+}
+
+async function domVerify(){
+  if(!DOM_SELECTED||!A.ok())return;
+  const res=$('domVerifyResult');
+  res.innerHTML='<div style="color:var(--text-muted);font-size:.82rem">Verifying...</div>';
+  try{
+    await G.call(`/domains/${DOM_SELECTED}/verify`,'POST');
+    res.innerHTML=`<div style="color:var(--accent-green);font-size:.82rem;padding:8px">✓ Domain <strong>${esc(DOM_SELECTED)}</strong> verified successfully!</div>`;
+    domRefresh();
+  }catch(e){
+    res.innerHTML=`<div style="color:var(--accent-red);font-size:.82rem;padding:8px">✗ Verification failed: ${esc(e.message)}<br><span style="color:var(--text-muted);font-size:.76rem">Ensure DNS records are created and have propagated. This can take up to 48 hours.</span></div>`;
+  }
+}
+
+async function domSetDefault(domain){
+  if(!A.ok())return;
+  if(!confirm(`Set ${domain} as the default domain? This will be used for new user UPNs.`))return;
+  try{
+    await G.call(`/domains/${domain}`,'PATCH',{isDefault:true});
+    domRefresh();
+  }catch(e){alert('Failed: '+e.message)}
+}
+
+async function domShowDns(domain){
+  DOM_SELECTED=domain;
+  $('domVerifyCard').classList.remove('hidden');
+  const el=$('domDnsRecords');
+  el.innerHTML='<div style="color:var(--text-muted);font-size:.82rem">Loading service records...</div>';
+  try{
+    // Fetch both verification and service DNS records
+    const[vResp,sResp]=await Promise.all([
+      G.call(`/domains/${domain}/verificationDnsRecords`).catch(()=>({value:[]})),
+      G.call(`/domains/${domain}/serviceConfigurationRecords`).catch(()=>({value:[]}))
+    ]);
+    const allRecords=[...(vResp.value||[]).map(r=>({...r,_type:'Verification'})),...(sResp.value||[]).map(r=>({...r,_type:'Service'}))];
+
+    if(!allRecords.length){el.innerHTML='<div style="color:var(--text-muted);font-size:.82rem">No DNS records found for this domain.</div>';return}
+
+    el.innerHTML=`<div style="font-size:.78rem;font-weight:600;color:var(--accent-cyan);margin-bottom:8px">DNS records for: ${esc(domain)}</div>
+    <div style="overflow-x:auto"><table style="width:100%;font-size:.78rem;border-collapse:collapse;font-family:var(--font-mono)">
+      <thead><tr style="text-align:left;color:var(--text-muted);font-size:.7rem;text-transform:uppercase;border-bottom:1px solid var(--border-subtle)">
+        <th style="padding:6px">Purpose</th><th style="padding:6px">Type</th><th style="padding:6px">Name</th><th style="padding:6px">Value</th><th style="padding:6px">TTL</th><th style="padding:6px">Priority</th>
+      </tr></thead><tbody>
+      ${allRecords.map(r=>{
+        const rType=r.recordType||(r['@odata.type']||'').split('.').pop().replace('DnsRecord','').replace('dns','');
+        const val=r.text||r.nameTarget||r.mailExchange||r.canonicalName||r.address||'';
+        return `<tr style="border-bottom:1px solid var(--border-subtle)">
+          <td style="padding:6px"><span class="badge ${r._type==='Service'?'badge-green':'badge-amber'}" style="font-size:.6rem">${r._type}</span></td>
+          <td style="padding:6px"><span class="badge badge-cyan" style="font-size:.65rem">${esc(rType)}</span></td>
+          <td style="padding:6px;color:var(--text-primary)">${esc(r.label||r.name||domain)}</td>
+          <td style="padding:6px;color:var(--accent-amber);word-break:break-all;max-width:360px;user-select:all">${esc(val)}</td>
+          <td style="padding:6px;color:var(--text-muted)">${r.ttl||3600}</td>
+          <td style="padding:6px;color:var(--text-muted)">${r.preference||r.priority||'—'}</td>
+        </tr>`}).join('')}
+      </tbody></table></div>`;
+
+    // Also show service records in the bottom card
+    const sRecords=sResp.value||[];
+    if(sRecords.length){
+      $('domServiceRecords').innerHTML=$('domDnsRecords').innerHTML.replace('DNS records for:','Service configuration records for:');
+    }
+  }catch(e){
+    el.innerHTML=`<div style="color:var(--accent-red);font-size:.82rem">Error: ${esc(e.message)}</div>`;
+  }
+}
 
 /* ============================================================
    COMPLIANCE TAB — with per-policy remediation
