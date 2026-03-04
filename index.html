@@ -156,7 +156,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 <body>
 <div id="app">
 <header class="header"><div class="header-brand"><div class="header-logo">M</div><div><div class="header-title">M365 Tenant Automation</div><div class="header-subtitle">MSP Onboarding, Provisioning &amp; CE+ Compliance</div></div></div><div class="header-meta"><button id="themeBtn" class="btn btn-ghost btn-sm" onclick="toggleTheme()" title="Toggle light/dark theme" style="font-size:1.1rem;padding:4px 8px;line-height:1">🌙</button><span class="badge badge-cyan">Graph API v1.0</span><span class="badge badge-green" style="margin-left:4px">v3.3</span><div id="authStatus" class="auth-status disconnected"><span class="auth-dot"></span><span id="authStatusText">Not connected</span></div><button id="authBtn" class="btn btn-sm btn-secondary" onclick="handleAuth()">Sign In</button></div></header>
-<nav class="tab-bar"><button class="tab-btn active" data-tab="setup" onclick="switchTab('setup',this)"><span>⚡</span> New Tenant Setup</button><button class="tab-btn" data-tab="discovery" onclick="switchTab('discovery',this)"><span>🔍</span> Tenant Discovery</button><button class="tab-btn" data-tab="users" onclick="switchTab('users',this)"><span>👤</span> Users</button><button class="tab-btn" data-tab="domains" onclick="switchTab('domains',this)"><span>🌐</span> Domains</button><button class="tab-btn" data-tab="compliance" onclick="switchTab('compliance',this)"><span>✅</span> CE+ Compliance</button><button class="tab-btn" data-tab="config" onclick="switchTab('config',this)"><span>⚙</span> App Config</button></nav>
+<nav class="tab-bar"><button class="tab-btn active" data-tab="setup" onclick="switchTab('setup',this)"><span>⚡</span> New Tenant Setup</button><button class="tab-btn" data-tab="discovery" onclick="switchTab('discovery',this)"><span>🔍</span> Tenant Discovery</button><button class="tab-btn" data-tab="users" onclick="switchTab('users',this)"><span>👤</span> Users</button><button class="tab-btn" data-tab="domains" onclick="switchTab('domains',this)"><span>🌐</span> Domains</button><button class="tab-btn" data-tab="intune" onclick="switchTab('intune',this)"><span>📱</span> Intune</button><button class="tab-btn" data-tab="compliance" onclick="switchTab('compliance',this)"><span>✅</span> CE+ Compliance</button><button class="tab-btn" data-tab="config" onclick="switchTab('config',this)"><span>⚙</span> App Config</button></nav>
 <main class="main-content">
 
 <!-- SETUP -->
@@ -417,6 +417,40 @@ Jane,Doe,jane.doe,CFO,Finance,LIC — Business Premium"></textarea>
 
 </div></div>
 
+<!-- ═══════ INTUNE TAB ═══════ -->
+<div id="panel-intune" class="tab-panel">
+
+<!-- Scan Controls -->
+<div class="card" style="margin-bottom:22px">
+<div class="flex items-center gap-md" style="flex-wrap:wrap">
+  <div style="flex:1;min-width:280px;max-width:400px">
+    <label class="form-label">Target Tenant Domain</label>
+    <input id="intDomain" class="form-input" placeholder="contoso.onmicrosoft.com">
+  </div>
+  <button id="intScanBtn" class="btn btn-primary" onclick="startIntuneScan()" style="align-self:flex-end">📱 Run Intune Scan</button>
+  <div id="intExBtns" class="flex gap-sm hidden" style="align-self:flex-end">
+    <button class="btn btn-secondary btn-sm" onclick="intExportHTML()">📋 HTML Report</button>
+    <button class="btn btn-secondary btn-sm" onclick="intExportCSV()">📄 CSV</button>
+  </div>
+</div>
+<div id="intProgress" class="hidden" style="margin-top:14px">
+  <div class="flex justify-between" style="margin-bottom:5px">
+    <span id="intStatus" style="font-size:.8rem;color:var(--text-secondary)">Scanning...</span>
+    <span id="intPercent" style="font-size:.8rem;font-weight:600;color:var(--accent-blue)">0%</span>
+  </div>
+  <div class="progress-track"><div id="intBar" class="progress-fill" style="width:0%"></div></div>
+</div>
+</div>
+
+<!-- Results -->
+<div id="intResults"></div>
+<div id="intEmpty" class="empty-state">
+  <div class="empty-icon">📱</div>
+  <div class="empty-title">Intune Security & Compliance</div>
+  <div class="empty-desc">Scans device management policies, compliance state, MAM/MDM configuration, endpoint security,<br>and assesses against CE+, NCSC, and CIS benchmarks with one-click remediation.</div>
+</div>
+</div>
+
 <div id="panel-compliance" class="tab-panel"><div class="card" style="margin-bottom:22px"><div class="flex items-center gap-md" style="flex-wrap:wrap"><div style="flex:1;min-width:280px;max-width:400px"><label class="form-label">Target Tenant Domain</label><input id="compDomain" class="form-input" placeholder="contoso.onmicrosoft.com"></div><button id="compScanBtn" class="btn btn-primary" onclick="startCompliance()" style="align-self:flex-end">✅ Run CE+ Scan</button><button id="compExBtn" class="btn btn-secondary hidden" onclick="exComp()" style="align-self:flex-end">📄 Export</button></div><div id="compProgress" class="hidden" style="margin-top:14px"><div class="flex justify-between" style="margin-bottom:5px"><span style="font-size:.8rem;color:var(--text-secondary)">Scanning...</span><span id="compPercent" style="font-size:.8rem;font-weight:600;color:var(--accent-blue)">0%</span></div><div class="progress-track"><div id="compBar" class="progress-fill" style="width:0%"></div></div></div></div><div id="compResults"></div><div id="compEmpty" class="empty-state"><div class="empty-icon">✅</div><div class="empty-title">CE+ Compliance Scanner</div><div class="empty-desc">Scans your tenant against all Cyber Essentials Plus requirements</div></div></div>
 
 <!-- CONFIG -->
@@ -532,7 +566,7 @@ Jane,Doe,jane.doe,CFO,Finance,LIC — Business Premium"></textarea>
     <div class="guide-feat-item"><div class="guide-feat-icon">👤</div><div class="guide-feat-label">User Provisioning & Management</div></div>
     <div class="guide-feat-item"><div class="guide-feat-icon">🌐</div><div class="guide-feat-label">Domain & DNS Management</div></div>
     <div class="guide-feat-item"><div class="guide-feat-icon">✅</div><div class="guide-feat-label">CE+ Compliance Scanning</div></div>
-    <div class="guide-feat-item"><div class="guide-feat-icon">🏷️</div><div class="guide-feat-label">License Group Automation</div></div>
+    <div class="guide-feat-item"><div class="guide-feat-icon">📱</div><div class="guide-feat-label">Intune Security Assessment</div></div>
   </div>
   <div class="guide-nav">
     <button class="guide-skip" onclick="guideClose()">Skip setup — I've used this before</button>
@@ -690,7 +724,7 @@ Jane,Doe,jane.doe,CFO,Finance,LIC — Business Premium"></textarea>
   <div class="guide-sub">Your tenant is connected and all permissions are in place. Here's what you can do now:</div>
 </div>
 <div class="guide-body">
-  <div class="guide-feat" style="grid-template-columns:1fr 1fr">
+  <div class="guide-feat" style="grid-template-columns:repeat(3,1fr)">
     <div class="guide-feat-item" style="cursor:pointer;transition:border-color .2s" onclick="guideGoTo('setup')" onmouseenter="this.style.borderColor='var(--accent-blue)'" onmouseleave="this.style.borderColor='var(--border-subtle)'">
       <div class="guide-feat-icon">⚡</div>
       <div class="guide-feat-label">New Tenant Setup</div>
@@ -710,6 +744,11 @@ Jane,Doe,jane.doe,CFO,Finance,LIC — Business Premium"></textarea>
       <div class="guide-feat-icon">✅</div>
       <div class="guide-feat-label">CE+ Compliance</div>
       <div style="font-size:.72rem;color:var(--text-muted);margin-top:4px">Scan against Cyber Essentials Plus requirements with remediation</div>
+    </div>
+    <div class="guide-feat-item" style="cursor:pointer;transition:border-color .2s" onclick="guideGoTo('intune')" onmouseenter="this.style.borderColor='var(--accent-blue)'" onmouseleave="this.style.borderColor='var(--border-subtle)'">
+      <div class="guide-feat-icon">📱</div>
+      <div class="guide-feat-label">Intune Security</div>
+      <div style="font-size:.72rem;color:var(--text-muted);margin-top:4px">MDM/MAM assessment, device compliance, endpoint security baselines</div>
     </div>
   </div>
   <div class="guide-nav" style="justify-content:center;gap:12px">
@@ -2833,6 +2872,666 @@ if(sc<80)L.push('','BUSINESS RISK SUMMARY','═'.repeat(60),'','Failing Cyber Es
 dl(L.join('\n'),`CE_Report_${dom.split('.')[0]}.txt`,'text/plain')}
 
 /* ============================================================
+   INTUNE SECURITY & COMPLIANCE TAB
+   ============================================================ */
+let INT_DATA=null,INT_CHECKS=null;
+
+// ── Policy recommendation definitions ──
+const INTUNE_RECS={
+  compliance:{cat:'Device Compliance',icon:'🛡️',checks:[
+    {id:'ic01',n:'Windows Compliance Policy Exists',sev:'critical',fw:'CE+/NCSC',req:'Devices must have a compliance policy assigned. Without one, all devices are marked compliant by default — defeating the purpose of conditional access device checks.',
+     check:d=>d.compliancePolicies.some(p=>p.platformType==='windows10AndLater'||p['@odata.type']?.includes('windows10')),
+     ep:'POST /deviceManagement/deviceCompliancePolicies',pay:{'@odata.type':'#microsoft.graph.windows10CompliancePolicy',displayName:'CE+ Windows Compliance Baseline',bitLockerEnabled:true,secureBootEnabled:true,codeIntegrityEnabled:true,passwordRequired:true,passwordMinimumLength:12,osMinimumVersion:'10.0.19045',firewallEnabled:true,antivirusRequired:true,defenderEnabled:true}},
+    {id:'ic02',n:'iOS/iPadOS Compliance Policy Exists',sev:'high',fw:'CE+/NCSC',req:'All managed iOS devices should have a compliance policy requiring passcode, encryption, and OS version controls.',
+     check:d=>d.compliancePolicies.some(p=>p.platformType==='iOS'||p['@odata.type']?.includes('ios')),
+     ep:'POST /deviceManagement/deviceCompliancePolicies',pay:{'@odata.type':'#microsoft.graph.iosCompliancePolicy',displayName:'CE+ iOS Compliance Baseline',passcodeRequired:true,passcodeMinimumLength:6,securityBlockJailbrokenDevices:true,managedEmailProfileRequired:false,osMinimumVersion:'16.0'}},
+    {id:'ic03',n:'Android Compliance Policy Exists',sev:'high',fw:'CE+/NCSC',req:'Android devices should have compliance policies enforcing encryption, passcode, and SafetyNet attestation.',
+     check:d=>d.compliancePolicies.some(p=>p.platformType==='androidForWork'||p.platformType==='android'||p['@odata.type']?.includes('android')),
+     ep:'POST /deviceManagement/deviceCompliancePolicies',pay:{'@odata.type':'#microsoft.graph.androidWorkProfileCompliancePolicy',displayName:'CE+ Android Compliance Baseline',passwordRequired:true,passwordMinimumLength:6,securityBlockJailbrokenDevices:true,storageRequireEncryption:true}},
+    {id:'ic04',n:'Non-Compliant Action Configured',sev:'high',fw:'CE+',req:'Compliance policies should have scheduled actions for non-compliant devices (mark non-compliant, send notification, retire).',
+     check:d=>d.compliancePolicies.some(p=>p.scheduledActionsForRule?.length>0),note:'Review each compliance policy and add Scheduled Actions: mark non-compliant immediately, send email after 1 day, retire after 30 days.'},
+    {id:'ic05',n:'Mark Devices With No Policy as Non-Compliant',sev:'critical',fw:'CE+/NCSC',req:'The tenant-wide setting must mark devices without a compliance policy as non-compliant. Default is "Compliant" which is dangerous.',
+     check:d=>d.policySettings?.secureByDefault===true,
+     ep:'PATCH /deviceManagement/deviceCompliancePolicyDeviceStateSummary',note:'Go to Endpoint Manager → Devices → Compliance policies → Compliance policy settings → Mark devices with no compliance policy as: Non-compliant. This setting requires manual change in the portal.'},
+  ]},
+  endpointSecurity:{cat:'Endpoint Security',icon:'🔒',checks:[
+    {id:'ie01',n:'Microsoft Defender Antivirus Policy',sev:'critical',fw:'CE+/NCSC/CIS',req:'An endpoint security antivirus policy must be deployed to enable real-time protection, cloud-delivered protection, and automatic sample submission.',
+     check:d=>d.endpointSecurity.some(p=>p.templateDisplayName?.includes('Antivirus')||p.displayName?.toLowerCase().includes('antivirus')),
+     note:'Create in Endpoint Manager → Endpoint Security → Antivirus → Create Policy → Windows 10+, Microsoft Defender Antivirus. Enable real-time protection, cloud protection level (High+), and PUA protection.'},
+    {id:'ie02',n:'Firewall Policy Deployed',sev:'critical',fw:'CE+/NCSC/CIS',req:'Windows Firewall must be enabled for all profiles (Domain, Private, Public) with inbound connections blocked by default.',
+     check:d=>d.endpointSecurity.some(p=>p.templateDisplayName?.includes('Firewall')||p.displayName?.toLowerCase().includes('firewall')),
+     note:'Create in Endpoint Manager → Endpoint Security → Firewall → Create Policy → Windows 10+. Enable firewall for all three profiles, block inbound by default.'},
+    {id:'ie03',n:'Disk Encryption (BitLocker) Policy',sev:'critical',fw:'CE+/NCSC/CIS',req:'Full disk encryption via BitLocker must be enforced on all Windows devices. CE+ requires encryption of all data at rest.',
+     check:d=>d.endpointSecurity.some(p=>p.templateDisplayName?.includes('BitLocker')||p.templateDisplayName?.includes('Disk encryption')||p.displayName?.toLowerCase().includes('bitlocker')||p.displayName?.toLowerCase().includes('encryption')),
+     note:'Create in Endpoint Manager → Endpoint Security → Disk encryption → Create Policy → Windows 10+, BitLocker. Require device encryption, configure recovery key escrow to Azure AD.'},
+    {id:'ie04',n:'EDR/Endpoint Detection Policy',sev:'high',fw:'NCSC/CIS',req:'Endpoint Detection and Response should be configured to provide advanced threat detection, investigation, and response capabilities.',
+     check:d=>d.endpointSecurity.some(p=>p.templateDisplayName?.includes('Endpoint detection')||p.displayName?.toLowerCase().includes('edr')),
+     note:'Create in Endpoint Manager → Endpoint Security → Endpoint detection and response → Create Policy. Requires Microsoft Defender for Endpoint P2 licensing.'},
+    {id:'ie05',n:'Attack Surface Reduction (ASR) Rules',sev:'high',fw:'NCSC/CIS',req:'ASR rules block common malware techniques including Office macro abuse, script-based attacks, credential theft, and ransomware behaviour.',
+     check:d=>d.endpointSecurity.some(p=>p.templateDisplayName?.includes('Attack surface')||p.displayName?.toLowerCase().includes('asr')),
+     note:'Create in Endpoint Manager → Endpoint Security → Attack surface reduction → Create Policy. Enable rules in Block mode after testing in Audit mode.'},
+    {id:'ie06',n:'Account Protection (LAPS/Windows Hello)',sev:'medium',fw:'NCSC/CIS',req:'Local Administrator Password Solution (LAPS) and/or Windows Hello for Business should be configured for strong local account management.',
+     check:d=>d.endpointSecurity.some(p=>p.templateDisplayName?.includes('Account protection')||p.displayName?.toLowerCase().includes('laps')||p.displayName?.toLowerCase().includes('hello')),
+     note:'Create in Endpoint Manager → Endpoint Security → Account protection. Enable LAPS for local admin password rotation, configure Windows Hello for Business.'},
+  ]},
+  appProtection:{cat:'App Protection (MAM)',icon:'📱',checks:[
+    {id:'ia01',n:'iOS App Protection Policy',sev:'critical',fw:'CE+/NCSC',req:'App protection policies must control data leakage from managed apps on iOS: prevent copy/paste to unmanaged apps, require PIN, encrypt app data.',
+     check:d=>d.appProtection.some(p=>(p['@odata.type']?.includes('ios')||p['@odata.type']?.includes('Ios'))&&!p.isAssigned===false),
+     ep:'POST /deviceAppManagement/iosManagedAppProtections',pay:{displayName:'CE+ iOS App Protection',periodOfflineBeforeAccessCheck:'PT12H',periodOnlineBeforeAccessCheck:'PT5M',allowedDataStorageLocations:['oneDriveForBusiness','sharePoint'],dataBackupBlocked:true,deviceComplianceRequired:false,pinRequired:true,minimumPinLength:6,managedBrowserToOpenLinksRequired:false,saveAsBlocked:true,faceIdBlocked:false}},
+    {id:'ia02',n:'Android App Protection Policy',sev:'critical',fw:'CE+/NCSC',req:'Android app protection policies must prevent data leakage, require PIN or biometric, block rooted devices, and encrypt app data.',
+     check:d=>d.appProtection.some(p=>(p['@odata.type']?.includes('android')||p['@odata.type']?.includes('Android'))&&!p.isAssigned===false),
+     ep:'POST /deviceAppManagement/androidManagedAppProtections',pay:{displayName:'CE+ Android App Protection',periodOfflineBeforeAccessCheck:'PT12H',screenCaptureBlocked:true,dataBackupBlocked:true,pinRequired:true,minimumPinLength:6,deviceComplianceRequired:false,saveAsBlocked:true}},
+    {id:'ia03',n:'App Protection Blocks Jailbroken/Rooted Devices',sev:'critical',fw:'CE+/NCSC',req:'App protection policies must block access from jailbroken iOS or rooted Android devices as they bypass OS security controls.',
+     check:d=>{const ios=d.appProtection.filter(p=>p['@odata.type']?.includes('ios')||p['@odata.type']?.includes('Ios'));
+       const and=d.appProtection.filter(p=>p['@odata.type']?.includes('android')||p['@odata.type']?.includes('Android'));
+       return(ios.length===0||ios.some(p=>p.appActionIfDeviceComplianceRequired==='block'))||(and.length===0||and.some(p=>p.appActionIfDeviceComplianceRequired==='block'))},
+     note:'Edit existing App Protection policies: Conditional Launch → Jailbroken/rooted devices → Block access.'},
+    {id:'ia04',n:'Minimum App Version Requirements',sev:'medium',fw:'NCSC',req:'App protection policies should enforce minimum OS and app versions to ensure devices have security patches applied.',
+     check:d=>d.appProtection.some(p=>p.minimumRequiredOsVersion||p.minimumRequiredAppVersion),
+     note:'Edit existing App Protection policies to set minimum OS version requirements under Conditional Launch.'},
+  ]},
+  deviceConfig:{cat:'Device Configuration',icon:'⚙️',checks:[
+    {id:'id01',n:'Device Restrictions Profile (Windows)',sev:'high',fw:'CE+/CIS',req:'Device restriction profiles control camera, Bluetooth, USB, screen capture, and other hardware features to reduce the attack surface.',
+     check:d=>d.deviceConfigs.some(p=>p['@odata.type']?.includes('Restrictions')||p.displayName?.toLowerCase().includes('restriction')),
+     note:'Create in Endpoint Manager → Devices → Configuration profiles → Create → Windows 10+ → Device restrictions. Restrict removable storage, configure password requirements, disable unnecessary features.'},
+    {id:'id02',n:'Wi-Fi Configuration Profile',sev:'medium',fw:'NCSC',req:'Managed Wi-Fi profiles ensure devices connect to approved networks with enterprise authentication (802.1x/EAP).',
+     check:d=>d.deviceConfigs.some(p=>p['@odata.type']?.includes('wifi')||p['@odata.type']?.includes('Wifi')||p.displayName?.toLowerCase().includes('wi-fi')||p.displayName?.toLowerCase().includes('wifi')),
+     note:'Create in Endpoint Manager → Devices → Configuration profiles → Create → Wi-Fi. Deploy corporate Wi-Fi profiles with certificate-based authentication.'},
+    {id:'id03',n:'Settings Catalog Policies Configured',sev:'medium',fw:'CIS',req:'Settings Catalog provides granular control over hundreds of Windows, macOS, and iOS settings with full policy coverage.',
+     check:d=>d.settingsCatalog.length>0},
+    {id:'id04',n:'Certificate/SCEP Profile',sev:'medium',fw:'NCSC',req:'Certificate profiles enable certificate-based authentication for Wi-Fi, VPN, and email, replacing less secure password auth.',
+     check:d=>d.deviceConfigs.some(p=>p['@odata.type']?.includes('Certificate')||p['@odata.type']?.includes('Scep')||p['@odata.type']?.includes('Pkcs')||p.displayName?.toLowerCase().includes('cert')),
+     note:'Create SCEP or PKCS certificate profiles after configuring your PKI infrastructure and NDES/Intune Certificate Connector.'},
+  ]},
+  windowsUpdate:{cat:'Windows Update Management',icon:'🔄',checks:[
+    {id:'iu01',n:'Windows Update Ring Configured',sev:'critical',fw:'CE+/NCSC',req:'CE+ requires all software including the OS to be kept up to date. Windows Update for Business rings must be configured with appropriate deferral periods.',
+     check:d=>d.updateRings.length>0,
+     ep:'POST /deviceManagement/deviceConfigurations',pay:{'@odata.type':'#microsoft.graph.windowsUpdateForBusinessConfiguration',displayName:'CE+ Windows Update Ring',qualityUpdatesDeferralPeriodInDays:0,featureUpdatesDeferralPeriodInDays:14,microsoftUpdateServiceAllowed:true,automaticUpdateMode:'autoInstallAndRebootAtScheduledTime',scheduledInstallDay:'everyDay',scheduledInstallTime:'03:00:00',deliveryOptimizationMode:'httpWithPeeringNat',qualityUpdatesPauseExpiryDateTime:'0001-01-01T00:00:00Z',featureUpdatesPauseExpiryDateTime:'0001-01-01T00:00:00Z'}},
+    {id:'iu02',n:'Quality Updates Within 14 Days',sev:'critical',fw:'CE+',req:'CE+ mandates critical and high-risk security patches are applied within 14 days of release. Quality update deferral should be 0–7 days.',
+     check:d=>d.updateRings.some(p=>(p.qualityUpdatesDeferralPeriodInDays||0)<=14),
+     note:'Edit Windows Update rings to set Quality update deferral to 0–7 days for optimal security.'},
+    {id:'iu03',n:'Feature Updates Within 30 Days',sev:'high',fw:'CE+/NCSC',req:'Feature updates should be deferred 14–30 days for stability testing, but not indefinitely as they contain security improvements.',
+     check:d=>d.updateRings.some(p=>(p.featureUpdatesDeferralPeriodInDays||0)<=30&&(p.featureUpdatesDeferralPeriodInDays||0)>0),
+     note:'Edit Windows Update rings to set Feature update deferral to 14–30 days.'},
+    {id:'iu04',n:'Driver Updates Managed',sev:'medium',fw:'CIS',req:'Driver updates should be managed through Windows Update for Business to ensure devices receive firmware and driver security patches.',
+     check:d=>d.updateRings.some(p=>p.driversExcluded===false||p.driversExcluded===undefined)},
+  ]},
+  enrollment:{cat:'Enrollment & Auto-Enrollment',icon:'📋',checks:[
+    {id:'in01',n:'MDM Auto-Enrollment Scope Configured',sev:'critical',fw:'CE+/NCSC',req:'MDM auto-enrollment must be enabled (ideally for All users) so that Azure AD-joined or hybrid-joined Windows devices are automatically enrolled into Intune. Without this, devices join Azure AD but are not managed, leaving a critical gap in endpoint security.',
+     check:d=>{const mdm=d.mdmPolicies;if(Array.isArray(mdm))return mdm.some(p=>p.appliesTo==='allUsers'||p.appliesTo==='selected');if(mdm?.appliesTo)return mdm.appliesTo==='allUsers'||mdm.appliesTo==='selected';return false},
+     note:'Configure in Entra ID → Mobility (MDM and MAM) → Microsoft Intune → MDM user scope: set to "All" or "Some" (select security groups). The URL fields should auto-populate with Intune discovery URLs. For CE+, "All" is strongly recommended to prevent unmanaged devices.'},
+    {id:'in02',n:'MDM Auto-Enrollment Scope Is "All Users"',sev:'high',fw:'CE+',req:'For maximum security, MDM scope should be set to "All" rather than "Some" to ensure every user who joins a device to Azure AD gets automatic Intune enrollment with no gaps.',
+     check:d=>{const mdm=d.mdmPolicies;if(Array.isArray(mdm))return mdm.some(p=>p.appliesTo==='allUsers');if(mdm?.appliesTo)return mdm.appliesTo==='allUsers';return false},
+     note:'Entra ID → Mobility (MDM and MAM) → Microsoft Intune → MDM user scope: change from "Some" to "All". If using "Some", ensure all relevant security groups are included.'},
+    {id:'in03',n:'MAM Auto-Enrollment Configured',sev:'medium',fw:'CE+/NCSC',req:'MAM (Mobile Application Management) auto-enrollment enables app protection on personal devices without full MDM enrollment — critical for BYOD scenarios where users access corporate data on personal phones.',
+     check:d=>{const mam=d.mamPolicies;if(Array.isArray(mam))return mam.some(p=>p.appliesTo==='allUsers'||p.appliesTo==='selected');if(mam?.appliesTo)return mam.appliesTo==='allUsers'||mam.appliesTo==='selected';return false},
+     note:'Configure in Entra ID → Mobility (MDM and MAM) → Microsoft Intune → MAM user scope: set to "All" or "Some". This works alongside App Protection Policies to protect data on unmanaged devices.'},
+    {id:'in04',n:'Windows Autopilot Profile Exists',sev:'high',fw:'CE+/NCSC',req:'Autopilot provides zero-touch provisioning ensuring new devices are enrolled and configured securely from first boot, without IT needing to image them.',
+     check:d=>d.autopilot.length>0,
+     note:'Create in Intune → Devices → Windows enrollment → Deployment profiles → Create profile. Choose User-driven (for standard deployments) or Self-deploying (for kiosks/shared devices).'},
+    {id:'in05',n:'Autopilot Pre-Provisioning Enabled',sev:'medium',fw:'NCSC',req:'Pre-provisioning (formerly White Glove) allows IT or a partner/OEM to pre-provision a device before the end user receives it — apps, policies, and certificates are installed in advance so the user gets a fully configured, compliant device on first login.',
+     check:d=>d.autopilot.some(p=>p.enableWhiteGlove===true||p.preprovisioningAllowed===true),
+     note:'Edit your Autopilot deployment profile → Under OOBE settings, set "Allow pre-provisioned deployment" to Yes. The technician then boots the device, presses Windows key 5 times to enter the pre-provisioning flow, connects to network, and the device provisions before shipping to the end user. Requires Autopilot profile + ESP configured.'},
+    {id:'in06',n:'Autopilot Devices Registered',sev:'medium',fw:'NCSC',req:'Devices must be registered with Windows Autopilot (by hardware hash) for the Autopilot experience to activate. Without registration, devices fall back to standard OOBE.',
+     check:d=>(d.autopilotDevices||[]).length>0,
+     note:'Register devices via: Partner/OEM upload, manual CSV upload from Settings → System → About → hardware hash, or Microsoft Store for Business. Go to Intune → Devices → Windows enrollment → Devices to see registered devices.'},
+    {id:'in07',n:'Autopilot Profile Assigned to Devices',sev:'medium',fw:'NCSC',req:'Registered Autopilot devices must have a deployment profile assigned. Unassigned devices will go through the default OOBE without Autopilot customisation.',
+     check:d=>(d.autopilotDevices||[]).some(v=>v.deploymentProfileAssignmentStatus==='assigned'||v.deploymentProfileAssignmentStatus==='assignedInSync'),
+     note:'Assign profiles via dynamic device groups using the ZTDID (Zero-Touch Device ID) attribute, or assign directly to individual devices in the Autopilot devices list.'},
+    {id:'in08',n:'Enrollment Status Page Configured',sev:'high',fw:'CE+/NCSC',req:'The ESP prevents users from accessing the desktop until all required apps, policies, and certificates are installed. Without it, users can access a non-compliant device during the setup window.',
+     check:d=>d.enrollmentConfigs.some(p=>p['@odata.type']?.includes('EnrollmentStatusScreen')||p.showInstallationProgress===true),
+     note:'Configure in Intune → Devices → Windows enrollment → Enrollment Status Page → Create or edit the default profile. Enable "Show app and profile configuration progress", optionally block device use until all apps install. Critical for both standard Autopilot and pre-provisioned deployments.'},
+    {id:'in09',n:'Enrollment Restrictions — Block Personal Windows Devices',sev:'high',fw:'CE+/NCSC',req:'Personal (BYOD) Windows devices should be blocked from MDM enrollment so that only corporate Autopilot or Azure AD-joined devices are managed, preventing shadow IT.',
+     check:d=>d.enrollmentConfigs.some(p=>p['@odata.type']?.includes('PlatformRestrictions')&&p.windowsRestriction?.personalDeviceEnrollmentBlocked===true),
+     note:'Configure in Intune → Devices → Enrollment restrictions → Device type restrictions → Edit default or create new. Under Windows (MDM), set "Personally owned" to Block. Corporate Autopilot devices are unaffected.'},
+    {id:'in10',n:'Intune MDM Authority Set',sev:'critical',fw:'CE+',req:'The MDM authority must be set to Intune (not co-management or Configuration Manager) to ensure Intune has full management control over enrolled devices.',
+     check:d=>d.coManagement?.deviceManagementAuthority==='intune',
+     note:'If currently set to Configuration Manager or co-management, migrate workloads to Intune. Check in Intune → Tenant administration → Tenant status.'},
+    {id:'in11',n:'Apple Push Certificate Valid',sev:'medium',fw:'CE+',req:'An Apple MDM Push certificate is required to manage iOS/iPadOS and macOS devices. Without it, Apple devices cannot be enrolled into Intune.',
+     check:d=>d.applePush?.appleIdentifier&&(!d.applePush.expirationDateTime||new Date(d.applePush.expirationDateTime)>new Date()),
+     note:'Configure in Intune → Devices → iOS/iPadOS enrollment → Apple MDM Push certificate. Requires an Apple ID. The certificate must be renewed annually — expiry means all Apple devices lose management.'},
+    {id:'in12',n:'Co-Management / Hybrid Join Strategy',sev:'medium',fw:'NCSC',req:'If using hybrid Azure AD join with SCCM co-management, ensure Intune workloads (compliance, device config, endpoint protection) are properly assigned to Intune rather than Configuration Manager.',
+     check:d=>{if(d.coManagement?.deviceManagementAuthority==='intune')return true;if(d.coManagement?.deviceManagementAuthority==='configurationManagerWithIntune')return false;return true},
+     note:'For hybrid environments: Entra Connect → configure hybrid Azure AD join. In SCCM → Co-management settings, slide workloads to Intune. For cloud-native, use Azure AD join with Autopilot (recommended).'},
+  ]},
+  securityBaselines:{cat:'Security Baselines',icon:'📊',checks:[
+    {id:'ib01',n:'Windows Security Baseline Deployed',sev:'high',fw:'CIS/NCSC',req:'Microsoft\'s security baselines provide pre-configured groups of Windows settings recommended by Microsoft security teams, aligned with CIS benchmarks.',
+     check:d=>d.intents.some(p=>p.templateDisplayName?.includes('Security Baseline')||p.displayName?.toLowerCase().includes('security baseline')),
+     note:'Create in Endpoint Manager → Endpoint Security → Security baselines → Windows Security Baseline → Create profile. Review and deploy default settings.'},
+    {id:'ib02',n:'Microsoft Edge Security Baseline',sev:'medium',fw:'CIS',req:'The Edge security baseline configures browser security settings including SmartScreen, password manager, and extension controls.',
+     check:d=>d.intents.some(p=>p.templateDisplayName?.includes('Edge')||p.displayName?.toLowerCase().includes('edge baseline')),
+     note:'Create in Endpoint Manager → Endpoint Security → Security baselines → Microsoft Edge Baseline → Create profile.'},
+    {id:'ib03',n:'Microsoft Defender for Endpoint Baseline',sev:'high',fw:'CIS/NCSC',req:'The Defender for Endpoint baseline ensures optimal security configuration for threat protection, ASR, and network protection.',
+     check:d=>d.intents.some(p=>p.templateDisplayName?.includes('Defender for Endpoint')||p.templateDisplayName?.includes('Microsoft Defender ATP')),
+     note:'Create in Endpoint Manager → Endpoint Security → Security baselines → Microsoft Defender for Endpoint Baseline. Requires Defender for Endpoint licensing.'},
+    {id:'ib04',n:'Windows 365 Cloud PC Baseline',sev:'medium',fw:'CIS',req:'If using Windows 365 Cloud PCs, a dedicated security baseline ensures virtual desktops have equivalent security controls.',
+     check:d=>d.intents.some(p=>p.templateDisplayName?.includes('365')||p.templateDisplayName?.includes('Cloud PC')),
+     note:'Only required if using Windows 365 Cloud PCs. Create in Endpoint Security → Security baselines.'},
+  ]}
+};
+
+// ── Scan engine ──
+async function startIntuneScan(){
+  const dom=$('intDomain').value.trim();if(!dom)return alert('Enter a tenant domain');
+  if(!A.ok())return alert('Sign in first');
+  $('intScanBtn').disabled=true;$('intScanBtn').innerHTML='<span class="animate-spin" style="display:inline-block">◌</span> Scanning...';
+  $('intProgress').classList.remove('hidden');$('intEmpty').classList.add('hidden');$('intResults').innerHTML='';$('intExBtns').classList.add('hidden');
+
+  const data={domain:dom,ts:new Date().toISOString()};
+  G.scopes=Auth.DISCOVERY_SCOPES;
+
+  const sections=[
+    {k:'compliancePolicies',l:'Compliance Policies',ep:'/deviceManagement/deviceCompliancePolicies?$expand=scheduledActionsForRule'},
+    {k:'complianceSummary',l:'Compliance Summary',ep:'/deviceManagement/deviceCompliancePolicyDeviceStateSummary'},
+    {k:'policySettings',l:'Policy Settings',ep:'/deviceManagement/settings',beta:true},
+    {k:'deviceConfigs',l:'Configuration Profiles',ep:'/deviceManagement/deviceConfigurations'},
+    {k:'settingsCatalog',l:'Settings Catalog Policies',ep:'/deviceManagement/configurationPolicies?$select=id,name,description,platforms,technologies,createdDateTime,lastModifiedDateTime'},
+    {k:'endpointSecurity',l:'Endpoint Security Policies',ep:'/deviceManagement/intents?$select=id,displayName,description,templateId,lastModifiedDateTime',beta:true},
+    {k:'templates',l:'Security Baseline Templates',ep:'/deviceManagement/templates?$select=id,displayName,description,templateType,versionInfo',beta:true},
+    {k:'appProtection',l:'App Protection Policies',ep:'/deviceAppManagement/managedAppPolicies',beta:true},
+    {k:'updateRings',l:'Windows Update Rings',ep:"/deviceManagement/deviceConfigurations?$filter=isof('microsoft.graph.windowsUpdateForBusinessConfiguration')"},
+    {k:'autopilot',l:'Autopilot Profiles',ep:'/deviceManagement/windowsAutopilotDeploymentProfiles',beta:true},
+    {k:'autopilotDevices',l:'Autopilot Devices',ep:'/deviceManagement/windowsAutopilotDeviceIdentities?$select=id,groupTag,serialNumber,model,manufacturer,enrollmentState,deploymentProfileAssignmentStatus&$top=200',beta:true},
+    {k:'enrollmentConfigs',l:'Enrollment Configurations',ep:'/deviceManagement/deviceEnrollmentConfigurations'},
+    {k:'mdmPolicies',l:'MDM Auto-Enrollment',ep:'/policies/mobileDeviceManagementPolicies',beta:true},
+    {k:'mamPolicies',l:'MAM Auto-Enrollment',ep:'/policies/mobileAppManagementPolicies',beta:true},
+    {k:'coManagement',l:'Co-Management Authority',ep:'/deviceManagement?$select=deviceManagementAuthority,intuneAccountId',beta:false,single:true},
+    {k:'applePush',l:'Apple Push Certificate',ep:'/deviceManagement/applePushNotificationCertificate',beta:false,single:true},
+    {k:'managedDevices',l:'Managed Devices',ep:'/deviceManagement/managedDevices?$select=id,deviceName,operatingSystem,osVersion,complianceState,managementAgent,enrolledDateTime,lastSyncDateTime,userPrincipalName,model,manufacturer,serialNumber,isEncrypted,managedDeviceOwnerType&$top=200'},
+  ];
+
+  for(let i=0;i<sections.length;i++){
+    const s=sections[i];
+    const pct=Math.round((i+1)/sections.length*100);
+    $('intPercent').textContent=pct+'%';$('intBar').style.width=pct+'%';
+    $('intStatus').textContent='Fetching '+s.l+'...';
+    try{
+      const resp=await G.call(s.ep,null,null,!!s.beta);
+      if(s.single){
+        data[s.k]=resp||{};
+      } else {
+        data[s.k]=resp?.value||resp||[];
+      }
+      // Page through managed devices if >200
+      if(s.k==='managedDevices'&&resp?.['@odata.nextLink']){
+        let next=resp['@odata.nextLink'].replace('https://graph.microsoft.com/v1.0','');
+        while(next&&data.managedDevices.length<999){
+          const pg=await G.call(next);data.managedDevices=data.managedDevices.concat(pg.value||[]);
+          next=pg['@odata.nextLink']?pg['@odata.nextLink'].replace('https://graph.microsoft.com/v1.0',''):null;
+        }
+      }
+      // Page through autopilot devices
+      if(s.k==='autopilotDevices'&&resp?.['@odata.nextLink']){
+        let next=resp['@odata.nextLink'].replace('https://graph.microsoft.com/beta','');
+        while(next&&data.autopilotDevices.length<999){
+          const pg=await G.call(next,null,null,true);data.autopilotDevices=data.autopilotDevices.concat(pg.value||[]);
+          next=pg['@odata.nextLink']?pg['@odata.nextLink'].replace('https://graph.microsoft.com/beta',''):null;
+        }
+      }
+    }catch(e){
+      console.warn(`Intune scan: ${s.k} failed:`,e.message);
+      const singles=['policySettings','complianceSummary','coManagement','applePush'];
+      data[s.k]=singles.includes(s.k)?{}:[];
+    }
+  }
+
+  // Fallback: if update rings filter failed, extract from deviceConfigs
+  if(!data.updateRings?.length){
+    data.updateRings=(data.deviceConfigs||[]).filter(c=>c['@odata.type']==='#microsoft.graph.windowsUpdateForBusinessConfiguration');
+  }
+
+  // Map intents to their template names
+  if(data.templates?.length&&data.endpointSecurity?.length){
+    const tMap={};data.templates.forEach(t=>tMap[t.id]=t.displayName);
+    data.endpointSecurity.forEach(p=>{if(p.templateId&&tMap[p.templateId])p.templateDisplayName=tMap[p.templateId]});
+  }
+
+  G.scopes=null;
+  INT_DATA=data;
+
+  // Run assessments
+  INT_CHECKS=[];
+  Object.entries(INTUNE_RECS).forEach(([ck,cat])=>{
+    cat.checks.forEach(chk=>{
+      let st='fail';
+      try{st=chk.check(data)?'pass':'fail'}catch{}
+      INT_CHECKS.push({...chk,ck,cn:cat.cat,ci:cat.icon,st,rem:0});
+    });
+  });
+
+  $('intProgress').classList.add('hidden');$('intScanBtn').disabled=false;$('intScanBtn').innerHTML='📱 Run Intune Scan';$('intExBtns').classList.remove('hidden');
+  renderIntune();
+}
+
+// ── Render ──
+function renderIntune(fSev='all',fSt='all'){
+  if(!INT_DATA||!INT_CHECKS)return;
+  const d=INT_DATA,ch=INT_CHECKS,el=$('intResults');
+  const pa=ch.filter(r=>r.st==='pass'||r.rem).length,fa=ch.filter(r=>r.st==='fail'&&!r.rem).length,tot=ch.length;
+  const sc=Math.round(pa/tot*100);
+  const sCol=sc>=80?'var(--accent-green)':sc>=50?'var(--accent-amber)':'var(--accent-red)';
+  const sBg=sc>=80?'rgba(16,185,129,.06)':sc>=50?'rgba(245,158,11,.06)':'rgba(239,68,68,.06)';
+  const sBor=sc>=80?'rgba(16,185,129,.25)':sc>=50?'rgba(245,158,11,.25)':'rgba(239,68,68,.25)';
+  const filtered=ch.filter(r=>{if(fSev!=='all'&&r.sev!==fSev)return false;if(fSt==='pass'&&!(r.st==='pass'||r.rem))return false;if(fSt==='fail'&&!(r.st==='fail'&&!r.rem))return false;if(fSt==='remediated'&&!r.rem)return false;return true});
+
+  let h='';
+
+  // ── Score Dashboard ──
+  h+=`<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;gap:12px;margin-bottom:20px">
+    <div class="card" style="text-align:center;padding:20px;background:${sBg};border-color:${sBor}"><div style="font-family:var(--font-display);font-size:2.5rem;font-weight:800;color:${sCol};line-height:1">${sc}%</div><div class="stat-label">Intune Score</div></div>
+    <div class="card" style="text-align:center;padding:20px"><div style="font-family:var(--font-display);font-size:1.8rem;font-weight:800;color:var(--accent-green)">${pa}</div><div class="stat-label">Passed</div></div>
+    <div class="card" style="text-align:center;padding:20px"><div style="font-family:var(--font-display);font-size:1.8rem;font-weight:800;color:var(--accent-red)">${fa}</div><div class="stat-label">Failed</div></div>
+    <div class="card" style="text-align:center;padding:20px"><div style="font-family:var(--font-display);font-size:1.8rem;font-weight:800;color:var(--accent-blue)">${tot}</div><div class="stat-label">Total Checks</div></div>
+    <div class="card" style="text-align:center;padding:20px"><div style="font-family:var(--font-display);font-size:1.8rem;font-weight:800;color:var(--accent-cyan)">${d.managedDevices?.length||0}</div><div class="stat-label">Devices</div></div>
+  </div>`;
+
+  // ── Discovery-Style Inventory ──
+  h+=intRenderInventory(d);
+
+  // ── Assessment Header ──
+  h+=`<div class="card" style="margin-bottom:16px;border-color:rgba(59,130,246,.25)">
+    <div class="card-header"><span class="dot" style="background:var(--accent-blue)"></span> Policy Assessment — CE+ / NCSC / CIS Benchmarks</div>
+    <p style="font-size:.82rem;color:var(--text-secondary);line-height:1.6">Each check below assesses your Intune configuration against the Cyber Essentials Plus scheme, NCSC guidelines, and CIS benchmarks. Failed checks can be remediated with one click where a Graph API endpoint is available.</p>
+  </div>`;
+
+  // ── Filters ──
+  h+=`<div class="filter-bar"><span class="fl">Severity:</span>
+    ${['all','critical','high','medium'].map(s=>`<button class="filter-chip ${fSev===s?'active':''}" onclick="renderIntune('${s}','${fSt}')">${s==='all'?'All':s[0].toUpperCase()+s.slice(1)}</button>`).join('')}
+    <span class="filter-sep"></span><span class="fl">Status:</span>
+    ${['all','pass','fail','remediated'].map(s=>`<button class="filter-chip ${fSt===s?'active':''}" onclick="renderIntune('${fSev}','${s}')">${s==='all'?'All':s[0].toUpperCase()+s.slice(1)}</button>`).join('')}
+  </div>`;
+
+  // ── Assessment Table ──
+  h+=`<div class="card" style="padding:0;overflow:auto;max-height:600px;margin-bottom:22px"><table class="comp-table"><thead><tr><th>Status</th><th>Category</th><th>Policy Check</th><th>Severity</th><th>Framework</th><th>Requirement</th><th style="text-align:center">Action</th></tr></thead><tbody>`;
+  filtered.forEach(r=>{
+    const isPassed=r.st==='pass'||r.rem;
+    const stBadge=r.rem?'badge-cyan':r.st==='pass'?'badge-green':'badge-red';
+    const stText=r.rem?'✓ Fixed':r.st==='pass'?'✓ Pass':'✗ Fail';
+    const sevBadge=r.sev==='critical'?'badge-red':r.sev==='high'?'badge-amber':'badge-muted';
+    const canFix=!isPassed&&(r.ep||r.note);
+    h+=`<tr>
+      <td><span class="badge ${stBadge}">${stText}</span></td>
+      <td style="font-size:.8rem;color:var(--text-secondary)">${r.ci} ${esc(r.cn)}</td>
+      <td style="font-weight:500">${esc(r.n)}</td>
+      <td><span class="badge ${sevBadge}">${r.sev}</span></td>
+      <td><span class="badge badge-violet" style="font-size:.62rem">${esc(r.fw)}</span></td>
+      <td style="font-size:.76rem;color:var(--text-secondary);max-width:260px">${esc(r.req).substring(0,120)}${r.req.length>120?'…':''}</td>
+      <td style="text-align:center">${isPassed?'<span class="btn-fix applied btn-sm">✓ Compliant</span>':canFix?`<button class="btn-fix btn" onclick="intOpenRem('${r.id}')">🔧 Fix This</button>`:'—'}</td>
+    </tr>`;
+  });
+  h+=`</tbody></table></div>`;
+
+  // ── Device Compliance Inventory ──
+  h+=intRenderDevices(d);
+
+  el.innerHTML=h;
+}
+
+// ── Discovery-style inventory sections ──
+function intRenderInventory(d){
+  let h='<div class="card" style="margin-bottom:22px">';
+
+  // Compliance Policies
+  const cp=d.compliancePolicies||[];
+  h+=`<div class="disc-section"><div class="disc-section-head"><div class="sec-icon" style="background:rgba(16,185,129,.1);color:var(--accent-green)">🛡️</div>Compliance Policies <span class="badge badge-muted" style="margin-left:auto">${cp.length}</span></div>`;
+  if(cp.length){
+    h+=`<div style="overflow-x:auto"><table class="disc-table"><thead><tr><th>Policy Name</th><th>Platform</th><th>Created</th><th>Last Modified</th></tr></thead><tbody>`;
+    cp.forEach(p=>{
+      const plat=p['@odata.type']?.match(/\.(windows|ios|android|macOS|mac)/i)?.[1]||p.platformType||'Unknown';
+      h+=`<tr><td style="font-weight:500">${esc(p.displayName||'')}</td><td><span class="badge badge-blue" style="font-size:.65rem">${esc(plat)}</span></td><td style="font-size:.76rem;color:var(--text-muted)">${(p.createdDateTime||'').slice(0,10)}</td><td style="font-size:.76rem;color:var(--text-muted)">${(p.lastModifiedDateTime||'').slice(0,10)}</td></tr>`;
+    });
+    h+=`</tbody></table></div>`;
+  } else h+=`<div style="color:var(--text-muted);font-size:.82rem;padding:8px">⚠ No compliance policies found — all devices will be marked as compliant by default.</div>`;
+  h+=`</div>`;
+
+  // Endpoint Security
+  const es=d.endpointSecurity||[];
+  h+=`<div class="disc-section"><div class="disc-section-head"><div class="sec-icon" style="background:rgba(239,68,68,.1);color:var(--accent-red)">🔒</div>Endpoint Security Policies <span class="badge badge-muted" style="margin-left:auto">${es.length}</span></div>`;
+  if(es.length){
+    h+=`<div style="overflow-x:auto"><table class="disc-table"><thead><tr><th>Policy Name</th><th>Template / Type</th><th>Last Modified</th></tr></thead><tbody>`;
+    es.forEach(p=>{
+      h+=`<tr><td style="font-weight:500">${esc(p.displayName||'')}</td><td style="font-size:.76rem;color:var(--text-secondary)">${esc(p.templateDisplayName||'Custom')}</td><td style="font-size:.76rem;color:var(--text-muted)">${(p.lastModifiedDateTime||'').slice(0,10)}</td></tr>`;
+    });
+    h+=`</tbody></table></div>`;
+  } else h+=`<div style="color:var(--text-muted);font-size:.82rem;padding:8px">No endpoint security policies found.</div>`;
+  h+=`</div>`;
+
+  // Device Configuration
+  const dc=d.deviceConfigs||[];
+  h+=`<div class="disc-section"><div class="disc-section-head"><div class="sec-icon" style="background:rgba(59,130,246,.1);color:var(--accent-blue)">⚙️</div>Configuration Profiles <span class="badge badge-muted" style="margin-left:auto">${dc.length}</span></div>`;
+  if(dc.length){
+    h+=`<div style="overflow-x:auto"><table class="disc-table"><thead><tr><th>Profile Name</th><th>Type</th><th>Platform</th><th>Last Modified</th></tr></thead><tbody>`;
+    dc.forEach(p=>{
+      const t=p['@odata.type']?.split('.')?.pop()||'Unknown';
+      const plat=t.match(/windows|ios|android|macOS/i)?.[0]||'Windows';
+      h+=`<tr><td style="font-weight:500">${esc(p.displayName||'')}</td><td style="font-size:.72rem;color:var(--text-muted);font-family:var(--font-mono)">${esc(t)}</td><td><span class="badge badge-blue" style="font-size:.62rem">${esc(plat)}</span></td><td style="font-size:.76rem;color:var(--text-muted)">${(p.lastModifiedDateTime||'').slice(0,10)}</td></tr>`;
+    });
+    h+=`</tbody></table></div>`;
+  } else h+=`<div style="color:var(--text-muted);font-size:.82rem;padding:8px">No configuration profiles found.</div>`;
+  h+=`</div>`;
+
+  // Settings Catalog
+  const sc=d.settingsCatalog||[];
+  if(sc.length){
+    h+=`<div class="disc-section"><div class="disc-section-head"><div class="sec-icon" style="background:rgba(139,92,246,.1);color:var(--accent-violet)">📐</div>Settings Catalog Policies <span class="badge badge-muted" style="margin-left:auto">${sc.length}</span></div>`;
+    h+=`<div style="overflow-x:auto"><table class="disc-table"><thead><tr><th>Policy Name</th><th>Platforms</th><th>Technologies</th><th>Last Modified</th></tr></thead><tbody>`;
+    sc.forEach(p=>{
+      h+=`<tr><td style="font-weight:500">${esc(p.name||'')}</td><td style="font-size:.72rem">${esc(p.platforms||'')}</td><td style="font-size:.72rem;color:var(--text-muted)">${esc(p.technologies||'')}</td><td style="font-size:.76rem;color:var(--text-muted)">${(p.lastModifiedDateTime||'').slice(0,10)}</td></tr>`;
+    });
+    h+=`</tbody></table></div></div>`;
+  }
+
+  // App Protection Policies
+  const ap=d.appProtection||[];
+  h+=`<div class="disc-section"><div class="disc-section-head"><div class="sec-icon" style="background:rgba(6,182,212,.1);color:var(--accent-cyan)">📱</div>App Protection (MAM) Policies <span class="badge badge-muted" style="margin-left:auto">${ap.length}</span></div>`;
+  if(ap.length){
+    h+=`<div style="overflow-x:auto"><table class="disc-table"><thead><tr><th>Policy Name</th><th>Platform</th><th>Type</th></tr></thead><tbody>`;
+    ap.forEach(p=>{
+      const plat=p['@odata.type']?.includes('ios')||p['@odata.type']?.includes('Ios')?'iOS':p['@odata.type']?.includes('android')||p['@odata.type']?.includes('Android')?'Android':'Other';
+      const t=p['@odata.type']?.split('.')?.pop()||'Unknown';
+      h+=`<tr><td style="font-weight:500">${esc(p.displayName||'')}</td><td><span class="badge ${plat==='iOS'?'badge-blue':plat==='Android'?'badge-green':'badge-muted'}" style="font-size:.62rem">${plat}</span></td><td style="font-size:.72rem;color:var(--text-muted)">${esc(t)}</td></tr>`;
+    });
+    h+=`</tbody></table></div>`;
+  } else h+=`<div style="color:var(--text-muted);font-size:.82rem;padding:8px">⚠ No app protection policies found — managed apps have no data leakage controls.</div>`;
+  h+=`</div>`;
+
+  // Windows Update Rings
+  const ur=d.updateRings||[];
+  h+=`<div class="disc-section"><div class="disc-section-head"><div class="sec-icon" style="background:rgba(245,158,11,.1);color:var(--accent-amber)">🔄</div>Windows Update Rings <span class="badge badge-muted" style="margin-left:auto">${ur.length}</span></div>`;
+  if(ur.length){
+    h+=`<div style="overflow-x:auto"><table class="disc-table"><thead><tr><th>Ring Name</th><th>Quality Deferral</th><th>Feature Deferral</th><th>Auto Update</th></tr></thead><tbody>`;
+    ur.forEach(p=>{
+      const qd=p.qualityUpdatesDeferralPeriodInDays??'—';
+      const fd=p.featureUpdatesDeferralPeriodInDays??'—';
+      const qdCol=qd<=14?'var(--accent-green)':'var(--accent-red)';
+      const fdCol=fd<=30?'var(--accent-green)':'var(--accent-amber)';
+      h+=`<tr><td style="font-weight:500">${esc(p.displayName||'')}</td><td style="color:${qdCol};font-weight:600">${qd} days</td><td style="color:${fdCol};font-weight:600">${fd} days</td><td style="font-size:.76rem">${esc(p.automaticUpdateMode||'—')}</td></tr>`;
+    });
+    h+=`</tbody></table></div>`;
+  } else h+=`<div style="color:var(--text-muted);font-size:.82rem;padding:8px">⚠ No Windows Update rings configured — devices are using default Windows Update settings.</div>`;
+  h+=`</div>`;
+
+  // MDM / MAM Auto-Enrollment
+  const mdmP=d.mdmPolicies||[];const mamP=d.mamPolicies||[];const coMgmt=d.coManagement||{};const aplPush=d.applePush||{};
+  h+=`<div class="disc-section"><div class="disc-section-head"><div class="sec-icon" style="background:rgba(16,185,129,.1);color:var(--accent-green)">🔄</div>Auto-Enrollment & Management Authority</div>`;
+  // MDM scope
+  const mdmScope=Array.isArray(mdmP)?mdmP.find(p=>p.displayName?.includes('Microsoft Intune')||p.id):mdmP;
+  const mdmScopeVal=mdmScope?.appliesTo||'none';
+  const mdmCol=mdmScopeVal==='allUsers'?'var(--accent-green)':mdmScopeVal==='selected'?'var(--accent-amber)':'var(--accent-red)';
+  const mdmLabel=mdmScopeVal==='allUsers'?'All Users':mdmScopeVal==='selected'?'Selected Groups':'None (Disabled)';
+  // MAM scope
+  const mamScope=Array.isArray(mamP)?mamP.find(p=>p.displayName?.includes('Microsoft Intune')||p.id):mamP;
+  const mamScopeVal=mamScope?.appliesTo||'none';
+  const mamCol=mamScopeVal==='allUsers'?'var(--accent-green)':mamScopeVal==='selected'?'var(--accent-amber)':'var(--accent-red)';
+  const mamLabel=mamScopeVal==='allUsers'?'All Users':mamScopeVal==='selected'?'Selected Groups':'None (Disabled)';
+  h+=`<div class="disc-grid disc-grid-4" style="gap:10px;margin-bottom:14px">
+    <div class="disc-kv"><div class="kv-label">MDM Auto-Enrollment Scope</div><div class="kv-value" style="color:${mdmCol};font-weight:700">${mdmLabel}</div></div>
+    <div class="disc-kv"><div class="kv-label">MAM Auto-Enrollment Scope</div><div class="kv-value" style="color:${mamCol};font-weight:700">${mamLabel}</div></div>
+    <div class="disc-kv"><div class="kv-label">MDM Authority</div><div class="kv-value" style="font-weight:600">${esc(coMgmt.deviceManagementAuthority||'Unknown')}</div></div>
+    <div class="disc-kv"><div class="kv-label">Apple Push Certificate</div><div class="kv-value">${aplPush.appleIdentifier?`<span style="color:var(--accent-green)">✓ Configured</span><br><span style="font-size:.72rem;color:var(--text-muted)">Expires: ${(aplPush.expirationDateTime||'').slice(0,10)}</span>`:'<span style="color:var(--accent-red)">✗ Not configured</span>'}</div></div>
+  </div>`;
+  if(mdmScopeVal==='none')h+=`<div style="padding:10px 14px;background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.15);border-radius:var(--radius-md);font-size:.8rem;color:var(--accent-red);margin-bottom:8px">⚠ <strong>MDM auto-enrollment is disabled.</strong> Devices that join Azure AD will NOT be automatically managed by Intune. This is a critical CE+ finding — configure in Entra ID → Mobility (MDM and MAM).</div>`;
+  h+=`</div>`;
+
+  // Autopilot & Enrollment
+  const ap2=d.autopilot||[];
+  const apDevs=d.autopilotDevices||[];
+  const ec=d.enrollmentConfigs||[];
+  h+=`<div class="disc-section"><div class="disc-section-head"><div class="sec-icon" style="background:rgba(59,130,246,.1);color:var(--accent-blue)">📋</div>Autopilot & Enrollment <span class="badge badge-muted" style="margin-left:auto">${ap2.length} profiles / ${apDevs.length} devices / ${ec.length} configs</span></div>`;
+  if(ap2.length){
+    h+=`<div style="font-size:.78rem;font-weight:600;color:var(--text-muted);margin:8px 0 4px;text-transform:uppercase;letter-spacing:.06em">Autopilot Deployment Profiles</div>`;
+    h+=`<div style="overflow-x:auto"><table class="disc-table"><thead><tr><th>Profile Name</th><th>Mode</th><th>Pre-Provisioning</th><th>OOBE Settings</th></tr></thead><tbody>`;
+    ap2.forEach(p=>{
+      const mode=p.extractHardwareHash?'Self-deploying':'User-driven';
+      const preP=(p.enableWhiteGlove===true||p.preprovisioningAllowed===true);
+      const prePBadge=preP?'<span class="badge badge-green" style="font-size:.62rem">✓ Enabled</span>':'<span class="badge badge-muted" style="font-size:.62rem">Disabled</span>';
+      const oobe=[];
+      if(p.outOfBoxExperienceSettings){
+        const o=p.outOfBoxExperienceSettings;
+        if(o.hidePrivacySettings)oobe.push('Privacy hidden');
+        if(o.hideEULA)oobe.push('EULA hidden');
+        if(o.skipKeyboardSelectionPage)oobe.push('KB skipped');
+        if(o.userType==='standard')oobe.push('Standard user');
+      }
+      h+=`<tr><td style="font-weight:500">${esc(p.displayName||'')}</td><td><span class="badge badge-blue" style="font-size:.62rem">${mode}</span></td><td>${prePBadge}</td><td style="font-size:.72rem;color:var(--text-muted)">${oobe.length?oobe.join(', '):'Default'}</td></tr>`;
+    });
+    h+=`</tbody></table></div>`;
+  }
+  if(apDevs.length){
+    const assigned=apDevs.filter(v=>v.deploymentProfileAssignmentStatus==='assigned'||v.deploymentProfileAssignmentStatus==='assignedInSync').length;
+    const unassigned=apDevs.length-assigned;
+    h+=`<div style="font-size:.78rem;font-weight:600;color:var(--text-muted);margin:12px 0 4px;text-transform:uppercase;letter-spacing:.06em">Registered Autopilot Devices <span style="font-weight:400">(${assigned} assigned, ${unassigned} unassigned)</span></div>`;
+    h+=`<div style="overflow-x:auto;max-height:200px;overflow-y:auto"><table class="disc-table"><thead><tr><th>Serial Number</th><th>Manufacturer</th><th>Model</th><th>Group Tag</th><th>Profile Status</th></tr></thead><tbody>`;
+    apDevs.slice(0,50).forEach(v=>{
+      const st=v.deploymentProfileAssignmentStatus||'unknown';
+      const stBadge=st==='assigned'||st==='assignedInSync'?'badge-green':st==='notAssigned'?'badge-amber':'badge-muted';
+      h+=`<tr><td style="font-family:var(--font-mono);font-size:.76rem">${esc(v.serialNumber||'—')}</td><td style="font-size:.76rem">${esc(v.manufacturer||'—')}</td><td style="font-size:.76rem">${esc(v.model||'—')}</td><td style="font-size:.76rem">${esc(v.groupTag||'—')}</td><td><span class="badge ${stBadge}" style="font-size:.62rem">${esc(st)}</span></td></tr>`;
+    });
+    if(apDevs.length>50)h+=`<tr><td colspan="5" style="color:var(--text-muted);font-size:.76rem;text-align:center">...and ${apDevs.length-50} more devices</td></tr>`;
+    h+=`</tbody></table></div>`;
+  }
+  if(ec.length){
+    h+=`<div style="font-size:.78rem;font-weight:600;color:var(--text-muted);margin:12px 0 4px;text-transform:uppercase;letter-spacing:.06em">Enrollment Configurations</div>`;
+    h+=`<div style="overflow-x:auto"><table class="disc-table"><thead><tr><th>Name</th><th>Type</th><th>Priority</th></tr></thead><tbody>`;
+    ec.forEach(p=>{
+      const t=p['@odata.type']?.split('.')?.pop()||'Unknown';
+      h+=`<tr><td style="font-weight:500">${esc(p.displayName||'')}</td><td style="font-size:.72rem;color:var(--text-muted)">${esc(t)}</td><td style="font-size:.76rem">${p.priority??'—'}</td></tr>`;
+    });
+    h+=`</tbody></table></div>`;
+  }
+  if(!ap2.length&&!ec.length&&!apDevs.length)h+=`<div style="color:var(--text-muted);font-size:.82rem;padding:8px">No enrollment configurations found.</div>`;
+  h+=`</div>`;
+
+  // Security Baselines
+  const sb=d.intents||[];
+  if(sb.length){
+    h+=`<div class="disc-section"><div class="disc-section-head"><div class="sec-icon" style="background:rgba(139,92,246,.1);color:var(--accent-violet)">📊</div>Security Baselines & Intents <span class="badge badge-muted" style="margin-left:auto">${sb.length}</span></div>`;
+    h+=`<div style="overflow-x:auto"><table class="disc-table"><thead><tr><th>Baseline Name</th><th>Template</th><th>Last Modified</th></tr></thead><tbody>`;
+    sb.forEach(p=>{
+      h+=`<tr><td style="font-weight:500">${esc(p.displayName||'')}</td><td style="font-size:.76rem;color:var(--text-secondary)">${esc(p.templateDisplayName||'Custom')}</td><td style="font-size:.76rem;color:var(--text-muted)">${(p.lastModifiedDateTime||'').slice(0,10)}</td></tr>`;
+    });
+    h+=`</tbody></table></div></div>`;
+  }
+
+  h+=`</div>`;
+  return h;
+}
+
+// ── Device compliance table ──
+function intRenderDevices(d){
+  const devs=d.managedDevices||[];
+  if(!devs.length)return'';
+
+  const compliant=devs.filter(v=>v.complianceState==='compliant');
+  const nonComp=devs.filter(v=>v.complianceState==='noncompliant');
+  const unknown=devs.filter(v=>v.complianceState!=='compliant'&&v.complianceState!=='noncompliant');
+  const encrypted=devs.filter(v=>v.isEncrypted===true);
+  const corporate=devs.filter(v=>v.managedDeviceOwnerType==='company');
+  const personal=devs.filter(v=>v.managedDeviceOwnerType==='personal');
+
+  let h=`<div class="card" style="margin-bottom:22px">
+    <div class="disc-section-head"><div class="sec-icon" style="background:rgba(16,185,129,.1);color:var(--accent-green)">💻</div>Device Compliance Inventory <span class="badge badge-muted" style="margin-left:auto">${devs.length} devices</span></div>`;
+
+  // Summary cards
+  h+=`<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:16px">
+    <div style="text-align:center;padding:12px;background:var(--bg-elevated);border-radius:var(--radius-md);border:1px solid var(--border-subtle)"><div style="font-size:1.4rem;font-weight:800;font-family:var(--font-display);color:var(--accent-green)">${compliant.length}</div><div class="stat-label">Compliant</div></div>
+    <div style="text-align:center;padding:12px;background:var(--bg-elevated);border-radius:var(--radius-md);border:1px solid var(--border-subtle)"><div style="font-size:1.4rem;font-weight:800;font-family:var(--font-display);color:var(--accent-red)">${nonComp.length}</div><div class="stat-label">Non-Compliant</div></div>
+    <div style="text-align:center;padding:12px;background:var(--bg-elevated);border-radius:var(--radius-md);border:1px solid var(--border-subtle)"><div style="font-size:1.4rem;font-weight:800;font-family:var(--font-display);color:var(--accent-amber)">${unknown.length}</div><div class="stat-label">Unknown/InGrace</div></div>
+    <div style="text-align:center;padding:12px;background:var(--bg-elevated);border-radius:var(--radius-md);border:1px solid var(--border-subtle)"><div style="font-size:1.4rem;font-weight:800;font-family:var(--font-display);color:var(--accent-cyan)">${encrypted.length}</div><div class="stat-label">Encrypted</div></div>
+    <div style="text-align:center;padding:12px;background:var(--bg-elevated);border-radius:var(--radius-md);border:1px solid var(--border-subtle)"><div style="font-size:1.4rem;font-weight:800;font-family:var(--font-display);color:var(--accent-blue)">${corporate.length}</div><div class="stat-label">Corporate</div></div>
+    <div style="text-align:center;padding:12px;background:var(--bg-elevated);border-radius:var(--radius-md);border:1px solid var(--border-subtle)"><div style="font-size:1.4rem;font-weight:800;font-family:var(--font-display);color:var(--accent-violet)">${personal.length}</div><div class="stat-label">Personal</div></div>
+  </div>`;
+
+  // Filter tabs
+  h+=`<div style="margin-bottom:10px;display:flex;gap:4px;flex-wrap:wrap">
+    <button class="filter-chip active" onclick="intFilterDevices('all',this)">All (${devs.length})</button>
+    <button class="filter-chip" onclick="intFilterDevices('compliant',this)">✓ Compliant (${compliant.length})</button>
+    <button class="filter-chip" onclick="intFilterDevices('noncompliant',this)">✗ Non-Compliant (${nonComp.length})</button>
+    <button class="filter-chip" onclick="intFilterDevices('unknown',this)">? Unknown (${unknown.length})</button>
+    <input class="form-input" placeholder="Search devices..." style="margin-left:auto;width:auto;min-width:200px;font-size:.78rem;padding:4px 10px" oninput="intSearchDevices(this.value)">
+  </div>`;
+
+  // Device table
+  h+=`<div id="intDeviceTable" style="overflow-x:auto;max-height:400px;overflow-y:auto"><table class="disc-table"><thead style="position:sticky;top:0;background:var(--bg-surface);z-index:1"><tr>
+    <th>Device Name</th><th>User</th><th>OS</th><th>Version</th><th>Compliance</th><th>Encrypted</th><th>Ownership</th><th>Manufacturer / Model</th><th>Last Sync</th>
+  </tr></thead><tbody id="intDeviceBody">`;
+  devs.forEach(v=>{
+    const cs=v.complianceState;
+    const cBadge=cs==='compliant'?'badge-green':cs==='noncompliant'?'badge-red':'badge-amber';
+    const cText=cs==='compliant'?'✓ Compliant':cs==='noncompliant'?'✗ Non-Compliant':cs||'Unknown';
+    const enc=v.isEncrypted===true?'<span class="badge badge-green" style="font-size:.62rem">✓ Yes</span>':v.isEncrypted===false?'<span class="badge badge-red" style="font-size:.62rem">✗ No</span>':'<span class="badge badge-muted" style="font-size:.62rem">—</span>';
+    const own=v.managedDeviceOwnerType==='company'?'<span class="badge badge-blue" style="font-size:.62rem">Corporate</span>':'<span class="badge badge-violet" style="font-size:.62rem">Personal</span>';
+    h+=`<tr data-compliance="${cs||'unknown'}" data-search="${esc((v.deviceName||'')+(v.userPrincipalName||'')+(v.manufacturer||'')+(v.model||'')).toLowerCase()}">
+      <td style="font-weight:500;font-size:.8rem">${esc(v.deviceName||'—')}</td>
+      <td style="font-size:.76rem;color:var(--accent-cyan)">${esc(v.userPrincipalName||'—')}</td>
+      <td style="font-size:.76rem">${esc(v.operatingSystem||'—')}</td>
+      <td style="font-size:.72rem;color:var(--text-muted);font-family:var(--font-mono)">${esc(v.osVersion||'—')}</td>
+      <td><span class="badge ${cBadge}" style="font-size:.62rem">${cText}</span></td>
+      <td>${enc}</td>
+      <td>${own}</td>
+      <td style="font-size:.72rem;color:var(--text-muted)">${esc(v.manufacturer||'')} ${esc(v.model||'')}</td>
+      <td style="font-size:.72rem;color:var(--text-muted)">${(v.lastSyncDateTime||'').slice(0,10)}</td>
+    </tr>`;
+  });
+  h+=`</tbody></table></div></div>`;
+  return h;
+}
+
+// ── Device filtering/search ──
+function intFilterDevices(filter,btn){
+  document.querySelectorAll('#intResults .filter-chip').forEach(b=>b.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  document.querySelectorAll('#intDeviceBody tr').forEach(tr=>{
+    if(filter==='all')tr.style.display='';
+    else if(filter==='unknown')tr.style.display=(tr.dataset.compliance!=='compliant'&&tr.dataset.compliance!=='noncompliant')?'':'none';
+    else tr.style.display=tr.dataset.compliance===filter?'':'none';
+  });
+}
+
+function intSearchDevices(q){
+  q=(q||'').toLowerCase();
+  document.querySelectorAll('#intDeviceBody tr').forEach(tr=>{
+    tr.style.display=(!q||tr.dataset.search?.includes(q))?'':'none';
+  });
+}
+
+// ── Remediation modal (reuses the existing rem modal) ──
+function intOpenRem(id){
+  const p=INT_CHECKS.find(r=>r.id===id);if(!p)return;CRP=p;CRP._isIntune=true;
+  $('remName').textContent=p.n;
+  $('remReq').textContent=p.req;
+  $('remSev').innerHTML=`<span class="badge ${p.sev==='critical'?'badge-red':p.sev==='high'?'badge-amber':'badge-muted'}" style="font-size:.75rem">${p.sev} severity</span> <span class="badge badge-violet" style="font-size:.72rem;margin-left:4px">${p.fw}</span>`;
+  $('remEp').textContent=p.ep||'Manual configuration required';
+  if(p.pay){$('remPaySection').style.display='block';$('remPay').textContent=JSON.stringify(p.pay,null,2)}else{$('remPaySection').style.display='none'}
+  $('remInArea').classList.add('hidden');
+  if(p.note){$('remNote').classList.remove('hidden');$('remNote').textContent='💡 '+p.note}else{$('remNote').classList.add('hidden')}
+  const applyBtn=$('remApplyBtn');
+  applyBtn.disabled=false;applyBtn.style.background='';
+  if(p.ep&&!p.ep.startsWith('GET')){applyBtn.style.display='';applyBtn.textContent='⚡ Create Policy'}
+  else if(p.note){applyBtn.style.display='';applyBtn.textContent='✓ Mark as Reviewed'}
+  else{applyBtn.style.display=''}
+  $('remModal').classList.remove('hidden');
+}
+
+// ── Hook into existing remConfirm to handle Intune items ──
+const _origRemConfirm=window.remConfirm;
+window.remConfirm=async function(){
+  if(CRP&&CRP._isIntune){
+    const p=CRP;const live=A.ok();
+    const applyBtn=$('remApplyBtn');
+    applyBtn.disabled=true;applyBtn.innerHTML='<span class="animate-spin" style="display:inline-block">◌</span> Applying...';
+    if(live&&p.ep&&p.pay&&!p.ep.startsWith('GET')){
+      try{
+        const[method,path]=p.ep.split(' ');
+        G.scopes=Auth.DISCOVERY_SCOPES;
+        await G.call(path,method,p.pay,path.includes('/beta'));
+        G.scopes=null;
+        applyBtn.innerHTML='✓ Created!';applyBtn.style.background='var(--accent-green)';
+      }catch(e){
+        G.scopes=null;
+        applyBtn.innerHTML='✗ Error';applyBtn.style.background='var(--accent-red)';
+        alert('Graph API error: '+e.message+'\n\nThe policy may need manual configuration in the Endpoint Manager portal, or may require additional licensing (e.g. Intune Plan 2, Defender for Endpoint).');
+        applyBtn.disabled=false;applyBtn.innerHTML='⚡ Retry';applyBtn.style.background='';return;
+      }
+    } else {
+      await delay(800);
+      applyBtn.innerHTML='✓ Reviewed';
+    }
+    const r=INT_CHECKS.find(x=>x.id===p.id);if(r){r.rem=1}
+    setTimeout(()=>{remClose();renderIntune()},600);
+    return;
+  }
+  return _origRemConfirm();
+};
+
+// ── Export functions ──
+function intExportHTML(){
+  if(!INT_DATA||!INT_CHECKS)return;
+  const d=INT_DATA,ch=INT_CHECKS;
+  const pa=ch.filter(r=>r.st==='pass'||r.rem).length,tot=ch.length,sc=Math.round(pa/tot*100);
+  const devs=d.managedDevices||[];
+  const comp=devs.filter(v=>v.complianceState==='compliant').length;
+  const nonc=devs.filter(v=>v.complianceState==='noncompliant').length;
+
+  let html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Intune Security Report — ${esc(d.domain)}</title>
+  <style>body{font-family:Segoe UI,system-ui,sans-serif;max-width:1100px;margin:0 auto;padding:20px;color:#1a1f2e}
+  h1{color:#2563eb;border-bottom:3px solid #2563eb;padding-bottom:8px}h2{color:#1e293b;margin-top:28px;border-bottom:1px solid #e2e8f0;padding-bottom:6px}
+  table{width:100%;border-collapse:collapse;margin:12px 0;font-size:.85rem}th{background:#f1f5f9;text-align:left;padding:8px 12px;font-size:.75rem;text-transform:uppercase;color:#64748b;border-bottom:2px solid #e2e8f0}
+  td{padding:8px 12px;border-bottom:1px solid #f1f5f9}.pass{color:#059669;font-weight:600}.fail{color:#dc2626;font-weight:600}
+  .score{font-size:3rem;font-weight:800;text-align:center;padding:20px;border-radius:12px;margin:16px 0}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:12px 0}.card{padding:16px;border:1px solid #e2e8f0;border-radius:8px;text-align:center}
+  .card h3{font-size:1.8rem;margin:0}.card p{font-size:.8rem;color:#64748b;margin:4px 0 0}</style></head><body>`;
+
+  html+=`<h1>📱 Intune Security & Compliance Report</h1>
+  <p><strong>Tenant:</strong> ${esc(d.domain)} &nbsp;|&nbsp; <strong>Date:</strong> ${new Date().toLocaleDateString()} &nbsp;|&nbsp; <strong>Score:</strong> ${pa}/${tot} (${sc}%)</p>`;
+
+  html+=`<div class="score" style="background:${sc>=80?'#f0fdf4;color:#059669':sc>=50?'#fffbeb;color:#d97706':'#fef2f2;color:#dc2626'}">${sc}% Intune Compliance Score</div>`;
+
+  html+=`<div class="grid">
+    <div class="card"><h3 style="color:#059669">${pa}</h3><p>Passed</p></div>
+    <div class="card"><h3 style="color:#dc2626">${tot-pa}</h3><p>Failed</p></div>
+    <div class="card"><h3 style="color:#2563eb">${devs.length}</h3><p>Managed Devices</p></div>
+  </div>`;
+
+  // Policy Assessment
+  html+=`<h2>Policy Assessment</h2><table><thead><tr><th>Status</th><th>Category</th><th>Check</th><th>Severity</th><th>Framework</th><th>Requirement</th></tr></thead><tbody>`;
+  ch.forEach(r=>{
+    const st=r.st==='pass'||r.rem?'pass':'fail';
+    html+=`<tr><td class="${st}">${st==='pass'?'✓ Pass':'✗ Fail'}</td><td>${esc(r.cn)}</td><td><strong>${esc(r.n)}</strong></td><td>${r.sev}</td><td>${esc(r.fw)}</td><td style="font-size:.8rem">${esc(r.req)}</td></tr>`;
+  });
+  html+=`</tbody></table>`;
+
+  // Device inventory
+  if(devs.length){
+    html+=`<h2>Device Compliance Inventory (${devs.length} devices)</h2>
+    <div class="grid"><div class="card"><h3 style="color:#059669">${comp}</h3><p>Compliant</p></div><div class="card"><h3 style="color:#dc2626">${nonc}</h3><p>Non-Compliant</p></div><div class="card"><h3 style="color:#d97706">${devs.length-comp-nonc}</h3><p>Unknown/InGrace</p></div></div>`;
+    html+=`<table><thead><tr><th>Device</th><th>User</th><th>OS</th><th>Version</th><th>Compliance</th><th>Encrypted</th><th>Ownership</th><th>Last Sync</th></tr></thead><tbody>`;
+    devs.forEach(v=>{
+      const st=v.complianceState==='compliant'?'pass':v.complianceState==='noncompliant'?'fail':'';
+      html+=`<tr><td>${esc(v.deviceName||'—')}</td><td>${esc(v.userPrincipalName||'—')}</td><td>${esc(v.operatingSystem||'—')}</td><td>${esc(v.osVersion||'—')}</td><td class="${st}">${esc(v.complianceState||'Unknown')}</td><td>${v.isEncrypted?'✓ Yes':'✗ No'}</td><td>${esc(v.managedDeviceOwnerType||'—')}</td><td>${(v.lastSyncDateTime||'').slice(0,10)}</td></tr>`;
+    });
+    html+=`</tbody></table>`;
+  }
+
+  html+=`<hr><p style="color:#94a3b8;font-size:.8rem">Generated by M365 Tenant Automation — ${new Date().toISOString()}</p></body></html>`;
+  dl(html,`Intune_Report_${d.domain.split('.')[0]}_${new Date().toISOString().slice(0,10)}.html`,'text/html');
+}
+
+function intExportCSV(){
+  if(!INT_DATA||!INT_CHECKS)return;
+  // Policy checks CSV
+  let csv='Category,Check,Severity,Framework,Status,Requirement\n';
+  INT_CHECKS.forEach(r=>{
+    csv+=`"${r.cn}","${r.n}","${r.sev}","${r.fw}","${r.st==='pass'||r.rem?'Pass':'Fail'}","${r.req.replace(/"/g,'""')}"\n`;
+  });
+  csv+='\n\nDevice Inventory\nDevice Name,User,OS,Version,Compliance,Encrypted,Ownership,Manufacturer,Model,Last Sync\n';
+  (INT_DATA.managedDevices||[]).forEach(v=>{
+    csv+=`"${v.deviceName||''}","${v.userPrincipalName||''}","${v.operatingSystem||''}","${v.osVersion||''}","${v.complianceState||''}","${v.isEncrypted?'Yes':'No'}","${v.managedDeviceOwnerType||''}","${v.manufacturer||''}","${v.model||''}","${(v.lastSyncDateTime||'').slice(0,10)}"\n`;
+  });
+  dl(csv,`Intune_Report_${INT_DATA.domain.split('.')[0]}_${new Date().toISOString().slice(0,10)}.csv`,'text/csv');
+}
+
+/* ============================================================
    CONFIG TAB
    ============================================================ */
 function copyRedirect(){const v=$('redirectDisplay').textContent;navigator.clipboard?.writeText(v).then(()=>{const b=document.querySelector('[onclick="copyRedirect()"]');b.textContent='✓ Copied!';setTimeout(()=>b.textContent='Copy',1500)})}
@@ -2846,7 +3545,7 @@ function getRedirectUri(){
 function propagateDomain(){
   const d=A.cfg&&A.cfg.tid&&A.cfg.tid!=='common'?A.cfg.tid:'';
   if(!d)return;
-  ['setupDomain','discDomain','compDomain'].forEach(id=>{if(!$(id).value)$(id).value=d});
+  ['setupDomain','discDomain','compDomain','intDomain'].forEach(id=>{if(!$(id).value)$(id).value=d});
   if(!$('setupAdmin').value&&A.acc)$('setupAdmin').value=A.acc.username||'';
 }
 
