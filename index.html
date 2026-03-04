@@ -722,12 +722,15 @@ const SKU_MAP={
   'MCOSTANDARD':'Skype for Business Online Plan 2','MCOIMP':'Skype for Business Online Plan 1',
   'MCOMEETADV':'Microsoft 365 Audio Conferencing','MCOPSTN1':'Microsoft 365 Domestic Calling Plan',
   'MCOPSTN2':'Microsoft 365 Domestic & International Calling','PHONESYSTEM_VIRTUALUSER':'Phone System Virtual User',
-  'TEAMS_ESSENTIALS_AAD':'Microsoft Teams Essentials',
+  'TEAMS_ESSENTIALS_AAD':'Microsoft Teams Essentials','MCOCAP':'Microsoft 365 Common Area Phone',
+  'MCOPSTNC':'Microsoft 365 Communication Credits','Microsoft_Teams_Rooms_Pro':'Microsoft Teams Rooms Pro',
+  'MICROSOFT_TEAMS_ROOMS_PRO':'Microsoft Teams Rooms Pro',
   // Power Platform
   'POWER_BI_STANDARD':'Power BI Free','POWER_BI_PRO':'Power BI Pro','POWER_BI_PREMIUM_PER_USER':'Power BI Premium Per User',
   'FLOW_FREE':'Power Automate Free','FLOW_P1':'Power Automate Plan 1','FLOW_P2':'Power Automate Plan 2',
   'POWERAUTOMATE_ATTENDED_RPA':'Power Automate Attended RPA','POWERAPPS_VIRAL':'Power Apps Trial',
   'POWERAPPS_PER_USER':'Power Apps Per User','POWERAPPS_PER_APP':'Power Apps Per App',
+  'POWERAPPS_DEV':'Power Apps for Developer','POWERAPPS_PORTALS_LOGIN':'Power Apps Portals Login',
   // Visio / Project
   'VISIOCLIENT':'Visio Plan 2','VISIO_PLAN1_DEPT':'Visio Plan 1','VISIOONLINE_PLAN1':'Visio Plan 1',
   'PROJECTPROFESSIONAL':'Project Plan 3','PROJECTPREMIUM':'Project Plan 5','PROJECTESSENTIALS':'Project Plan 1',
@@ -1475,15 +1478,22 @@ async function nuLoadGroups(){
     // Also load SKUs for the quick-create dropdown
     try{
       const skus=await G.call("/subscribedSkus?$select=skuId,skuPartNumber,consumedUnits,prepaidUnits");
-      const sel=$('nuNewGrpSku');sel.innerHTML='<option value="">Assign SKU (optional)</option>';
-      (skus.value||[]).forEach(s=>{
-        const avail=(s.prepaidUnits?.enabled||0)-s.consumedUnits;
-        sel.innerHTML+=`<option value="${s.skuId}">${esc(skuName(s.skuPartNumber))} (${avail} avail)</option>`
+      const sel=$('nuNewGrpSku');
+      const skuArr=skus.value||[];
+      let opts='<option value="">Assign SKU (optional)</option>';
+      skuArr.forEach(s=>{
+        const avail=(s.prepaidUnits?.enabled||0)-(s.consumedUnits||0);
+        opts+=`<option value="${s.skuId}">${esc(skuName(s.skuPartNumber))} (${avail} avail)</option>`;
       });
-    }catch{}
+      sel.innerHTML=opts;
+      console.log('✅ SKU dropdown loaded:',skuArr.length,'SKUs');
+    }catch(e){
+      console.warn('SKU dropdown load failed:',e.message);
+      $('nuNewGrpSku').innerHTML='<option value="">⚠ Failed to load SKUs</option>';
+    }
 
     // Load domains for UPN dropdown
-    nuLoadDomains();
+    await nuLoadDomains();
     G.scopes=null;
   }catch(e){
     el.innerHTML=`<div style="color:var(--accent-red);font-size:.82rem;padding:8px">Error loading groups: ${esc(e.message)}</div>`;
@@ -2262,6 +2272,7 @@ async function bootstrap(){
       }
     }
     bsLog(`Application permissions: ${consented} new, ${skipped} existing, ${failed} failed`,'info');
+    const totalConsented=consented+skipped;
 
     // Grant admin consent for DELEGATED permissions (oauth2PermissionGrants — for user-signed-in discovery)
     bsLog('Granting admin consent for delegated scopes (for discovery)...','info');
@@ -2311,9 +2322,9 @@ async function bootstrap(){
       bsLog('  SETUP COMPLETE — All tabs now functional','success');
       bsLog('═══════════════════════════════════════════','success');
       $('step3Badge').className='badge badge-green';$('step3Badge').textContent='Done';
-    } else if(consented>0){
+    } else if(totalConsented>0){
       bsLog('','warning');
-      bsLog('Partial success — '+consented+' permissions granted, '+failed+' failed.','warning');
+      bsLog('Partial success — '+totalConsented+' permissions granted, '+failed+' failed.','warning');
       bsLog('The tool will work for features covered by granted permissions.','warning');
       $('step3Badge').className='badge badge-amber';$('step3Badge').textContent='Partial';
     } else {
@@ -2325,7 +2336,7 @@ async function bootstrap(){
 
     $('bsResult').classList.remove('hidden');
     $('bsClientId').textContent=A.cfg.cid;
-    $('bsConsented').innerHTML=`<span class="badge ${failed===0?'badge-green':consented>0?'badge-amber':'badge-red'}">${consented}/${PERMS.length}</span>`;
+    $('bsConsented').innerHTML=`<span class="badge ${failed===0?'badge-green':totalConsented>0?'badge-amber':'badge-red'}">${totalConsented}/${PERMS.length}</span>`;
     if(secretText){$('bsSecret').textContent=secretText}
     else{$('bsSecret').innerHTML='<span style="color:var(--text-muted)">Not generated — create manually in Azure Portal → Certificates & secrets</span>'}
 
