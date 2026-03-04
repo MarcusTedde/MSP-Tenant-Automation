@@ -812,6 +812,20 @@ const CEP={accessControl:{cat:'Access Control',icon:'🔐',p:[
 ]}};
 
 /* ── Onboarding Setup Phases (run before CE+ compliance) ── */
+// Helper: create a dynamic group (device or user membership rule)
+async function obCreateDynGroup(ctx,name,nick,desc,rule,memberType){
+  try{
+    const existing=await G.call(`/groups?$filter=displayName eq '${name}'&$select=id,displayName`);
+    if(existing.value&&existing.value.length>0)return`${name} (already exists)`;
+    const membershipRuleProcessingState='On';
+    const body={displayName:name,mailEnabled:false,mailNickname:nick.replace(/[^a-z0-9-]/g,''),
+      securityEnabled:true,groupTypes:['DynamicMembership'],description:desc,
+      membershipRule:rule,membershipRuleProcessingState};
+    await G.call('/groups','POST',body);
+    return`✓ Created dynamic group: ${name}`
+  }catch(e){return`⚠ ${name}: ${e.message.slice(0,80)}`}
+}
+
 const ONBOARD=[
 {id:'ob-org',cat:'Company Branding & Identity',icon:'🎨',steps:[
   {n:'Set Organisation Details',fn:async(ctx)=>{
@@ -972,39 +986,288 @@ const ONBOARD=[
   {n:'Outbound Spam Filter Guidance',fn:async(ctx)=>{
     return{note:true,msg:'Configure via Exchange Admin Center → Mail flow → Rules → Add auto-forward blocking rule. PowerShell: Set-HostedOutboundSpamFilterPolicy -AutoForwardingMode Off'}}}
 ]},
-{id:'ob-intune',cat:'Intune Baseline Enrolment',icon:'📱',steps:[
-  {n:'Set MDM Authority to Intune',fn:async(ctx)=>{
-    // MDM authority is usually already Intune for new tenants, but let's verify
+{id:'ob-intune-enroll',cat:'Intune — Enrollment & Auto-Enrollment',icon:'📋',steps:[
+  {n:'Verify MDM Authority',fn:async(ctx)=>{
     try{
-      const mgmt=await G.call('/deviceManagement?$select=intuneAccountId');
-      return`MDM authority confirmed — Intune Account: ${mgmt.intuneAccountId||'active'}`
-    }catch{return{note:true,msg:'Set MDM authority in Intune Admin Center → Devices → Enroll devices → MDM authority'}}
-  }},
-  {n:'Configure Default Enrolment Restrictions',fn:async(ctx)=>{
+      const mgmt=await G.call('/deviceManagement?$select=intuneAccountId,deviceManagementAuthority');
+      ctx._mdmAuth=mgmt.deviceManagementAuthority||'unknown';
+      return`MDM authority: ${mgmt.deviceManagementAuthority||'intune'} — Intune Account: ${mgmt.intuneAccountId||'active'}`
+    }catch{return{note:true,msg:'Verify MDM authority in Intune Admin Center → Tenant administration → Tenant status'}}}},
+  {n:'Create Dynamic Group — All Windows Devices',fn:async(ctx)=>{
+    return await obCreateDynGroup(ctx,'[Intune] All Windows Devices','intune-all-windows','All Autopilot and Intune-managed Windows devices',
+      '(device.deviceOSType -eq "Windows") and (device.deviceOwnership -eq "Company")')}},
+  {n:'Create Dynamic Group — All iOS Devices',fn:async(ctx)=>{
+    return await obCreateDynGroup(ctx,'[Intune] All iOS Devices','intune-all-ios','All managed iOS/iPadOS devices',
+      '(device.deviceOSType -eq "IOS")')}},
+  {n:'Create Dynamic Group — All Android Devices',fn:async(ctx)=>{
+    return await obCreateDynGroup(ctx,'[Intune] All Android Devices','intune-all-android','All managed Android devices',
+      '(device.deviceOSType -eq "AndroidEnterprise") or (device.deviceOSType -eq "Android")')}},
+  {n:'Create Dynamic Group — All macOS Devices',fn:async(ctx)=>{
+    return await obCreateDynGroup(ctx,'[Intune] All macOS Devices','intune-all-macos','All managed macOS devices',
+      '(device.deviceOSType -eq "MacMDM")')}},
+  {n:'Create Dynamic Group — Autopilot Devices',fn:async(ctx)=>{
+    return await obCreateDynGroup(ctx,'[Intune] Autopilot Devices','intune-autopilot','All Windows Autopilot registered devices',
+      '(device.devicePhysicalIDs -any (_ -startsWith "[ZTDID]"))')}},
+  {n:'Create Dynamic Group — Corporate Devices',fn:async(ctx)=>{
+    return await obCreateDynGroup(ctx,'[Intune] Corporate Devices','intune-corporate','All company-owned managed devices',
+      '(device.deviceOwnership -eq "Company")')}},
+  {n:'Create Dynamic Group — Personal (BYOD) Devices',fn:async(ctx)=>{
+    return await obCreateDynGroup(ctx,'[Intune] Personal BYOD Devices','intune-byod','All personally-owned enrolled devices',
+      '(device.deviceOwnership -eq "Personal")')}},
+  {n:'Create Dynamic Group — Non-Compliant Devices',fn:async(ctx)=>{
+    return await obCreateDynGroup(ctx,'[Intune] Non-Compliant Devices','intune-noncompliant','Devices failing compliance policy',
+      '(device.isCompliant -ne True) and (device.managementType -eq "MDM")')}},
+  {n:'Create Dynamic Group — All Intune Users',fn:async(ctx)=>{
+    return await obCreateDynGroup(ctx,'[Intune] All Licensed Users','intune-all-users','Users with Intune-eligible licences',
+      '(user.assignedPlans -any (assignedPlan.servicePlanId -eq "c1ec4a95-1f05-45b3-a911-aa3fa01094f5" -and assignedPlan.capabilityStatus -eq "Enabled"))','user')}},
+  {n:'Configure MDM Auto-Enrollment Scope',fn:async(ctx)=>{
     try{
-      const resp=await G.call('/deviceManagement/deviceEnrollmentConfigurations?$select=id,displayName');
-      return`Found ${(resp.value||[]).length} existing enrolment configs. Review in Intune Admin Center → Devices → Enrol devices → Enrolment restrictions.`
-    }catch{return{note:true,msg:'Configure enrolment restrictions in Intune Admin Center'}}}},
-  {n:'Create Default Windows Compliance Policy',fn:async(ctx)=>{
+      // Try to set MDM scope to All via beta policy endpoint
+      const resp=await G.call('/policies/mobileDeviceManagementPolicies','GET',null,true);
+      const policies=resp.value||resp||[];
+      const intunePol=policies.find(p=>p.displayName?.includes('Microsoft Intune')||p.description?.includes('Intune'));
+      if(intunePol&&intunePol.id){
+        await G.call(`/policies/mobileDeviceManagementPolicies/${intunePol.id}`,'PATCH',{appliesTo:'allUsers'},true);
+        return'✓ MDM auto-enrollment scope set to All Users'
+      }
+      return{note:true,msg:'MDM auto-enrollment policy not found via API. Configure manually: Entra ID → Mobility (MDM and MAM) → Microsoft Intune → MDM user scope = All. This ensures every Azure AD-joined device is automatically enrolled into Intune.'}
+    }catch(e){return{note:true,msg:`Could not configure via API (${e.message.slice(0,60)}). Go to Entra ID → Mobility (MDM and MAM) → Microsoft Intune → Set MDM user scope to "All" and MAM user scope to "All".`}}}},
+  {n:'Configure MAM Auto-Enrollment Scope',fn:async(ctx)=>{
     try{
-      await G.call('/deviceManagement/deviceCompliancePolicies','POST',{
-        displayName:'[MSP] Baseline Windows Compliance','@odata.type':'#microsoft.graph.windows10CompliancePolicy',
-        passwordRequired:true,passwordMinimumLength:8,osMinimumVersion:'10.0.19045.0',
-        defenderEnabled:true,activeFirewallRequired:true,bitLockerEnabled:true,
-        scheduledActionsForRule:[{ruleName:'PasswordRequired',scheduledActionConfigurations:[{actionType:'block',gracePeriodHours:168,notificationTemplateId:''}]}]});
-      return'Baseline compliance policy created with 7-day grace period'
-    }catch(e){return'⚠ '+e.message}}},
-  {n:'Create Windows Autopilot Default Profile',fn:async(ctx)=>{
+      const resp=await G.call('/policies/mobileAppManagementPolicies','GET',null,true);
+      const policies=resp.value||resp||[];
+      const intunePol=policies.find(p=>p.displayName?.includes('Microsoft Intune')||p.description?.includes('Intune'));
+      if(intunePol&&intunePol.id){
+        await G.call(`/policies/mobileAppManagementPolicies/${intunePol.id}`,'PATCH',{appliesTo:'allUsers'},true);
+        return'✓ MAM auto-enrollment scope set to All Users'
+      }
+      return{note:true,msg:'Configure MAM scope: Entra ID → Mobility (MDM and MAM) → Microsoft Intune → MAM user scope = All. Required for BYOD app protection.'}
+    }catch(e){return{note:true,msg:`MAM scope API not available (${e.message.slice(0,60)}). Set manually in Entra ID → Mobility → MAM user scope = All.`}}}},
+  {n:'Create Autopilot Deployment Profile',fn:async(ctx)=>{
     try{
       await G.call('/deviceManagement/windowsAutopilotDeploymentProfiles','POST',{
         '@odata.type':'#microsoft.graph.azureADWindowsAutopilotDeploymentProfile',
-        displayName:'[MSP] Default Autopilot Profile',description:'Standard OOBE deployment',
-        language:'os-default',extractHardwareHash:true,
+        displayName:'[MSP] Standard Autopilot — User Driven',description:'CE+ compliant OOBE: standard user, privacy hidden, EULA hidden, pre-provisioning enabled',
+        language:'os-default',extractHardwareHash:true,enableWhiteGlove:true,
         outOfBoxExperienceSettings:{hidePrivacySettings:true,hideEULA:true,
-          userType:'standard',skipKeyboardSelectionPage:true,hideEscapeLink:true}
+          userType:'standard',skipKeyboardSelectionPage:true,hideEscapeLink:true},
+        deviceNameTemplate:'%SERIAL%'
       },true);
-      return'Autopilot deployment profile created'
-    }catch(e){return'⚠ '+e.message+' (requires Intune licence)'}}}
+      return'Autopilot profile created — user-driven mode, pre-provisioning (White Glove) enabled, standard user type'
+    }catch(e){return'⚠ '+e.message+' — requires Intune licence. Create manually in Intune → Devices → Windows enrollment → Deployment profiles.'}}},
+  {n:'Configure Enrollment Status Page',fn:async(ctx)=>{
+    try{
+      // Get existing default ESP
+      const resp=await G.call('/deviceManagement/deviceEnrollmentConfigurations?$filter=deviceEnrollmentConfigurationType eq \'EnrollmentStatusPage\'');
+      const existing=(resp.value||[]).find(p=>p.priority===0)||null;
+      if(existing){
+        await G.call(`/deviceManagement/deviceEnrollmentConfigurations/${existing.id}`,'PATCH',{
+          '@odata.type':'#microsoft.graph.windows10EnrollmentCompletionPageConfiguration',
+          displayName:'[MSP] Enrollment Status Page',showInstallationProgress:true,
+          blockDeviceSetupRetryByUser:false,allowDeviceResetOnInstallFailure:true,
+          installProgressTimeoutInMinutes:60,allowLogCollectionOnInstallFailure:true});
+        return'Enrollment Status Page updated — shows progress, 60-min timeout, allows reset on failure'
+      }
+      return{note:true,msg:'No default ESP found. Create in Intune → Devices → Windows enrollment → Enrollment Status Page. Enable "Show app and profile configuration progress", set timeout to 60 min.'}
+    }catch(e){return'⚠ '+e.message}}},
+  {n:'Configure Enrollment Restrictions — Block Personal Windows',fn:async(ctx)=>{
+    try{
+      const resp=await G.call('/deviceManagement/deviceEnrollmentConfigurations?$filter=deviceEnrollmentConfigurationType eq \'PlatformRestrictions\'');
+      const def=(resp.value||[]).find(p=>p.priority===0)||null;
+      if(def){
+        return{note:true,msg:`Default platform restriction found (${def.displayName}). Edit in Intune → Devices → Enrollment restrictions → Device type restrictions. Set Windows "Personally owned" to Block. This ensures only Autopilot/corporate devices can enroll.`}
+      }
+      return{note:true,msg:'Configure enrollment restrictions in Intune → Devices → Enrollment restrictions → Device type restrictions. Block personally-owned Windows devices.'}
+    }catch(e){return'⚠ '+e.message}}}
+]},
+{id:'ob-intune-compliance',cat:'Intune — Compliance Policies (CE+)',icon:'🛡️',steps:[
+  {n:'Create Windows 10/11 Compliance Policy',fn:async(ctx)=>{
+    try{
+      await G.call('/deviceManagement/deviceCompliancePolicies','POST',{
+        '@odata.type':'#microsoft.graph.windows10CompliancePolicy',
+        displayName:'[MSP] CE+ Windows Compliance Baseline',description:'Cyber Essentials Plus compliant Windows policy — BitLocker, Secure Boot, firewall, Defender, 12-char password, OS patched within 45 days',
+        passwordRequired:true,passwordMinimumLength:12,passwordRequiredType:'deviceDefault',
+        osMinimumVersion:'10.0.19045',
+        bitLockerEnabled:true,secureBootEnabled:true,codeIntegrityEnabled:true,
+        storageRequireEncryption:true,
+        activeFirewallRequired:true,firewallEnabled:true,
+        antivirusRequired:true,antiSpywareRequired:true,defenderEnabled:true,
+        rtpEnabled:true,signatureOutOfDate:true,
+        tpmRequired:true,
+        scheduledActionsForRule:[{ruleName:'PasswordRequired',scheduledActionConfigurations:[
+          {actionType:'block',gracePeriodHours:72,notificationTemplateId:''},
+          {actionType:'notification',gracePeriodHours:24,notificationTemplateId:''},
+          {actionType:'retire',gracePeriodHours:720,notificationTemplateId:''}
+        ]}]});
+      return'Windows compliance policy created — BitLocker, Secure Boot, TPM, Firewall, Defender, 12-char password, OS baseline, 3-day grace → block, 30-day → retire'
+    }catch(e){return'⚠ '+e.message}}},
+  {n:'Create iOS/iPadOS Compliance Policy',fn:async(ctx)=>{
+    try{
+      await G.call('/deviceManagement/deviceCompliancePolicies','POST',{
+        '@odata.type':'#microsoft.graph.iosCompliancePolicy',
+        displayName:'[MSP] CE+ iOS Compliance Baseline',description:'CE+ compliant iOS policy — passcode, encryption, jailbreak detection, OS version',
+        passcodeRequired:true,passcodeMinimumLength:6,passcodeBlockSimple:true,
+        securityBlockJailbrokenDevices:true,
+        osMinimumVersion:'16.0',
+        managedEmailProfileRequired:false,
+        scheduledActionsForRule:[{ruleName:'PasswordRequired',scheduledActionConfigurations:[
+          {actionType:'block',gracePeriodHours:72,notificationTemplateId:''}
+        ]}]});
+      return'iOS compliance policy created — 6-digit passcode, jailbreak blocked, OS 16+ required'
+    }catch(e){return'⚠ '+e.message}}},
+  {n:'Create Android Work Profile Compliance Policy',fn:async(ctx)=>{
+    try{
+      await G.call('/deviceManagement/deviceCompliancePolicies','POST',{
+        '@odata.type':'#microsoft.graph.androidWorkProfileCompliancePolicy',
+        displayName:'[MSP] CE+ Android Compliance Baseline',description:'CE+ compliant Android policy — password, encryption, rooted detection',
+        passwordRequired:true,passwordMinimumLength:6,
+        securityBlockJailbrokenDevices:true,
+        storageRequireEncryption:true,
+        securityRequireSafetyNetAttestationBasicIntegrity:true,
+        securityRequireSafetyNetAttestationCertifiedDevice:true,
+        scheduledActionsForRule:[{ruleName:'PasswordRequired',scheduledActionConfigurations:[
+          {actionType:'block',gracePeriodHours:72,notificationTemplateId:''}
+        ]}]});
+      return'Android compliance policy created — PIN, encryption, SafetyNet, rooted device block'
+    }catch(e){return'⚠ '+e.message}}},
+  {n:'Create macOS Compliance Policy',fn:async(ctx)=>{
+    try{
+      await G.call('/deviceManagement/deviceCompliancePolicies','POST',{
+        '@odata.type':'#microsoft.graph.macOSCompliancePolicy',
+        displayName:'[MSP] CE+ macOS Compliance Baseline',description:'CE+ compliant macOS policy — password, encryption, firewall, OS version',
+        passwordRequired:true,passwordMinimumLength:12,
+        storageRequireEncryption:true,
+        firewallEnabled:true,firewallBlockAllIncoming:false,firewallEnableStealthMode:true,
+        osMinimumVersion:'13.0',systemIntegrityProtectionEnabled:true,
+        scheduledActionsForRule:[{ruleName:'PasswordRequired',scheduledActionConfigurations:[
+          {actionType:'block',gracePeriodHours:72,notificationTemplateId:''}
+        ]}]});
+      return'macOS compliance policy created — FileVault, firewall+stealth, SIP, 12-char password, macOS 13+'
+    }catch(e){return'⚠ '+e.message}}}
+]},
+{id:'ob-intune-endpoint',cat:'Intune — Endpoint Security (NCSC/CIS)',icon:'🔒',steps:[
+  {n:'Create Defender Antivirus Policy',fn:async(ctx)=>{
+    return{note:true,msg:'Endpoint Security policies (Antivirus, Firewall, EDR, ASR, BitLocker) must be created in the Intune portal as they use a template-based intent model not fully supported via Graph POST.\n\nGo to Intune → Endpoint Security → Antivirus → Create Policy:\n• Platform: Windows 10+\n• Profile: Microsoft Defender Antivirus\n• Real-time protection: Enabled\n• Cloud-delivered protection level: High+\n• PUA protection: Audit or Block\n• Assign to: [Intune] All Windows Devices group\n\nThis is the #1 CE+ requirement for endpoint protection.'}}},
+  {n:'Create Firewall Policy',fn:async(ctx)=>{
+    return{note:true,msg:'Go to Intune → Endpoint Security → Firewall → Create Policy:\n• Platform: Windows 10+\n• Enable firewall for Domain, Private, and Public profiles\n• Block all inbound connections by default\n• Assign to: [Intune] All Windows Devices group\n\nCE+ requires firewall enabled on all profiles with inbound blocked.'}}},
+  {n:'Create BitLocker Disk Encryption Policy',fn:async(ctx)=>{
+    return{note:true,msg:'Go to Intune → Endpoint Security → Disk encryption → Create Policy:\n• Platform: Windows 10+\n• Profile: BitLocker\n• Require device encryption: Yes\n• Encryption method: XTS-AES 256-bit\n• Recovery key rotation: Azure AD-joined\n• Recovery key escrow to Azure AD: Required\n• Assign to: [Intune] All Windows Devices group\n\nCE+ requires full disk encryption on all devices.'}}},
+  {n:'Create Attack Surface Reduction (ASR) Rules',fn:async(ctx)=>{
+    return{note:true,msg:'Go to Intune → Endpoint Security → Attack surface reduction → Create Policy:\n• Platform: Windows 10+\n• Block Office macros from creating child processes: Block\n• Block credential stealing from LSASS: Block\n• Block executable content from email: Block\n• Block JavaScript/VBScript from launching downloads: Block\n• Block process creations from PSExec/WMI: Audit\n• Use advanced protection against ransomware: Block\n• Assign to: [Intune] All Windows Devices group\n\nStart with Audit mode in production, switch to Block after 2 weeks of review.'}}},
+  {n:'Create LAPS Configuration',fn:async(ctx)=>{
+    return{note:true,msg:'Go to Intune → Endpoint Security → Account protection → Create Policy:\n• Enable Windows LAPS: Yes\n• Backup directory: Azure AD\n• Password age (days): 30\n• Password complexity: Large letters + small letters + numbers + special characters\n• Password length: 14\n• Assign to: [Intune] All Windows Devices group\n\nLAPS rotates local admin passwords automatically, preventing lateral movement with shared local admin credentials.'}}},
+  {n:'Create Windows Update Ring',fn:async(ctx)=>{
+    try{
+      await G.call('/deviceManagement/deviceConfigurations','POST',{
+        '@odata.type':'#microsoft.graph.windowsUpdateForBusinessConfiguration',
+        displayName:'[MSP] CE+ Update Ring — Standard',description:'CE+ compliant: quality 0-day deferral, feature 14-day deferral, auto-install at 3am',
+        qualityUpdatesDeferralPeriodInDays:0,
+        featureUpdatesDeferralPeriodInDays:14,
+        microsoftUpdateServiceAllowed:true,
+        driversExcluded:false,
+        automaticUpdateMode:'autoInstallAndRebootAtScheduledTime',
+        scheduledInstallDay:'everyDay',
+        scheduledInstallTime:'03:00:00',
+        deliveryOptimizationMode:'httpWithPeeringNat',
+        qualityUpdatesPauseExpiryDateTime:'0001-01-01T00:00:00Z',
+        featureUpdatesPauseExpiryDateTime:'0001-01-01T00:00:00Z',
+        businessReadyUpdatesOnly:'businessReadyOnly',
+        engagedRestartDeadlineInDays:3,
+        deadlineForQualityUpdatesInDays:3,
+        deadlineForFeatureUpdatesInDays:7});
+      return'Windows Update ring created — quality updates immediate, feature 14-day deferral, 3-day restart deadline, auto-install 3am'
+    }catch(e){return'⚠ '+e.message}}}
+]},
+{id:'ob-intune-mam',cat:'Intune — App Protection (MAM)',icon:'📱',steps:[
+  {n:'Create iOS App Protection Policy',fn:async(ctx)=>{
+    try{
+      await G.call('/deviceAppManagement/iosManagedAppProtections','POST',{
+        displayName:'[MSP] CE+ iOS App Protection',description:'CE+ MAM policy: prevent data leakage, require PIN, block jailbroken, encrypt app data',
+        periodOfflineBeforeAccessCheck:'PT12H',
+        periodOnlineBeforeAccessCheck:'PT30M',
+        allowedDataStorageLocations:['oneDriveForBusiness','sharePoint'],
+        dataBackupBlocked:true,
+        deviceComplianceRequired:false,
+        pinRequired:true,minimumPinLength:6,
+        managedBrowserToOpenLinksRequired:false,
+        saveAsBlocked:true,
+        faceIdBlocked:false,
+        contactSyncBlocked:false,
+        printBlocked:true,
+        fingerprintBlocked:false,
+        disableAppPinIfDevicePinIsSet:true,
+        maximumAllowedDeviceThreatLevel:'secured',
+        appActionIfDeviceComplianceRequired:'block',
+        appActionIfMaximumPinRetriesExceeded:'resetAccount',
+        maximumPinRetries:5,
+        minimumRequiredOsVersion:'16.0',
+        appDataEncryptionType:'afterDeviceRestart'
+      });
+      return'iOS app protection policy created — PIN, save-as blocked, print blocked, backup blocked, jailbreak=block, OS 16+, encryption enabled'
+    }catch(e){return'⚠ '+e.message}}},
+  {n:'Create Android App Protection Policy',fn:async(ctx)=>{
+    try{
+      await G.call('/deviceAppManagement/androidManagedAppProtections','POST',{
+        displayName:'[MSP] CE+ Android App Protection',description:'CE+ MAM policy for Android: prevent data leakage, require PIN, block rooted, encrypt app data',
+        periodOfflineBeforeAccessCheck:'PT12H',
+        screenCaptureBlocked:true,
+        dataBackupBlocked:true,
+        deviceComplianceRequired:false,
+        pinRequired:true,minimumPinLength:6,
+        saveAsBlocked:true,
+        contactSyncBlocked:false,
+        printBlocked:true,
+        fingerprintBlocked:false,
+        disableAppPinIfDevicePinIsSet:true,
+        maximumAllowedDeviceThreatLevel:'secured',
+        appActionIfDeviceComplianceRequired:'block',
+        appActionIfMaximumPinRetriesExceeded:'resetAccount',
+        maximumPinRetries:5,
+        minimumRequiredOsVersion:'13.0',
+        encryptAppData:true
+      });
+      return'Android app protection policy created — PIN, screenshot blocked, save-as blocked, print blocked, rooted=block, OS 13+, encryption enabled'
+    }catch(e){return'⚠ '+e.message}}},
+  {n:'MAM Policy Assignment Guidance',fn:async(ctx)=>{
+    return{note:true,msg:'App protection policies must be assigned to users and targeted to specific apps.\n\nGo to Intune → Apps → App protection policies → Select each policy:\n1. Under "Apps" → Target to "All Microsoft Apps" (recommended) or select specific apps\n2. Under "Assignments" → Include "All Users" or the [Intune] All Licensed Users group\n\nMAM policies protect data even on unmanaged BYOD devices — they only activate when the user opens a targeted app and signs in with their work account.'}}}
+]},
+{id:'ob-intune-config',cat:'Intune — Device Configuration',icon:'⚙️',steps:[
+  {n:'Create Windows Device Restrictions Profile',fn:async(ctx)=>{
+    try{
+      await G.call('/deviceManagement/deviceConfigurations','POST',{
+        '@odata.type':'#microsoft.graph.windows10GeneralConfiguration',
+        displayName:'[MSP] CE+ Windows Restrictions',description:'CE+ device restrictions: USB storage, password requirements, telemetry, experience',
+        passwordRequired:true,passwordMinimumLength:12,
+        passwordMinutesOfInactivityBeforeScreenTimeout:15,
+        storageBlockRemovableStorage:false,
+        usbBlocked:false,
+        bluetoothBlocked:false,
+        cameraBlocked:false,
+        screenCaptureBlocked:false,
+        cortanaBlocked:false,
+        microsoftAccountBlocked:true,
+        copyPasteBlocked:false,
+        diagnosticsDataSubmissionMode:'basic',
+        passwordBlockSimple:true,
+        passwordExpirationDays:0,
+        lockScreenBlockToastNotifications:true,
+        windowsSpotlightBlocked:true,
+        windowsStoreBlocked:false,
+        edgeBlockPopups:true,
+        edgeBlockSearchSuggestions:false,
+        defenderBlockEndUserAccess:false,
+        defenderRequireRealTimeMonitoring:true,
+        defenderRequireCloudProtection:true,
+        defenderRequireNetworkInspectionSystem:true,
+        smartScreenBlockPromptOverride:true,
+        smartScreenBlockPromptOverrideForFiles:true,
+        smartScreenEnableInShell:true});
+      return'Windows restrictions profile created — password 12+, lock screen toast blocked, Spotlight blocked, SmartScreen enforced, Defender real-time+cloud, MS accounts blocked'
+    }catch(e){return'⚠ '+e.message}}},
+  {n:'Security Baseline Deployment Guidance',fn:async(ctx)=>{
+    return{note:true,msg:'Security baselines must be deployed from the Intune portal (template-based, not supported via Graph POST).\n\nGo to Intune → Endpoint Security → Security baselines:\n\n1. Windows Security Baseline (latest version) → Create profile\n   • Review all settings (mostly use defaults)\n   • Assign to: [Intune] All Windows Devices\n\n2. Microsoft Edge Baseline → Create profile\n   • Configures SmartScreen, password manager, extensions\n   • Assign to: [Intune] All Windows Devices\n\n3. Microsoft Defender for Endpoint Baseline → Create profile (if licensed)\n   • Optimal Defender ATP settings\n   • Assign to: [Intune] All Windows Devices\n\nBaselines align with CIS benchmarks and NCSC recommendations.'}}},
+  {n:'Summary & Assignment Guidance',fn:async(ctx)=>{
+    return{note:true,msg:'IMPORTANT — Assignment step required:\n\nAll policies created above need to be assigned to the correct groups in Intune. Use the dynamic groups created earlier:\n\n• Windows policies → [Intune] All Windows Devices\n• iOS policies → [Intune] All iOS Devices\n• Android policies → [Intune] All Android Devices\n• macOS policies → [Intune] All macOS Devices\n• App protection → [Intune] All Licensed Users\n• Update rings → [Intune] All Windows Devices\n\nGo to Intune → Devices → Compliance / Configuration / Endpoint Security → Select each policy → Assignments → Add groups.\n\nPre-provisioning: Boot device → press Win key 5x at OOBE → connect to network → device auto-provisions before user receives it.'}}}
 ]},
 {id:'ob-sp',cat:'SharePoint & OneDrive Defaults',icon:'📂',steps:[
   {n:'Restrict External Sharing (Org-Only)',fn:async(ctx)=>{
