@@ -58,7 +58,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .phase-item{padding:7px 11px;border-radius:var(--radius-md);display:flex;align-items:center;gap:10px;font-size:.8rem;font-family:var(--font-display);transition:all var(--t-fast)}.phase-item.active{background:rgba(59,130,246,.06);border:1px solid rgba(59,130,246,.15)}.phase-item:not(.active){border:1px solid transparent}
 .phase-dot{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;flex-shrink:0}.phase-dot.done{background:var(--accent-green);color:#fff}.phase-dot.active{background:var(--accent-blue);color:#fff}.phase-dot.pending{background:var(--bg-elevated);color:var(--text-dim)}
 /* Discovery professional sections */
-.disc-section{margin-bottom:16px;animation:slideUp .3s ease-out}
+.disc-section{margin-bottom:16px}
 .disc-section-head{font-family:var(--font-display);font-weight:700;font-size:.88rem;color:var(--text-primary);padding:12px 0 8px;border-bottom:1px solid var(--border-subtle);margin-bottom:12px;display:flex;align-items:center;gap:10px}
 .disc-section-head .sec-icon{width:28px;height:28px;border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0}
 .disc-grid{display:grid;gap:10px}
@@ -109,7 +109,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 </head>
 <body>
 <div id="app">
-<header class="header"><div class="header-brand"><div class="header-logo">M</div><div><div class="header-title">M365 Tenant Automation</div><div class="header-subtitle">MSP Onboarding &amp; CE+ Compliance</div></div></div><div class="header-meta"><span class="badge badge-cyan">Graph API v1.0</span><span class="badge badge-green" style="margin-left:4px">v3.0</span><div id="authStatus" class="auth-status disconnected"><span class="auth-dot"></span><span id="authStatusText">Not connected</span></div><button id="authBtn" class="btn btn-sm btn-secondary" onclick="handleAuth()">Sign In</button></div></header>
+<header class="header"><div class="header-brand"><div class="header-logo">M</div><div><div class="header-title">M365 Tenant Automation</div><div class="header-subtitle">MSP Onboarding &amp; CE+ Compliance</div></div></div><div class="header-meta"><span class="badge badge-cyan">Graph API v1.0</span><span class="badge badge-green" style="margin-left:4px">v3.1</span><div id="authStatus" class="auth-status disconnected"><span class="auth-dot"></span><span id="authStatusText">Not connected</span></div><button id="authBtn" class="btn btn-sm btn-secondary" onclick="handleAuth()">Sign In</button></div></header>
 <nav class="tab-bar"><button class="tab-btn active" data-tab="setup" onclick="switchTab('setup',this)"><span>⚡</span> New Tenant Setup</button><button class="tab-btn" data-tab="discovery" onclick="switchTab('discovery',this)"><span>🔍</span> Tenant Discovery</button><button class="tab-btn" data-tab="compliance" onclick="switchTab('compliance',this)"><span>✅</span> CE+ Compliance</button><button class="tab-btn" data-tab="config" onclick="switchTab('config',this)"><span>⚙</span> App Config</button></nav>
 <main class="main-content">
 
@@ -368,7 +368,7 @@ function cleanup(){SS.run=0;$('setupStartBtn').classList.remove('hidden');$('set
    DISCOVERY TAB — Professional presentation
    ============================================================ */
 async function startDiscovery(){
-  console.log('🚀 startDiscovery v3.0 — scanning 33 sections');
+  console.log('🚀 startDiscovery v3.1 — scanning 33 sections');
   const dom=$('discDomain').value.trim();if(!dom)return;
   $('discScanBtn').disabled=true;$('discScanBtn').innerHTML='<span class="animate-spin" style="display:inline-block">◌</span> Scanning...';$('discProgress').classList.remove('hidden');$('discEmpty').classList.add('hidden');$('discResults').innerHTML='';$('discExBtns').classList.add('hidden');
   DD={domain:dom,ts:new Date().toISOString()};const live=A.ok();
@@ -451,7 +451,7 @@ async function startDiscovery(){
   renderDisc()}
 
 function renderDisc(){
-  console.log('🔍 renderDisc v3.0 — 33 section discovery');
+  console.log('🔍 renderDisc v3.1 — 33 section discovery');
   try{
   if(!DD)return;const d=DD,c=$('discResults');
   const arr=k=>Array.isArray(d[k])?d[k]:[];
@@ -477,7 +477,25 @@ function renderDisc(){
   // Mailbox categorisation from proxy addresses
   const sharedMbox=mbox.filter(x=>(x.proxyAddresses||[]).some(p=>/^smtp:/i.test(p))&&(x.userType||'').toLowerCase()!=='guest');
 
-  let h='<div class="stagger">';
+  let h='<div>';
+
+  // Debug: count what data we have
+  const okKeys=[],errKeys=[],noteKeys=[];
+  Object.entries(d).forEach(([k,v])=>{if(k==='domain'||k==='ts')return;if(v?._error)errKeys.push(k);else if(v?._note)noteKeys.push(k);else okKeys.push(k)});
+  console.log('📊 OK:',okKeys.length,okKeys.join(','),'| Errors:',errKeys.length,errKeys.join(','),'| Notes:',noteKeys.length,noteKeys.join(','));
+
+  // ───── PERMISSION STATUS ─────
+  if(errKeys.length>0){
+    h+=`<div style="background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.15);border-radius:8px;padding:14px 18px;margin-bottom:16px">
+      <div style="font-weight:700;font-size:.88rem;color:var(--accent-amber);margin-bottom:6px">⚠ ${errKeys.length} of ${errKeys.length+okKeys.length+noteKeys.length} sections returned errors (missing permissions)</div>
+      <div style="font-size:.76rem;color:var(--text-secondary);line-height:1.5">
+        <strong>Working:</strong> ${okKeys.join(', ')}<br>
+        <strong>Failed (403):</strong> <span style="color:var(--accent-amber)">${errKeys.join(', ')}</span>
+        ${noteKeys.length?`<br><strong>Info:</strong> ${noteKeys.join(', ')}`:''}
+      </div>
+      <div style="font-size:.76rem;color:var(--text-muted);margin-top:8px">Re-run <strong>App Config → Step 3 (Bootstrap)</strong> to grant missing permissions, then re-scan.</div>
+    </div>`;
+  }
 
   // ───── SUMMARY DASHBOARD ─────
   h+=`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin-bottom:18px">
@@ -739,7 +757,10 @@ function renderDisc(){
       <div class="disc-kv" style="text-align:center"><div class="kv-label">Percentage</div><div class="kv-value" style="font-size:1.4rem;font-weight:800;color:${col}">${pct}%</div></div>
     </div></div>`}}
 
-  h+='</div>';c.innerHTML=h;
+  h+='</div>';
+  console.log('📝 renderDisc HTML:',h.length,'chars');
+  c.innerHTML=h;
+  console.log('✅ renderDisc complete, discResults.childElementCount:',c.childElementCount,'offsetHeight:',c.offsetHeight);
   }catch(e){
     console.error('renderDisc error:',e);
     $('discResults').innerHTML=`<div style="color:var(--accent-red);padding:20px;font-family:var(--font-display)">
