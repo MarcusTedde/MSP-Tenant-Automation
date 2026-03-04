@@ -770,21 +770,44 @@ async function bootstrap(){
       const apps=await G.call(`/applications?$filter=appId eq '${A.cfg.cid}'&$select=id,appId,displayName`);
       if(apps.value&&apps.value.length>0){appObjId=apps.value[0].id;bsLog('✓ Found app: '+apps.value[0].displayName+' (Object ID: '+appObjId+')','success')}
       else{bsLog('⚠ App not found via filter — trying direct lookup','warning')}
-    }catch(e){bsLog('⚠ App lookup failed: '+e.message,'warning');bsLog('  This usually means the token lacks Application.ReadWrite.All scope','warning')}
+    }catch(e){bsLog('⚠ App lookup failed: '+e.message,'warning')}
 
-    // Update the app's requiredResourceAccess if we have the object ID
+    // Dynamically resolve correct appRole IDs from the Microsoft Graph service principal
+    // This avoids hardcoded GUIDs which differ between delegated and application permission types
+    bsLog('Fetching Microsoft Graph permission catalogue...','info');
+    status.textContent='Resolving permission IDs...';
+    const graphSp=await G.call("/servicePrincipals?$filter=appId eq '00000003-0000-0000-c000-000000000000'&$select=id,appRoles");
+    const graphSpId=graphSp.value[0].id;
+    const appRoles=graphSp.value[0].appRoles||[];
+    bsLog('✓ Catalogue loaded: '+appRoles.length+' available app roles','success');
+
+    // Build lookup: permission name → correct appRole ID
+    const roleMap={};
+    appRoles.forEach(r=>{if(r.value)roleMap[r.value]=r.id});
+    const permNames=PERMS.map(p=>p.n);
+    const resolved=[];const notFound=[];
+    for(const name of permNames){
+      if(roleMap[name]){resolved.push({n:name,id:roleMap[name]})}
+      else{notFound.push(name)}
+    }
+    if(notFound.length>0){
+      bsLog('⚠ '+notFound.length+' permissions not in catalogue: '+notFound.join(', '),'warning');
+    }
+    bsLog('✓ Resolved '+resolved.length+'/'+permNames.length+' permission IDs','success');
+
+    // Update the app manifest with correct IDs
     if(appObjId){
-      bsLog('Declaring required Graph API permissions on app...','info');
-      status.textContent='Setting required permissions...';
+      bsLog('Declaring '+resolved.length+' application permissions on app manifest...','info');
+      status.textContent='Updating app manifest...';
       try{
         await G.call(`/applications/${appObjId}`,'PATCH',{
           requiredResourceAccess:[{
             resourceAppId:'00000003-0000-0000-c000-000000000000',
-            resourceAccess:PERMS.map(p=>({id:p.id,type:'Role'}))
+            resourceAccess:resolved.map(p=>({id:p.id,type:'Role'}))
           }]
         });
-        bsLog('✓ All 15 application permissions declared on app manifest','success');
-      }catch(e){bsLog('⚠ Could not update app permissions: '+e.message,'warning')}
+        bsLog('✓ App manifest updated with correct permission IDs','success');
+      }catch(e){bsLog('⚠ Could not update app manifest: '+e.message,'warning')}
     }
 
     // Create Service Principal if it doesn't exist
@@ -801,13 +824,11 @@ async function bootstrap(){
         spId=sp.id;bsLog('✓ Service Principal created: '+spId,'success');
       }catch(e){bsLog('✗ Failed to create SP: '+e.message,'error');throw e}}
 
-    // Grant admin consent — assign each app role
-    bsLog('Granting admin consent for '+PERMS.length+' application permissions...','info');
+    // Grant admin consent using dynamically resolved IDs
+    bsLog('Granting admin consent for '+resolved.length+' application permissions...','info');
     status.textContent='Granting admin consent...';
-    const graphSp=await G.call("/servicePrincipals?$filter=appId eq '00000003-0000-0000-c000-000000000000'&$select=id");
-    const graphSpId=graphSp.value[0].id;
     let consented=0,failed=0;
-    for(const p of PERMS){
+    for(const p of resolved){
       try{
         await G.call(`/servicePrincipals/${spId}/appRoleAssignments`,'POST',{
           principalId:spId,resourceId:graphSpId,appRoleId:p.id});
@@ -817,26 +838,10 @@ async function bootstrap(){
           consented++;bsLog('  ✓ '+p.n+' (already granted)','success');
         } else {
           failed++;bsLog('  ✗ '+p.n+': '+e.message,'error');
-          if(failed===1&&e.message.includes('403')){
-            bsLog('','warning');
-            bsLog('  ┌─────────────────────────────────────────────┐','warning');
-            bsLog('  │ 403 = Token lacks AppRoleAssignment.ReadWrite │','warning');
-            bsLog('  │                                               │','warning');
-            bsLog('  │ Try: Sign out (header button), then redo     │','warning');
-            bsLog('  │ Step 2 — accept the consent prompt that      │','warning');
-            bsLog('  │ asks for Directory and Application perms.    │','warning');
-            bsLog('  │                                               │','warning');
-            bsLog('  │ If no consent prompt appears, go to Azure    │','warning');
-            bsLog('  │ Portal → App Registration → API permissions  │','warning');
-            bsLog('  │ → Add: AppRoleAssignment.ReadWrite.All       │','warning');
-            bsLog('  │   (Delegated) and grant admin consent.       │','warning');
-            bsLog('  └─────────────────────────────────────────────┘','warning');
-            bsLog('','warning');
-          }
         }
       }
     }
-    bsLog(`Admin consent result: ${consented} granted, ${failed} failed out of ${PERMS.length}`,'info');
+    bsLog(`Admin consent result: ${consented} granted, ${failed} failed, ${notFound.length} unavailable — of ${PERMS.length} requested`,'info');
 
     // Generate client secret
     let secretText='';
