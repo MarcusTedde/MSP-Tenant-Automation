@@ -160,7 +160,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 </head>
 <body>
 <div id="app">
-<header class="header"><div class="header-brand"><div class="header-logo">M</div><div><div class="header-title">M365 Tenant Automation</div><div class="header-subtitle">MSP Onboarding, Provisioning &amp; CE+ Compliance</div></div></div><div class="header-meta"><button id="themeBtn" class="btn btn-ghost btn-sm" onclick="toggleTheme()" title="Toggle light/dark theme" style="font-size:1.1rem;padding:4px 8px;line-height:1">🌙</button><span class="badge badge-cyan">Graph API v1.0</span><span class="badge badge-green" style="margin-left:4px">v3.3</span><div id="authStatus" class="auth-status disconnected"><span class="auth-dot"></span><span id="authStatusText">Not connected</span></div><button id="authBtn" class="btn btn-sm btn-secondary" onclick="handleAuth()">Sign In</button></div></header>
+<header class="header"><div class="header-brand"><div class="header-logo">M</div><div><div class="header-title">M365 Tenant Automation</div><div class="header-subtitle">MSP Onboarding, Provisioning &amp; CE+ Compliance</div></div></div><div class="header-meta"><button id="themeBtn" class="btn btn-ghost btn-sm" onclick="toggleTheme()" title="Toggle light/dark theme" style="font-size:1.1rem;padding:4px 8px;line-height:1">🌙</button><span class="badge badge-cyan">Graph API v1.0</span><span class="badge badge-green" style="margin-left:4px">v3.4</span><div id="authStatus" class="auth-status disconnected"><span class="auth-dot"></span><span id="authStatusText">Not connected</span></div><button id="authBtn" class="btn btn-sm btn-secondary" onclick="handleAuth()">Sign In</button></div></header>
 <nav class="tab-bar"><button class="tab-btn active" data-tab="setup" onclick="switchTab('setup',this)"><span>⚡</span> New Tenant Setup</button><button class="tab-btn" data-tab="discovery" onclick="switchTab('discovery',this)"><span>🔍</span> Tenant Discovery</button><button class="tab-btn" data-tab="users" onclick="switchTab('users',this)"><span>👤</span> Users</button><button class="tab-btn" data-tab="domains" onclick="switchTab('domains',this)"><span>🌐</span> Domains</button><button class="tab-btn" data-tab="intune" onclick="switchTab('intune',this)"><span>📱</span> Intune</button><button class="tab-btn" data-tab="compliance" onclick="switchTab('compliance',this)"><span>✅</span> CE+ Compliance</button><button class="tab-btn" data-tab="config" onclick="switchTab('config',this)"><span>⚙</span> App Config</button></nav>
 <main class="main-content">
 
@@ -779,12 +779,12 @@ const GE='https://graph.microsoft.com/v1.0',GB='https://graph.microsoft.com/beta
 const PERMS=[{n:'Directory.ReadWrite.All',id:'_'},{n:'Domain.ReadWrite.All',id:'_'},{n:'Policy.Read.All',id:'_'},{n:'Policy.ReadWrite.ConditionalAccess',id:'_'},{n:'Policy.ReadWrite.AuthenticationMethod',id:'_'},{n:'Application.ReadWrite.All',id:'_'},{n:'AppRoleAssignment.ReadWrite.All',id:'_'},{n:'DeviceManagementConfiguration.ReadWrite.All',id:'_'},{n:'DeviceManagementManagedDevices.ReadWrite.All',id:'_'},{n:'DeviceManagementApps.ReadWrite.All',id:'_'},{n:'DeviceManagementServiceConfig.ReadWrite.All',id:'_'},{n:'SecurityEvents.ReadWrite.All',id:'_'},{n:'AuditLog.Read.All',id:'_'},{n:'SharePointTenantSettings.ReadWrite.All',id:'_'},{n:'Sites.Read.All',id:'_'},{n:'RoleManagement.ReadWrite.Directory',id:'_'},{n:'Organization.ReadWrite.All',id:'_'},{n:'User.ReadWrite.All',id:'_'},{n:'Group.ReadWrite.All',id:'_'},{n:'Mail.ReadWrite',id:'_'},{n:'InformationProtectionPolicy.Read.All',id:'_'},{n:'RecordsManagement.Read.All',id:'_'},{n:'DelegatedPermissionGrant.ReadWrite.All',id:'_'}];
 
 const CEP={accessControl:{cat:'Access Control',icon:'🔐',p:[
-{id:'ac-001',n:'Enforce MFA for All Users',ce:'Multi-factor authentication must be enabled for all user accounts',sev:'critical',ep:'POST /identity/conditionalAccess/policies',pay:{displayName:'[CE+] Require MFA - All Users',state:'enabled',conditions:{users:{includeUsers:['All']},applications:{includeApplications:['All']}},grantControls:{operator:'OR',builtInControls:['mfa']}}},
-{id:'ac-002',n:'Block Legacy Authentication',ce:'Legacy authentication protocols must be blocked',sev:'critical',ep:'POST /identity/conditionalAccess/policies',pay:{displayName:'[CE+] Block Legacy Auth',state:'enabled',conditions:{users:{includeUsers:['All']},applications:{includeApplications:['All']},clientAppTypes:['exchangeActiveSync','other']},grantControls:{operator:'OR',builtInControls:['block']}}},
-{id:'ac-003',n:'Require Compliant Device',ce:'Only compliant/managed devices should access corporate resources',sev:'high',ep:'POST /identity/conditionalAccess/policies',pay:{displayName:'[CE+] Compliant Device',state:'enabled',conditions:{users:{includeUsers:['All']},applications:{includeApplications:['All']}},grantControls:{operator:'OR',builtInControls:['compliantDevice']}}},
-{id:'ac-004',n:'Block High Risk Sign-ins',ce:'High risk sign-ins must be blocked automatically',sev:'high',ep:'POST /identity/conditionalAccess/policies',pay:{displayName:'[CE+] Block High Risk',state:'enabled',conditions:{users:{includeUsers:['All']},applications:{includeApplications:['All']},signInRiskLevels:['high']},grantControls:{operator:'OR',builtInControls:['block']}}},
-{id:'ac-005',n:'Restrict Admin Portal',ce:'Admin portals only accessible from compliant devices with MFA',sev:'high',ep:'POST /identity/conditionalAccess/policies',pay:{displayName:'[CE+] Admin Portal Restriction',state:'enabled',conditions:{users:{includeRoles:['62e90394-69f5-4237-9190-012177145e10']},applications:{includeApplications:['c44b4083-3bb0-49c1-b47d-974e53cbdf3c']}},grantControls:{operator:'AND',builtInControls:['mfa','compliantDevice']}}},
-{id:'ac-006',n:'Session Timeout Policy',ce:'User sessions must timeout after inactivity',sev:'medium',ep:'POST /identity/conditionalAccess/policies',pay:{displayName:'[CE+] Session Timeout',state:'enabled',conditions:{users:{includeUsers:['All']},applications:{includeApplications:['All']}},sessionControls:{signInFrequency:{value:1,type:'hours',isEnabled:true},persistentBrowser:{mode:'never',isEnabled:true}}}}
+{id:'ac-001',n:'Enforce MFA for All Users',ce:'Multi-factor authentication must be enabled for all user accounts',sev:'critical',ep:'POST /identity/conditionalAccess/policies',pay:{displayName:'[CE+] Require MFA - All Users',state:'enabledForReportingButNotEnforced',conditions:{users:{includeUsers:['All'],excludeGroups:[]},applications:{includeApplications:['All']}},grantControls:{operator:'OR',builtInControls:['mfa']}},_caExclude:true},
+{id:'ac-002',n:'Block Legacy Authentication',ce:'Legacy authentication protocols must be blocked',sev:'critical',ep:'POST /identity/conditionalAccess/policies',pay:{displayName:'[CE+] Block Legacy Auth',state:'enabledForReportingButNotEnforced',conditions:{users:{includeUsers:['All'],excludeGroups:[]},applications:{includeApplications:['All']},clientAppTypes:['exchangeActiveSync','other']},grantControls:{operator:'OR',builtInControls:['block']}},_caExclude:true},
+{id:'ac-003',n:'Require Compliant Device',ce:'Only compliant/managed devices should access corporate resources',sev:'high',ep:'POST /identity/conditionalAccess/policies',pay:{displayName:'[CE+] Compliant Device',state:'enabledForReportingButNotEnforced',conditions:{users:{includeUsers:['All'],excludeGroups:[]},applications:{includeApplications:['All']}},grantControls:{operator:'OR',builtInControls:['compliantDevice']}},_caExclude:true},
+{id:'ac-004',n:'Block High Risk Sign-ins',ce:'High risk sign-ins must be blocked automatically',sev:'high',ep:'POST /identity/conditionalAccess/policies',pay:{displayName:'[CE+] Block High Risk',state:'enabledForReportingButNotEnforced',conditions:{users:{includeUsers:['All'],excludeGroups:[]},applications:{includeApplications:['All']},signInRiskLevels:['high']},grantControls:{operator:'OR',builtInControls:['block']}},_caExclude:true},
+{id:'ac-005',n:'Restrict Admin Portal',ce:'Admin portals only accessible from compliant devices with MFA',sev:'high',ep:'POST /identity/conditionalAccess/policies',pay:{displayName:'[CE+] Admin Portal Restriction',state:'enabledForReportingButNotEnforced',conditions:{users:{includeRoles:['62e90394-69f5-4237-9190-012177145e10'],excludeGroups:[]},applications:{includeApplications:['c44b4083-3bb0-49c1-b47d-974e53cbdf3c']}},grantControls:{operator:'AND',builtInControls:['mfa','compliantDevice']}},_caExclude:true},
+{id:'ac-006',n:'Session Timeout Policy',ce:'User sessions must timeout after inactivity',sev:'medium',ep:'POST /identity/conditionalAccess/policies',pay:{displayName:'[CE+] Session Timeout',state:'enabledForReportingButNotEnforced',conditions:{users:{includeUsers:['All'],excludeGroups:[]},applications:{includeApplications:['All']}},sessionControls:{signInFrequency:{value:1,type:'hours',isEnabled:true},persistentBrowser:{mode:'never',isEnabled:true}}},_caExclude:true}
 ]},secureConfig:{cat:'Secure Configuration',icon:'⚙️',p:[
 {id:'sc-001',n:'Password Policy & Banned Passwords',ce:'Password policies must enforce minimum complexity',sev:'critical',ep:'PATCH /settings',ni:true,ip:'Custom banned passwords (comma-separated):',ifl:'customBannedPasswords'},
 {id:'sc-002',n:'SSPR Registration Campaign',ce:'SSPR configured with strong authentication methods',sev:'medium',ep:'PATCH /policies/authenticationMethodsPolicy',pay:{registrationEnforcement:{authenticationMethodsRegistrationCampaign:{state:'enabled',snoozeDurationInDays:3,includeTargets:[{id:'all_users',targetType:'group',targetedAuthenticationMethod:'microsoftAuthenticator'}]}}}},
@@ -810,10 +810,11 @@ const CEP={accessControl:{cat:'Access Control',icon:'🔐',p:[
 {id:'dp-002',n:'OneDrive Sync Restrictions',ce:'OneDrive sync restricted to managed devices',sev:'medium',ep:'PATCH /admin/sharepoint/settings',pay:{isUnmanagedSyncAppForTenantRestricted:true}},
 {id:'dp-003',n:'Teams External Access',ce:'External access in Teams must be controlled',sev:'medium',note:'Requires Teams Admin Center or PowerShell'}
 ]},adminProtection:{cat:'Admin Account Protection',icon:'👤',p:[
-{id:'ap-001',n:'Break Glass Accounts',ce:'Emergency access accounts must exist',sev:'critical',ep:'POST /users',ni:true,ip:'Primary domain for break glass UPNs:',ifl:'domain'},
-{id:'ap-002',n:'PIM / Just-In-Time Access',ce:'Privileged roles should use Just-In-Time activation',sev:'high',note:'Requires Azure AD P2 licence'},
-{id:'ap-003',n:'Admin MFA Audit',ce:'All admin accounts must have MFA registered',sev:'critical',ep:'GET /reports/authenticationMethods/usersRegisteredByMethod',note:'Audit check — verifies admin MFA status'},
-{id:'ap-004',n:'Role-Assignable Security Groups',ce:'Admin access should use role-assignable groups',sev:'medium',ep:'POST /groups',pay:{displayName:'[CE+] Global Admins',mailEnabled:false,mailNickname:'ce-global-admins',securityEnabled:true,isAssignableToRole:true}}
+{id:'ap-001',n:'Break Glass Accounts',ce:'Emergency access accounts must exist with non-obvious names and FIDO2 MFA',sev:'critical',ep:'POST /users',ni:true,ip:'Primary domain for break glass UPNs:',ifl:'domain'},
+{id:'ap-002',n:'CA Exclusion Group for Break Glass',ce:'Break glass accounts must be excluded from all Conditional Access policies via a role-assignable security group',sev:'critical',ep:'POST /groups',pay:{displayName:'[CA-Exclude] Emergency Access',mailEnabled:false,mailNickname:'ca-exclude-emergency',securityEnabled:true,isAssignableToRole:true,groupTypes:[],description:'Emergency access accounts excluded from all Conditional Access policies'}},
+{id:'ap-003',n:'PIM / Just-In-Time Access',ce:'Privileged roles should use Just-In-Time activation',sev:'high',note:'Requires Azure AD P2 licence'},
+{id:'ap-004',n:'Admin MFA Audit',ce:'All admin accounts must have MFA registered',sev:'critical',ep:'GET /reports/authenticationMethods/usersRegisteredByMethod',note:'Audit check — verifies admin MFA status'},
+{id:'ap-005',n:'Role-Assignable Security Groups',ce:'Admin access should use role-assignable groups',sev:'medium',ep:'POST /groups',pay:{displayName:'[CE+] Global Admins',mailEnabled:false,mailNickname:'ce-global-admins',securityEnabled:true,isAssignableToRole:true}}
 ]}};
 
 /* ── Onboarding Setup Phases (run before CE+ compliance) ── */
@@ -959,20 +960,48 @@ const ONBOARD=[
     return`Admin accounts: ${created.join(', ')}`}},
   {n:'Create Break Glass Accounts',fn:async(ctx)=>{
     const domain=ctx.admin.split('@')[1]||ctx.domain;
-    const accts=[{upn:`breakglass1@${domain}`,display:'Break Glass 1'},{upn:`breakglass2@${domain}`,display:'Break Glass 2'}];
-    const created=[];
+    // Use non-obvious names to avoid password-spray targeting (NCSC best practice)
+    const prefix1='svc-resilience-'+uid().slice(0,4).toLowerCase();
+    const prefix2='svc-continuity-'+uid().slice(0,4).toLowerCase();
+    const accts=[{upn:`${prefix1}@${domain}`,display:'Emergency Access 1'},{upn:`${prefix2}@${domain}`,display:'Emergency Access 2'}];
+    const created=[];const bgIds=[];
     for(const a of accts){
       try{
-        const existing=await G.call(`/users?$filter=userPrincipalName eq '${a.upn}'&$select=id`);
-        if(existing.value&&existing.value.length>0){created.push(a.display+' (exists)');continue}
+        // Check for existing break glass accounts (any naming convention)
+        const existingBg=await G.call(`/users?$filter=startswith(displayName,'Emergency Access')&$select=id,userPrincipalName`);
+        const match=(existingBg.value||[]).find(u=>u.userPrincipalName===a.upn);
+        if(match){created.push(a.display+' (exists)');bgIds.push(match.id);continue}
         const pass='BG!'+uid()+'#'+Math.floor(Math.random()*99);
-        await G.call('/users','POST',{
+        const user=await G.call('/users','POST',{
           accountEnabled:true,displayName:a.display,userPrincipalName:a.upn,
           mailNickname:a.upn.split('@')[0],usageLocation:ctx.loc||'GB',
           passwordProfile:{password:pass,forceChangePasswordNextSignIn:false}});
-        created.push(`${a.display} — password: ${pass}`);
+        bgIds.push(user.id);
+        created.push(`${a.display} (${a.upn}) — password: ${pass}`);
       }catch(e){created.push(a.display+' ('+e.message.slice(0,30)+')')}}
-    return`Break glass: ${created.join(', ')}<br><span style="color:var(--accent-amber);font-size:.76rem">⚠ Store passwords in secure vault immediately. Exclude from CA policies.</span>`}},
+    // Store break-glass IDs in context for CA exclusion group
+    ctx._breakGlassIds=bgIds;
+    return`Break glass: ${created.join(', ')}<br><span style="color:var(--accent-amber);font-size:.76rem">⚠ Store passwords in secure vault (split across two locations). Register FIDO2 keys for MFA. Names are randomised to resist password-spray attacks.</span>`}},
+  {n:'Create CA Exclusion Group for Break Glass',fn:async(ctx)=>{
+    const grpName='[CA-Exclude] Emergency Access';
+    try{
+      const existing=await G.call(`/groups?$filter=displayName eq '${grpName}'&$select=id`);
+      if(existing.value&&existing.value.length>0){
+        ctx._caExcludeGroupId=existing.value[0].id;
+        // Ensure break-glass accounts are members
+        if(ctx._breakGlassIds){for(const uid of ctx._breakGlassIds){
+          try{await G.call(`/groups/${existing.value[0].id}/members/$ref`,'POST',{'@odata.id':`https://graph.microsoft.com/v1.0/directoryObjects/${uid}`})}catch{}}}
+        return`${grpName} (already exists — verified membership)`}
+      const grp=await G.call('/groups','POST',{
+        displayName:grpName,mailEnabled:false,mailNickname:'ca-exclude-emergency',
+        securityEnabled:true,groupTypes:[],isAssignableToRole:true,
+        description:'Emergency access accounts excluded from all Conditional Access policies. Role-assignable group — only Global Admins and Privileged Role Admins can modify membership.'});
+      ctx._caExcludeGroupId=grp.id;
+      // Add break-glass accounts to the exclusion group
+      if(ctx._breakGlassIds){for(const uid of ctx._breakGlassIds){
+        try{await G.call(`/groups/${grp.id}/members/$ref`,'POST',{'@odata.id':`https://graph.microsoft.com/v1.0/directoryObjects/${uid}`})}catch{}}}
+      return`✓ Created role-assignable security group: ${grpName} — break glass accounts added. This group is excluded from all CA policies deployed by this tool.`
+    }catch(e){return`⚠ ${grpName}: ${e.message.slice(0,80)}`}}},
   {n:'Configure Access Denied Custom Text',fn:async(ctx)=>{
     const org=await G.call('/organization');const orgId=org.value[0].id;
     const helpText=`Access denied. Contact your IT helpdesk: ${[ctx.supportPhone,ctx.supportEmail,ctx.supportUrl].filter(Boolean).join(' | ')||'your administrator'}`;
@@ -1727,8 +1756,18 @@ async function startSetup(){
         if(live&&p.ep&&p.pay&&!p.ep.startsWith('GET')){
           try{
             const[method,path]=p.ep.split(' ');
-            let payload={...p.pay};
+            let payload=JSON.parse(JSON.stringify(p.pay));
             if(p.ni&&p.ifl){const iv=$('mInput')?.value?.trim()||p.dv||'';if(iv)payload[p.ifl]=iv}
+            // Inject break-glass exclusion group into CA policies
+            if(p._caExclude&&ctx._caExcludeGroupId&&payload.conditions?.users){
+              if(!payload.conditions.users.excludeGroups)payload.conditions.users.excludeGroups=[];
+              payload.conditions.users.excludeGroups.push(ctx._caExcludeGroupId);
+              addLog('    → Break glass exclusion group applied','info');
+            }
+            // CA policies deployed in report-only mode for safety
+            if(p._caExclude&&payload.state==='enabledForReportingButNotEnforced'){
+              addLog('    → Deployed in Report-Only mode (review in Entra portal before enabling)','warning');
+            }
             await G.call(path,method,payload,path.includes('sharepoint'));
             addLog('  ✓ '+p.n,'success');SS.cfg++;
           }catch(e){
@@ -1755,7 +1794,7 @@ function cleanup(){SS.run=0;$('setupStartBtn').classList.remove('hidden');$('set
    DISCOVERY TAB — Professional presentation
    ============================================================ */
 async function startDiscovery(){
-  console.log('🚀 startDiscovery v3.3 — scanning 33 sections');
+  console.log('🚀 startDiscovery v3.4 — scanning 33 sections');
   const dom=$('discDomain').value.trim();if(!dom)return;
   $('discScanBtn').disabled=true;$('discScanBtn').innerHTML='<span class="animate-spin" style="display:inline-block">◌</span> Scanning...';$('discProgress').classList.remove('hidden');$('discEmpty').classList.add('hidden');$('discResults').innerHTML='';$('discExBtns').classList.add('hidden');
   DD={domain:dom,ts:new Date().toISOString()};const live=A.ok();
@@ -1849,7 +1888,7 @@ async function startDiscovery(){
   renderDisc()}
 
 function renderDisc(){
-  console.log('🔍 renderDisc v3.3 — 33 section discovery');
+  console.log('🔍 renderDisc v3.4 — 33 section discovery');
   try{
   if(!DD)return;const d=DD,c=$('discResults');
   const arr=k=>Array.isArray(d[k])?d[k]:[];
@@ -1984,10 +2023,30 @@ function renderDisc(){
     </tbody></table></div>`}
 
   // ───── CONDITIONAL ACCESS ─────
-  h+=`<div class="disc-section">${errN('conditionalAccess')}<div class="disc-section-head"><div class="sec-icon" style="background:rgba(16,185,129,.1);color:var(--accent-green)">🔒</div>Conditional Access <span class="badge badge-muted" style="margin-left:auto">${ca.length}</span></div>
-    <table class="disc-table"><thead><tr><th>Policy</th><th>Status</th><th>Target</th><th>Grant Controls</th></tr></thead><tbody>
+  // Analyse CA policies for best-practice warnings
+  const caWarnings=[];
+  const hasExclusions=ca.some(p=>(p.conditions?.users?.excludeGroups||[]).length>0||(p.conditions?.users?.excludeUsers||[]).length>0);
+  const allTargetAll=ca.filter(p=>p.state==='enabled'&&(p.conditions?.users?.includeUsers||[]).includes('All'));
+  if(ca.length===0)caWarnings.push({sev:'critical',msg:'No Conditional Access policies found — tenant has no Zero Trust controls'});
+  if(ca.length>0&&!hasExclusions)caWarnings.push({sev:'critical',msg:'No policies exclude break-glass/emergency accounts — risk of total admin lockout'});
+  if(allTargetAll.length>0){const noExcl=allTargetAll.filter(p=>!(p.conditions?.users?.excludeGroups||[]).length&&!(p.conditions?.users?.excludeUsers||[]).length);if(noExcl.length)caWarnings.push({sev:'high',msg:`${noExcl.length} policy(ies) target "All Users" with no exclusions — ensure break-glass accounts are excluded`})}
+  const reportOnly=ca.filter(p=>p.state==='enabledForReportingButNotEnforced');
+  if(reportOnly.length)caWarnings.push({sev:'info',msg:`${reportOnly.length} policy(ies) in Report-Only mode — review sign-in logs before enabling`});
+  const disabled=ca.filter(p=>p.state==='disabled');
+  if(disabled.length)caWarnings.push({sev:'medium',msg:`${disabled.length} disabled policy(ies) found — review and remove or enable`});
+
+  h+=`<div class="disc-section">${errN('conditionalAccess')}<div class="disc-section-head"><div class="sec-icon" style="background:rgba(16,185,129,.1);color:var(--accent-green)">🔒</div>Conditional Access <span class="badge badge-muted" style="margin-left:auto">${ca.length}</span></div>`;
+  if(caWarnings.length){h+=`<div style="margin-bottom:12px">`;caWarnings.forEach(w=>{
+    const wCol=w.sev==='critical'?'var(--accent-red)':w.sev==='high'?'var(--accent-amber)':w.sev==='medium'?'var(--accent-amber)':'var(--accent-cyan)';
+    const wBg=w.sev==='critical'?'rgba(239,68,68,.08)':w.sev==='high'?'rgba(245,158,11,.08)':'rgba(6,182,212,.06)';
+    h+=`<div style="padding:8px 12px;margin-bottom:6px;border-radius:var(--radius-md);background:${wBg};border-left:3px solid ${wCol};font-size:.8rem;font-family:var(--font-display);color:${wCol}">${w.sev==='critical'?'🚨':w.sev==='high'?'⚠️':'ℹ️'} <strong>${w.sev.toUpperCase()}:</strong> ${esc(w.msg)}</div>`});
+    h+=`</div>`}
+  h+=`<table class="disc-table"><thead><tr><th>Policy</th><th>Status</th><th>Target</th><th>Exclusions</th><th>Grant Controls</th></tr></thead><tbody>
     ${ca.map(p=>{const st=p.state||'';const stB=st==='enabled'?'badge-green':st.includes('report')?'badge-amber':'badge-muted';const tgt=p.target||p.conditions?.users?.includeUsers?.join(', ')||'—';const ctrl=p.controls||p.grantControls?.builtInControls?.join(', ')||'—';
-      return`<tr><td style="font-weight:500">${esc(p.name||p.displayName||'')}</td><td><span class="badge ${stB}">${esc(st)}</span></td><td style="font-size:.78rem;color:var(--text-secondary)">${esc(tgt)}</td><td style="font-size:.78rem;color:var(--text-secondary)">${esc(ctrl)}</td></tr>`}).join('')}
+      const exclUsers=(p.conditions?.users?.excludeUsers||[]);const exclGroups=(p.conditions?.users?.excludeGroups||[]);
+      const exclCount=exclUsers.length+exclGroups.length;
+      const exclBadge=exclCount>0?`<span class="badge badge-green">${exclCount} exclusion${exclCount>1?'s':''}</span>`:'<span class="badge badge-red">None</span>';
+      return`<tr><td style="font-weight:500">${esc(p.name||p.displayName||'')}</td><td><span class="badge ${stB}">${esc(st)}</span></td><td style="font-size:.78rem;color:var(--text-secondary)">${esc(tgt)}</td><td>${exclBadge}</td><td style="font-size:.78rem;color:var(--text-secondary)">${esc(ctrl)}</td></tr>`}).join('')}
     </tbody></table></div>`;
 
   // ───── NAMED LOCATIONS ─────
@@ -2208,8 +2267,13 @@ footer{margin-top:40px;padding-top:14px;border-top:1px solid #eee;font-size:10px
   const grpH=(title,list)=>{if(!list.length)return;h+=`<h2>${title} (${list.length})</h2><table><tr><th>Name</th><th>Email</th></tr>`;list.forEach(g=>{h+=`<tr><td>${esc(g.displayName||g.name||'')}</td><td style="font-size:11px">${esc(g.mail||g.mailNickname||'—')}</td></tr>`});h+=`</table>`};
   grpH('M365 Groups',m365g);grpH('Security Groups',secg);grpH('Distribution Lists',distg);
   // CA
-  h+=`<h2>Conditional Access (${ca.length})</h2><table><tr><th>Policy</th><th>Status</th></tr>`;
-  ca.forEach(p=>{const st=p.state||'';h+=`<tr><td>${esc(p.name||p.displayName||'')}</td><td><span class="badge ${st==='enabled'?'b-on':st.includes('report')?'b-rpt':'b-off'}">${esc(st)}</span></td></tr>`});h+=`</table>`;
+  h+=`<h2>Conditional Access (${ca.length})</h2>`;
+  if(ca.length===0)h+=`<p class="fail"><strong>WARNING:</strong> No Conditional Access policies — tenant has no Zero Trust controls.</p>`;
+  const htmlHasExcl=ca.some(p=>(p.conditions?.users?.excludeGroups||[]).length>0||(p.conditions?.users?.excludeUsers||[]).length>0);
+  if(ca.length>0&&!htmlHasExcl)h+=`<p class="fail"><strong>WARNING:</strong> No CA policies exclude break-glass/emergency accounts — risk of admin lockout.</p>`;
+  h+=`<table><tr><th>Policy</th><th>Status</th><th>Exclusions</th></tr>`;
+  ca.forEach(p=>{const st=p.state||'';const exclCount=(p.conditions?.users?.excludeGroups||[]).length+(p.conditions?.users?.excludeUsers||[]).length;
+    h+=`<tr><td>${esc(p.name||p.displayName||'')}</td><td><span class="badge ${st==='enabled'?'b-on':st.includes('report')?'b-rpt':'b-off'}">${esc(st)}</span></td><td>${exclCount>0?`<span class="badge b-on">${exclCount}</span>`:'<span class="badge b-off">None</span>'}</td></tr>`});h+=`</table>`;
   // Apps
   if(apps.length){h+=`<h2>App Registrations (${apps.length})</h2><table><tr><th>Name</th><th>App ID</th><th>Audience</th></tr>`;apps.forEach(a=>{h+=`<tr><td>${esc(a.displayName||a.name||'')}</td><td style="font-size:11px">${esc(a.appId||'')}</td><td>${esc(a.signInAudience||a.aud||'—')}</td></tr>`});h+=`</table>`}
   // Devices
@@ -3093,6 +3157,13 @@ function openRem(id){
   if(p.pay){$('remPaySection').style.display='block';$('remPay').textContent=JSON.stringify(p.pay,null,2)}else{$('remPaySection').style.display='none'}
   if(p.ni){$('remInArea').classList.remove('hidden');$('remInLabel').textContent=p.ip;$('remIn').value='';$('remIn').placeholder=p.dv||''}else{$('remInArea').classList.add('hidden')}
   if(p.note){$('remNote').classList.remove('hidden');$('remNote').textContent='⚠ '+p.note}else{$('remNote').classList.add('hidden')}
+  // Show CA safety banner for Conditional Access policies
+  let caBanner=$('remCaBanner');if(!caBanner){caBanner=document.createElement('div');caBanner.id='remCaBanner';$('remNote').parentNode.insertBefore(caBanner,$('remNote'))}
+  if(p._caExclude){
+    caBanner.style.display='block';
+    caBanner.style.cssText='display:block;padding:10px 14px;margin-bottom:12px;border-radius:var(--radius-md);background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);font-size:.8rem;font-family:var(--font-display);color:var(--accent-amber);line-height:1.6';
+    caBanner.innerHTML='🛡️ <strong>Conditional Access Safety:</strong><br>• This policy will be deployed in <strong>Report-Only</strong> mode — it will not block users<br>• Break-glass emergency access accounts will be automatically excluded<br>• Review the Entra sign-in logs for 7 days before switching to Enabled<br>• Always ensure break-glass accounts are tested before enabling blocking policies';
+  }else if(caBanner){caBanner.style.display='none'}
   // Show/hide apply button based on whether we have an endpoint
   const applyBtn=$('remApplyBtn');
   applyBtn.disabled=false;applyBtn.style.background='';
@@ -3111,14 +3182,25 @@ async function remConfirm(){
   if(live&&p.ep&&p.pay&&!p.ep.startsWith('GET')){
     try{
       const[method,path]=p.ep.split(' ');
-      // Merge user input into payload if this is a dynamic-input policy
-      let payload={...p.pay};
+      // Deep clone to avoid mutating the template
+      let payload=JSON.parse(JSON.stringify(p.pay));
       if(p.ni&&p.ifl){
         const inputVal=$('remIn').value.trim()||p.dv||'';
         if(inputVal)payload[p.ifl]=inputVal;
       }
+      // For CA policies: look up break-glass exclusion group and inject
+      if(p._caExclude&&path.includes('conditionalAccess')&&payload.conditions?.users){
+        try{
+          const bgGrp=await G.call("/groups?$filter=displayName eq '[CA-Exclude] Emergency Access'&$select=id");
+          if(bgGrp.value&&bgGrp.value.length>0){
+            if(!payload.conditions.users.excludeGroups)payload.conditions.users.excludeGroups=[];
+            payload.conditions.users.excludeGroups.push(bgGrp.value[0].id);
+          }
+        }catch{}
+      }
       await G.call(path,method,payload,path.includes('sharepoint'));
       applyBtn.innerHTML='✓ Applied!';applyBtn.style.background='var(--accent-green)';
+      if(p._caExclude)applyBtn.innerHTML='✓ Applied (Report-Only)';
     }catch(e){
       applyBtn.innerHTML='✗ Error';applyBtn.style.background='var(--accent-red)';
       alert('Graph API error: '+e.message+'\n\nThe policy may need manual configuration or additional licensing.');
