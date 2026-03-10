@@ -4888,7 +4888,8 @@ function toolExo(){
 <label class="form-label">Internal Message</label>
 <textarea id="exoOooInternal" class="form-input" rows="3" placeholder="I am currently out of office..."></textarea>
 </div>
-<div style="margin-bottom:12px">
+<label style="display:flex;align-items:center;gap:6px;font-size:.82rem;color:var(--text-secondary);margin-bottom:12px;cursor:pointer"><input id="exoOooSameMsg" type="checkbox" onchange="exoOooSameToggle()"> Use same message for external recipients</label>
+<div id="exoOooExternalWrap" style="margin-bottom:12px">
 <label class="form-label">External Message</label>
 <textarea id="exoOooExternal" class="form-input" rows="3" placeholder="Thank you for your email..."></textarea>
 </div>
@@ -4989,16 +4990,22 @@ async function exoCreateShared(){
   }catch(e){r.innerHTML=`<span style="color:var(--accent-red)">✗ ${esc(e.message)}</span>`}
 }
 
+function exoOooSameToggle(){
+  const on=$('exoOooSameMsg').checked;
+  $('exoOooExternalWrap').style.display=on?'none':'block';
+}
 async function exoSetOoo(){
   const r=$('exoOooResult');r.innerHTML='<span style="color:var(--text-muted)">Setting...</span>';
   if(!A.ok())return r.innerHTML='<span style="color:var(--accent-red)">Sign in first</span>';
   const user=$('exoOooUser').value.trim();if(!user)return r.innerHTML='<span style="color:var(--accent-red)">Enter user UPN</span>';
+  const internalMsg=$('exoOooInternal').value||'I am out of office.';
+  const externalMsg=$('exoOooSameMsg').checked?internalMsg:($('exoOooExternal').value||'Thank you for your email. I am currently out of office.');
   try{
     const pay={automaticRepliesSetting:{status:'scheduled',
       scheduledStartDateTime:{dateTime:$('exoOooStart').value||new Date().toISOString(),timeZone:'UTC'},
       scheduledEndDateTime:{dateTime:$('exoOooEnd').value||new Date(Date.now()+7*86400000).toISOString(),timeZone:'UTC'},
-      internalReplyMessage:$('exoOooInternal').value||'I am out of office.',
-      externalReplyMessage:$('exoOooExternal').value||'Thank you for your email. I am currently out of office.',
+      internalReplyMessage:internalMsg,
+      externalReplyMessage:externalMsg,
       externalAudience:'all'}};
     await G.call(`/users/${user}/mailboxSettings`,'PATCH',pay);
     r.innerHTML=`<span style="color:var(--accent-green)">✓ Out of office set for ${esc(user)}</span>`;
