@@ -160,7 +160,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 </head>
 <body>
 <div id="app">
-<header class="header"><div class="header-brand"><div class="header-logo">M</div><div><div class="header-title">M365 Tenant Automation</div><div class="header-subtitle">MSP Onboarding, Provisioning &amp; CE+ Compliance</div></div></div><div class="header-meta"><button id="themeBtn" class="btn btn-ghost btn-sm" onclick="toggleTheme()" title="Toggle light/dark theme" style="font-size:1.1rem;padding:4px 8px;line-height:1">🌙</button><span class="badge badge-cyan">Graph API v1.0</span><span class="badge badge-green" style="margin-left:4px">v3.4</span><div id="authStatus" class="auth-status disconnected"><span class="auth-dot"></span><span id="authStatusText">Not connected</span></div><button id="authBtn" class="btn btn-sm btn-secondary" onclick="handleAuth()">Sign In</button></div></header>
+<header class="header"><div class="header-brand"><div class="header-logo">M</div><div><div class="header-title">M365 Tenant Automation</div><div class="header-subtitle">MSP Onboarding, Provisioning &amp; CE+ Compliance</div></div></div><div class="header-meta"><button id="themeBtn" class="btn btn-ghost btn-sm" onclick="toggleTheme()" title="Toggle light/dark theme" style="font-size:1.1rem;padding:4px 8px;line-height:1">🌙</button><span class="badge badge-cyan">Graph API v1.0</span><span class="badge badge-green" style="margin-left:4px">v3.5</span><div id="authStatus" class="auth-status disconnected"><span class="auth-dot"></span><span id="authStatusText">Not connected</span></div><button id="authBtn" class="btn btn-sm btn-secondary" onclick="handleAuth()">Sign In</button></div></header>
 <nav class="tab-bar"><button class="tab-btn active" data-tab="setup" onclick="switchTab('setup',this)"><span>⚡</span> New Tenant Setup</button><button class="tab-btn" data-tab="discovery" onclick="switchTab('discovery',this)"><span>🔍</span> Tenant Discovery</button><button class="tab-btn" data-tab="users" onclick="switchTab('users',this)"><span>👤</span> Users</button><button class="tab-btn" data-tab="domains" onclick="switchTab('domains',this)"><span>🌐</span> Domains</button><button class="tab-btn" data-tab="tools" onclick="switchTab('tools',this)"><span>🧰</span> MSP Tools</button><button class="tab-btn" data-tab="intune" onclick="switchTab('intune',this)"><span>📱</span> Intune</button><button class="tab-btn" data-tab="compliance" onclick="switchTab('compliance',this)"><span>✅</span> CE+ Compliance</button><button class="tab-btn" data-tab="config" onclick="switchTab('config',this)"><span>⚙</span> App Config</button></nav>
 <main class="main-content">
 
@@ -179,7 +179,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 </div><div class="card"><div class="flex justify-between items-center" style="margin-bottom:12px"><div class="card-header" style="margin-bottom:0">Progress</div><span id="setupPercent" style="font-family:var(--font-display);font-size:1.5rem;font-weight:800;color:var(--accent-blue)">0%</span></div><div class="progress-track" style="margin-bottom:14px"><div id="setupProgressBar" class="progress-fill" style="width:0%"></div></div><div class="flex gap-lg"><div><div class="stat-label">Configured</div><div id="setupConfigured" style="font-family:var(--font-display);font-size:1.2rem;font-weight:800;color:var(--accent-green)">0</div></div><div><div class="stat-label">Total</div><div id="setupTotal" style="font-family:var(--font-display);font-size:1.2rem;font-weight:800">0</div></div><div><div class="stat-label">Errors</div><div id="setupErrors" style="font-family:var(--font-display);font-size:1.2rem;font-weight:800;color:var(--accent-green)">0</div></div></div></div><div class="card" style="flex:1;overflow:auto;max-height:600px"><div class="card-header">Phases</div><div id="phaseList" class="flex flex-col gap-sm"></div></div></div><div class="card flex flex-col" style="flex:1;min-height:620px"><div class="flex justify-between items-center" style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--border-subtle)"><div class="card-header" style="margin-bottom:0"><span id="logLive" class="hidden" style="width:7px;height:7px;border-radius:50%;background:var(--accent-green)"></span>Configuration Log</div><button class="btn btn-ghost btn-sm" onclick="copyLog()">Copy</button></div><div id="logContainer" class="log-container"><div class="empty-state" id="logEmpty"><div class="empty-icon">⚡</div><div class="empty-title">Ready to configure</div><div class="empty-desc">Enter tenant details and click Start</div></div></div></div></div></div>
 
 <!-- DISCOVERY -->
-<div id="panel-discovery" class="tab-panel"><div class="card" style="margin-bottom:22px"><div class="flex items-center gap-md" style="flex-wrap:wrap"><div style="flex:1;min-width:280px;max-width:400px"><label class="form-label">Target Tenant Domain</label><input id="discDomain" class="form-input" placeholder="contoso.onmicrosoft.com"></div><button id="discScanBtn" class="btn btn-primary" onclick="startDiscovery()" style="align-self:flex-end">🔍 Run Discovery</button><div id="discExBtns" class="flex gap-sm hidden" style="align-self:flex-end"><button class="btn btn-secondary btn-sm" onclick="exDiscJSON()">📄 JSON</button><button class="btn btn-secondary btn-sm" onclick="exDiscHTML()">📋 HTML Report</button><button class="btn btn-sm" style="background:rgba(236,91,44,.12);color:var(--accent-orange);border:1px solid rgba(236,91,44,.25)" onclick="exITGlue()">🔶 ITGlue HTML</button></div></div><div id="discProgress" class="hidden" style="margin-top:14px"><div class="flex justify-between" style="margin-bottom:5px"><span id="discStatus" style="font-size:.8rem;color:var(--text-secondary)"></span><span id="discPercent" style="font-size:.8rem;font-weight:600;color:var(--accent-blue)">0%</span></div><div class="progress-track"><div id="discBar" class="progress-fill" style="width:0%"></div></div></div></div><div id="discResults"></div><div id="discEmpty" class="empty-state"><div class="empty-icon">🔍</div><div class="empty-title">No scan results</div><div class="empty-desc">Enter a tenant domain and run a discovery scan</div></div></div>
+<div id="panel-discovery" class="tab-panel"><div class="card" style="margin-bottom:22px"><div class="flex items-center gap-md" style="flex-wrap:wrap"><div style="flex:1;min-width:280px;max-width:400px"><label class="form-label">Target Tenant Domain</label><input id="discDomain" class="form-input" placeholder="contoso.onmicrosoft.com"></div><button id="discScanBtn" class="btn btn-primary" onclick="startDiscovery()" style="align-self:flex-end">🔍 Run Discovery</button><button class="btn btn-secondary btn-sm" onclick="refreshDiscToken()" style="align-self:flex-end" title="Force a fresh token with all admin-consented permissions">🔄 Refresh Token</button><div id="discExBtns" class="flex gap-sm hidden" style="align-self:flex-end"><button class="btn btn-secondary btn-sm" onclick="exDiscJSON()">📄 JSON</button><button class="btn btn-secondary btn-sm" onclick="exDiscHTML()">📋 HTML Report</button><button class="btn btn-sm" style="background:rgba(236,91,44,.12);color:var(--accent-orange);border:1px solid rgba(236,91,44,.25)" onclick="exITGlue()">🔶 ITGlue HTML</button></div></div><div id="discProgress" class="hidden" style="margin-top:14px"><div class="flex justify-between" style="margin-bottom:5px"><span id="discStatus" style="font-size:.8rem;color:var(--text-secondary)"></span><span id="discPercent" style="font-size:.8rem;font-weight:600;color:var(--accent-blue)">0%</span></div><div class="progress-track"><div id="discBar" class="progress-fill" style="width:0%"></div></div></div></div><div id="discResults"></div><div id="discEmpty" class="empty-state"><div class="empty-icon">🔍</div><div class="empty-title">No scan results</div><div class="empty-desc">Enter a tenant domain and run a discovery scan</div></div></div>
 
 <!-- COMPLIANCE -->
 <!-- ═══════ USERS TAB ═══════ -->
@@ -1522,7 +1522,7 @@ class Auth{
   static BOOTSTRAP_SCOPES=['https://graph.microsoft.com/Application.ReadWrite.All','https://graph.microsoft.com/AppRoleAssignment.ReadWrite.All','https://graph.microsoft.com/Directory.ReadWrite.All','https://graph.microsoft.com/DelegatedPermissionGrant.ReadWrite.All'];
   static DISCOVERY_SCOPES=['https://graph.microsoft.com/.default'];
   async login(tid){const r=await this.inst.loginPopup({scopes:Auth.BOOTSTRAP_SCOPES,prompt:'select_account',...(tid?{authority:`https://login.microsoftonline.com/${tid}`}:{})});this.acc=r.account;this.tok=r.accessToken;authUI(1,r.account.username);return r}
-  async token(sc){if(!this.acc)throw new Error('Not authenticated');const scopes=sc||Auth.BOOTSTRAP_SCOPES;try{const r=await this.inst.acquireTokenSilent({scopes,account:this.acc});this.tok=r.accessToken;return r.accessToken}catch{const r=await this.inst.acquireTokenPopup({scopes});this.tok=r.accessToken;return r.accessToken}}
+  async token(sc){if(!this.acc)throw new Error('Not authenticated');const scopes=sc||Auth.BOOTSTRAP_SCOPES;const isDefault=scopes.length===1&&scopes[0].endsWith('/.default');try{const r=await this.inst.acquireTokenSilent({scopes,account:this.acc,forceRefresh:isDefault});this.tok=r.accessToken;return r.accessToken}catch{const r=await this.inst.acquireTokenPopup({scopes});this.tok=r.accessToken;return r.accessToken}}
   async logout(){if(this.inst){await this.inst.logoutPopup();this.acc=null;this.tok=null;authUI(0)}}
   ok(){return!!this.acc}
 }
@@ -1882,8 +1882,20 @@ function cleanup(){SS.run=0;$('setupStartBtn').classList.remove('hidden');$('set
 /* ============================================================
    DISCOVERY TAB — Professional presentation
    ============================================================ */
+async function refreshDiscToken(){
+  if(!A.ok()){alert('Sign in first.');return}
+  try{
+    const r=await A.inst.acquireTokenPopup({scopes:Auth.DISCOVERY_SCOPES,account:A.acc,prompt:'consent'});
+    A.tok=r.accessToken;A.acc=r.account;
+    try{
+      const pl=JSON.parse(atob(r.accessToken.split('.')[1]));
+      const sc=(pl.scp||'').split(' ').filter(Boolean);
+      alert('Token refreshed — '+sc.length+' delegated scopes active.\n\nScopes:\n'+sc.join('\n'));
+    }catch{alert('Token refreshed successfully.')}
+  }catch(e){alert('Token refresh failed: '+e.message)}
+}
 async function startDiscovery(){
-  console.log('🚀 startDiscovery v3.4 — scanning 33 sections');
+  console.log('🚀 startDiscovery v3.5 — scanning 33 sections');
   const dom=$('discDomain').value.trim();if(!dom)return;
   $('discScanBtn').disabled=true;$('discScanBtn').innerHTML='<span class="animate-spin" style="display:inline-block">◌</span> Scanning...';$('discProgress').classList.remove('hidden');$('discEmpty').classList.add('hidden');$('discResults').innerHTML='';$('discExBtns').classList.add('hidden');
   DD={domain:dom,ts:new Date().toISOString()};const live=A.ok();
@@ -1977,7 +1989,7 @@ async function startDiscovery(){
   renderDisc()}
 
 function renderDisc(){
-  console.log('🔍 renderDisc v3.4 — 33 section discovery');
+  console.log('🔍 renderDisc v3.5 — 33 section discovery');
   try{
   if(!DD)return;const d=DD,c=$('discResults');
   const arr=k=>Array.isArray(d[k])?d[k]:[];
@@ -2019,7 +2031,13 @@ function renderDisc(){
         <strong>Failed (403):</strong> <span style="color:var(--accent-amber)">${errKeys.join(', ')}</span>
         ${noteKeys.length?`<br><strong>Info:</strong> ${noteKeys.join(', ')}`:''}
       </div>
-      <div style="font-size:.76rem;color:var(--text-muted);margin-top:8px">Re-run <strong>App Config → Step 3 (Bootstrap)</strong> to grant missing permissions, then re-scan.</div>
+      <div style="font-size:.76rem;color:var(--text-muted);margin-top:8px;line-height:1.6">
+        <strong>Fix steps:</strong><br>
+        1. Click <strong>🔄 Refresh Token</strong> above — accept the consent prompt — then re-scan.<br>
+        2. If still failing: go to <strong>App Config → Step 3 (Bootstrap)</strong>, re-run it, accept consent, then re-scan.<br>
+        3. If still failing: sign out, sign back in, then re-scan. The new permissions require a fresh login session.<br>
+        4. Last resort: in Azure Portal → Enterprise Apps → your app → Permissions → <strong>Grant admin consent</strong>.
+      </div>
     </div>`;
   }
 
@@ -4193,6 +4211,35 @@ async function bootstrap(){
 
     // Restore original token method
     A.token=origToken;
+
+    // Force fresh token with all newly granted scopes — clears MSAL cache for .default
+    bsLog('Refreshing token with newly granted permissions...','info');
+    status.textContent='Refreshing token...';
+    try{
+      // Clear all cached tokens so next acquireTokenSilent fetches fresh from AAD
+      const allAccounts=A.inst.getAllAccounts();
+      for(const acct of allAccounts){
+        try{await A.inst.getTokenCache?.().removeAccount?.(acct)}catch{}
+      }
+      // Re-authenticate with consent to pick up all new scopes
+      const refreshResp=await A.inst.acquireTokenPopup({
+        scopes:Auth.DISCOVERY_SCOPES,
+        account:A.acc,
+        prompt:'consent'
+      });
+      A.tok=refreshResp.accessToken;
+      A.acc=refreshResp.account;
+      // Decode to verify scopes
+      try{
+        const pl=JSON.parse(atob(refreshResp.accessToken.split('.')[1]));
+        const sc=pl.scp||'';
+        const scopeCount=sc?sc.split(' ').length:0;
+        bsLog('✓ Token refreshed — '+scopeCount+' delegated scopes active','success');
+        if(scopeCount<10){bsLog('  ⚠ Fewer scopes than expected. If discovery still shows 403 errors, sign out and back in, then re-run bootstrap.','warning')}
+      }catch{bsLog('✓ Token refreshed','success')}
+    }catch(e){
+      bsLog('⚠ Token refresh failed: '+e.message+' — sign out and back in before running discovery.','warning');
+    }
 
     if(failed===0){
       bsLog('','success');
