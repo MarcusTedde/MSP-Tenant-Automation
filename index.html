@@ -6003,8 +6003,53 @@ function toolEntra(){
 <div id="entraAppResult" style="margin-top:10px;font-size:.82rem;max-height:400px;overflow:auto"></div>
 </div>
 
+<div class="card">
+<div class="card-header"><span class="dot" style="background:var(--accent-violet)"></span> User Group Membership</div>
+<div style="margin-bottom:12px;position:relative">
+<label class="form-label">User UPN</label>
+<input id="entraGrpUser" class="form-input" placeholder="Start typing a name or UPN..." autocomplete="off">
+</div>
+<button class="btn btn-primary btn-sm" onclick="entraUserGroups()">👥 Show Memberships</button>
+<div id="entraGrpResult" style="margin-top:10px;font-size:.82rem;max-height:400px;overflow:auto"></div>
+</div>
+
+<div class="card">
+<div class="card-header"><span class="dot" style="background:var(--accent-violet)"></span> Conditional Access Policies</div>
+<button class="btn btn-primary btn-sm" onclick="entraListCAPolicies()">🛡️ List All Policies</button>
+<div id="entraCaResult" style="margin-top:10px;font-size:.82rem;max-height:500px;overflow:auto"></div>
+</div>
+
+<div class="card">
+<div class="card-header"><span class="dot" style="background:var(--accent-violet)"></span> User Sign-in Activity</div>
+<div style="margin-bottom:12px;position:relative">
+<label class="form-label">User UPN</label>
+<input id="entraSignInUser" class="form-input" placeholder="Start typing a name or UPN..." autocomplete="off">
+</div>
+<button class="btn btn-primary btn-sm" onclick="entraUserSignIns()">📊 View Recent Sign-ins</button>
+<div id="entraSignInResult" style="margin-top:10px;font-size:.82rem;max-height:400px;overflow:auto"></div>
+</div>
+
+<div class="card">
+<div class="card-header"><span class="dot" style="background:var(--accent-violet)"></span> MFA Registration Status</div>
+<button class="btn btn-primary btn-sm" onclick="entraListMfaStatus()">🔐 Check MFA Status</button>
+<div id="entraMfaResult" style="margin-top:10px;font-size:.82rem;max-height:500px;overflow:auto"></div>
+</div>
+
+<div class="card">
+<div class="card-header"><span class="dot" style="background:var(--accent-violet)"></span> User Account Lookup</div>
+<div style="margin-bottom:12px;position:relative">
+<label class="form-label">User UPN</label>
+<input id="entraUserLookup" class="form-input" placeholder="Start typing a name or UPN..." autocomplete="off">
+</div>
+<button class="btn btn-primary btn-sm" onclick="entraLookupUser()">🔍 Lookup User</button>
+<div id="entraLookupResult" style="margin-top:10px;font-size:.82rem;max-height:500px;overflow:auto"></div>
+</div>
+
 </div>`;
   _initUpnTypeahead('entraResetUser');
+  _initUpnTypeahead('entraGrpUser');
+  _initUpnTypeahead('entraSignInUser');
+  _initUpnTypeahead('entraUserLookup');
   _fetchUpns();
 }
 
@@ -6116,6 +6161,200 @@ async function entraAuditApps(){
   }catch(e){r.innerHTML=`<span style="color:var(--accent-red)">✗ ${esc(e.message)}</span>`}
 }
 
+async function entraUserGroups(){
+  const r=$('entraGrpResult');r.innerHTML='<span style="color:var(--text-muted)">Loading…</span>';
+  if(!A.ok())return r.innerHTML='<span style="color:var(--accent-red)">Sign in first</span>';
+  const upn=$('entraGrpUser').value.trim();if(!upn)return r.innerHTML='<span style="color:var(--accent-red)">Enter a UPN</span>';
+  try{
+    const grps=await G.call(`/users/${upn}/memberOf?$select=displayName,groupTypes,mailEnabled,securityEnabled,mail,id&$top=200`);
+    const items=grps.value||[];
+    if(!items.length)return r.innerHTML='<span style="color:var(--text-muted)">No group memberships found</span>';
+    const m365=items.filter(g=>g['@odata.type']==='#microsoft.graph.group'&&(g.groupTypes||[]).includes('Unified'));
+    const sec=items.filter(g=>g['@odata.type']==='#microsoft.graph.group'&&!(g.groupTypes||[]).includes('Unified')&&g.securityEnabled);
+    const dist=items.filter(g=>g['@odata.type']==='#microsoft.graph.group'&&g.mailEnabled&&!g.securityEnabled&&!(g.groupTypes||[]).includes('Unified'));
+    const roles=items.filter(g=>g['@odata.type']==='#microsoft.graph.directoryRole');
+    let h=`<div style="margin-bottom:8px;font-weight:600">${items.length} membership${items.length===1?'':'s'}</div>`;
+    function grpSection(title,arr,col){
+      if(!arr.length)return'';
+      let s=`<div style="font-weight:600;font-size:.82rem;margin:8px 0 4px;color:${col}">${title} (${arr.length})</div>`;
+      arr.forEach(g=>{s+=`<div style="padding:4px 0;font-size:.8rem;border-bottom:1px solid var(--border-subtle)"><span style="font-weight:500">${esc(g.displayName||'')}</span>${g.mail?` <span style="color:var(--text-muted);font-size:.74rem">${esc(g.mail)}</span>`:''}</div>`});
+      return s;
+    }
+    h+=grpSection('Directory Roles',roles,'var(--accent-red)');
+    h+=grpSection('M365 Groups',m365,'var(--accent-blue)');
+    h+=grpSection('Security Groups',sec,'var(--accent-green)');
+    h+=grpSection('Distribution Groups',dist,'var(--accent-violet)');
+    r.innerHTML=h;
+  }catch(e){r.innerHTML=`<span style="color:var(--accent-red)">✗ ${esc(e.message)}</span>`}
+}
+
+async function entraListCAPolicies(){
+  const r=$('entraCaResult');r.innerHTML='<span style="color:var(--text-muted)">Loading…</span>';
+  if(!A.ok())return r.innerHTML='<span style="color:var(--accent-red)">Sign in first</span>';
+  try{
+    const resp=await G.call('/identity/conditionalAccess/policies?$select=displayName,state,conditions,grantControls,sessionControls,createdDateTime,modifiedDateTime');
+    const policies=resp.value||[];
+    if(!policies.length)return r.innerHTML='<span style="color:var(--text-muted)">No Conditional Access policies found</span>';
+    let h=`<div style="margin-bottom:10px;font-weight:600">${policies.length} Conditional Access polic${policies.length===1?'y':'ies'}</div>`;
+    policies.forEach(p=>{
+      const stateCol=p.state==='enabled'?'var(--accent-green)':p.state==='enabledForReportingButNotEnforced'?'var(--accent-amber)':'var(--accent-red)';
+      const stateLabel=p.state==='enabled'?'On':p.state==='enabledForReportingButNotEnforced'?'Report Only':'Off';
+      const grants=(p.grantControls?.builtInControls||[]).join(', ')||'—';
+      const apps=p.conditions?.applications?.includeApplications||[];
+      const appLabel=apps.includes('All')?'All Apps':apps.length+' app(s)';
+      const users=p.conditions?.users;
+      const userLabel=users?.includeUsers?.includes('All')?'All Users':(users?.includeUsers?.length||0)+(users?.includeGroups?.length||0)+' target(s)';
+      h+=`<div style="padding:12px;background:var(--bg-elevated);border-radius:var(--radius-md);margin-bottom:8px;border-left:3px solid ${stateCol}">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <div style="font-weight:600;font-size:.88rem">${esc(p.displayName)}</div>
+          <span style="background:${stateCol==='var(--accent-green)'?'rgba(16,185,129,.15)':stateCol==='var(--accent-amber)'?'rgba(245,158,11,.15)':'rgba(239,68,68,.15)'};color:${stateCol};padding:2px 8px;border-radius:10px;font-size:.74rem;font-weight:600">${stateLabel}</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;font-size:.78rem;color:var(--text-muted)">
+          <div>Users: <span style="color:var(--text-secondary)">${esc(userLabel)}</span></div>
+          <div>Apps: <span style="color:var(--text-secondary)">${esc(appLabel)}</span></div>
+          <div>Grant: <span style="color:var(--text-secondary)">${esc(grants)}</span></div>
+        </div>
+        ${p.modifiedDateTime?`<div style="font-size:.72rem;color:var(--text-muted);margin-top:4px">Modified: ${new Date(p.modifiedDateTime).toLocaleDateString('en-GB')}</div>`:''}
+      </div>`;
+    });
+    r.innerHTML=h;
+  }catch(e){r.innerHTML=`<span style="color:var(--accent-red)">✗ ${esc(e.message)}<br><span style="font-size:.78rem">Requires Policy.Read.All permission</span></span>`}
+}
+
+async function entraUserSignIns(){
+  const r=$('entraSignInResult');r.innerHTML='<span style="color:var(--text-muted)">Loading…</span>';
+  if(!A.ok())return r.innerHTML='<span style="color:var(--accent-red)">Sign in first</span>';
+  const upn=$('entraSignInUser').value.trim();if(!upn)return r.innerHTML='<span style="color:var(--accent-red)">Enter a UPN</span>';
+  try{
+    const resp=await G.call(`/auditLogs/signIns?$top=25&$orderby=createdDateTime desc&$filter=userPrincipalName eq '${upn}'`);
+    const logs=resp.value||[];
+    if(!logs.length)return r.innerHTML='<span style="color:var(--text-muted)">No recent sign-in activity found</span>';
+    // Summary
+    const ok=logs.filter(l=>l.status?.errorCode===0).length;
+    const fail=logs.length-ok;
+    const locations=[...new Set(logs.map(l=>[l.location?.city,l.location?.countryOrRegion].filter(Boolean).join(', ')).filter(Boolean))];
+    const apps=[...new Set(logs.map(l=>l.appDisplayName).filter(Boolean))];
+    let h=`<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px">
+      <div style="padding:10px;background:var(--bg-elevated);border-radius:var(--radius-md);text-align:center"><div style="font-size:1.4rem;font-weight:800;color:var(--accent-green)">${ok}</div><div style="font-size:.76rem;color:var(--text-muted)">Successful</div></div>
+      <div style="padding:10px;background:var(--bg-elevated);border-radius:var(--radius-md);text-align:center"><div style="font-size:1.4rem;font-weight:800;color:var(--accent-red)">${fail}</div><div style="font-size:.76rem;color:var(--text-muted)">Failed</div></div>
+      <div style="padding:10px;background:var(--bg-elevated);border-radius:var(--radius-md);text-align:center"><div style="font-size:1.4rem;font-weight:800;color:var(--accent-cyan)">${locations.length}</div><div style="font-size:.76rem;color:var(--text-muted)">Locations</div></div>
+    </div>`;
+    if(locations.length)h+=`<div style="font-size:.78rem;color:var(--text-muted);margin-bottom:4px">Locations: ${locations.map(l=>esc(l)).join(', ')}</div>`;
+    if(apps.length)h+=`<div style="font-size:.78rem;color:var(--text-muted);margin-bottom:10px">Apps: ${apps.slice(0,5).map(a=>esc(a)).join(', ')}${apps.length>5?' + '+(apps.length-5)+' more':''}</div>`;
+    h+='<table class="disc-table" style="font-size:.78rem"><thead><tr><th>Time</th><th>App</th><th>Status</th><th>IP</th><th>Location</th></tr></thead><tbody>';
+    logs.forEach(l=>{
+      const isOk=l.status?.errorCode===0;
+      h+=`<tr><td>${new Date(l.createdDateTime).toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}</td><td style="max-width:120px;overflow:hidden;text-overflow:ellipsis">${esc(l.appDisplayName||'—')}</td><td><span class="badge ${isOk?'badge-green':'badge-red'}">${isOk?'OK':esc(l.status?.failureReason?.slice(0,20)||'Failed')}</span></td><td style="font-size:.74rem">${esc(l.ipAddress||'—')}</td><td>${esc(l.location?.city||'')} ${esc(l.location?.countryOrRegion||'')}</td></tr>`;
+    });
+    h+='</tbody></table>';
+    r.innerHTML=h;
+  }catch(e){r.innerHTML=`<span style="color:var(--accent-red)">✗ ${esc(e.message)}<br><span style="font-size:.78rem">Requires AuditLog.Read.All and Azure AD Premium</span></span>`}
+}
+
+async function entraListMfaStatus(){
+  const r=$('entraMfaResult');r.innerHTML='<span style="color:var(--text-muted)">Loading MFA registration status…</span>';
+  if(!A.ok())return r.innerHTML='<span style="color:var(--accent-red)">Sign in first</span>';
+  try{
+    G.scopes=Auth.DISCOVERY_SCOPES;
+    const resp=await G.call("/reports/authenticationMethods/userRegistrationDetails?$top=999&$select=userPrincipalName,userDisplayName,isMfaRegistered,isMfaCapable,methodsRegistered,isAdmin",null,null,true);
+    G.scopes=null;
+    const users=resp.value||[];
+    if(!users.length)return r.innerHTML='<span style="color:var(--text-muted)">No MFA data available</span>';
+    const registered=users.filter(u=>u.isMfaRegistered).length;
+    const notReg=users.filter(u=>!u.isMfaRegistered);
+    const adminsNoMfa=notReg.filter(u=>u.isAdmin);
+    const pct=Math.round(registered/users.length*100);
+    let h=`<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px">
+      <div style="padding:10px;background:var(--bg-elevated);border-radius:var(--radius-md);text-align:center"><div style="font-size:1.4rem;font-weight:800;color:var(--accent-green)">${pct}%</div><div style="font-size:.76rem;color:var(--text-muted)">MFA Registered</div></div>
+      <div style="padding:10px;background:var(--bg-elevated);border-radius:var(--radius-md);text-align:center"><div style="font-size:1.4rem;font-weight:800;color:var(--accent-red)">${notReg.length}</div><div style="font-size:.76rem;color:var(--text-muted)">Not Registered</div></div>
+      <div style="padding:10px;background:var(--bg-elevated);border-radius:var(--radius-md);text-align:center"><div style="font-size:1.4rem;font-weight:800;color:${adminsNoMfa.length?'var(--accent-red)':'var(--accent-green)'}">${adminsNoMfa.length}</div><div style="font-size:.76rem;color:var(--text-muted)">Admins w/o MFA</div></div>
+    </div>`;
+    if(adminsNoMfa.length){
+      h+=`<div style="padding:10px;background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.2);border-radius:var(--radius-md);margin-bottom:10px">
+        <div style="font-weight:600;font-size:.82rem;color:var(--accent-red);margin-bottom:4px">Admin Accounts Without MFA</div>`;
+      adminsNoMfa.forEach(u=>{h+=`<div style="font-size:.8rem;padding:2px 0">${esc(u.userDisplayName||'')} — <span style="color:var(--accent-cyan)">${esc(u.userPrincipalName)}</span></div>`});
+      h+=`</div>`;
+    }
+    if(notReg.length){
+      h+=`<div style="font-weight:600;font-size:.82rem;margin-bottom:6px;color:var(--accent-amber)">Users Without MFA (${notReg.length})</div>`;
+      h+='<table class="disc-table" style="font-size:.78rem"><thead><tr><th>User</th><th>Admin</th><th>Methods</th></tr></thead><tbody>';
+      notReg.slice(0,50).forEach(u=>{
+        h+=`<tr><td>${esc(u.userDisplayName||'')} <span style="color:var(--text-muted);font-size:.72rem">${esc(u.userPrincipalName)}</span></td><td>${u.isAdmin?'<span style="color:var(--accent-red);font-weight:600">Yes</span>':'No'}</td><td style="font-size:.74rem">${(u.methodsRegistered||[]).join(', ')||'None'}</td></tr>`;
+      });
+      h+='</tbody></table>';
+      if(notReg.length>50)h+=`<div style="font-size:.76rem;color:var(--text-muted);margin-top:4px">…and ${notReg.length-50} more</div>`;
+    }
+    r.innerHTML=h;
+  }catch(e){G.scopes=null;r.innerHTML=`<span style="color:var(--accent-red)">✗ ${esc(e.message)}<br><span style="font-size:.78rem">Requires AuditLog.Read.All and Azure AD Premium P1/P2</span></span>`}
+}
+
+async function entraLookupUser(){
+  const r=$('entraLookupResult');r.innerHTML='<span style="color:var(--text-muted)">Looking up…</span>';
+  if(!A.ok())return r.innerHTML='<span style="color:var(--accent-red)">Sign in first</span>';
+  const upn=$('entraUserLookup').value.trim();if(!upn)return r.innerHTML='<span style="color:var(--accent-red)">Enter a UPN</span>';
+  try{
+    G.scopes=Auth.DISCOVERY_SCOPES;
+    const[user,mgr,grps,signIn,skus]=await Promise.all([
+      G.call(`/users/${upn}?$select=displayName,userPrincipalName,mail,jobTitle,department,officeLocation,mobilePhone,businessPhones,companyName,accountEnabled,userType,createdDateTime,onPremisesSyncEnabled,onPremisesLastSyncDateTime,assignedLicenses,proxyAddresses`),
+      G.call(`/users/${upn}/manager?$select=displayName,userPrincipalName`).catch(()=>null),
+      G.call(`/users/${upn}/memberOf?$select=displayName,groupTypes,securityEnabled,mailEnabled&$top=100`).catch(()=>({value:[]})),
+      G.call(`/auditLogs/signIns?$top=1&$orderby=createdDateTime desc&$filter=userPrincipalName eq '${upn}'`).catch(()=>({value:[]})),
+      G.call('/subscribedSkus?$select=skuId,skuPartNumber').catch(()=>({value:[]}))
+    ]);
+    G.scopes=null;
+    const skuIdMap={};(skus.value||[]).forEach(s=>{skuIdMap[s.skuId]=s.skuPartNumber});
+    const licNames=(user.assignedLicenses||[]).map(l=>skuName(skuIdMap[l.skuId]||'')).filter(n=>n!=='Unknown');
+    const lastSign=(signIn.value||[])[0];
+    const groups=(grps.value||[]).filter(g=>g['@odata.type']==='#microsoft.graph.group');
+    const roles=(grps.value||[]).filter(g=>g['@odata.type']==='#microsoft.graph.directoryRole');
+    const lbl='font-size:.8rem;color:var(--text-muted)';const val='font-size:.8rem;color:var(--text-secondary)';
+    let h=`<div style="padding:14px;background:var(--bg-elevated);border-radius:var(--radius-md)">`;
+    h+=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+      <div style="width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,var(--accent-violet),var(--accent-blue));display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:1rem">${esc((user.displayName||'?')[0])}</div>
+      <div>
+        <div style="font-weight:600;font-size:1rem">${esc(user.displayName)}</div>
+        <div style="font-size:.8rem;color:var(--accent-cyan)">${esc(user.userPrincipalName)}</div>
+      </div>
+      <div style="margin-left:auto;display:flex;gap:4px;flex-wrap:wrap">
+        ${user.accountEnabled?'<span style="background:rgba(16,185,129,.15);color:var(--accent-green);padding:2px 8px;border-radius:10px;font-size:.74rem;font-weight:600">Active</span>':'<span style="background:rgba(239,68,68,.15);color:var(--accent-red);padding:2px 8px;border-radius:10px;font-size:.74rem;font-weight:600">Disabled</span>'}
+        <span style="background:rgba(139,92,246,.12);color:var(--accent-violet);padding:2px 8px;border-radius:10px;font-size:.74rem">${esc(user.userType||'Member')}</span>
+      </div>
+    </div>`;
+    h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border-subtle)">
+      <div style="${lbl}">Job Title: <span style="${val}">${esc(user.jobTitle||'—')}</span></div>
+      <div style="${lbl}">Department: <span style="${val}">${esc(user.department||'—')}</span></div>
+      <div style="${lbl}">Office: <span style="${val}">${esc(user.officeLocation||'—')}</span></div>
+      <div style="${lbl}">Company: <span style="${val}">${esc(user.companyName||'—')}</span></div>
+      <div style="${lbl}">Phone: <span style="${val}">${esc(user.mobilePhone||(user.businessPhones||[])[0]||'—')}</span></div>
+      <div style="${lbl}">Manager: <span style="${val}">${mgr?esc(mgr.displayName)+' ('+esc(mgr.userPrincipalName)+')':'—'}</span></div>
+      <div style="${lbl}">Created: <span style="${val}">${user.createdDateTime?new Date(user.createdDateTime).toLocaleDateString('en-GB'):'—'}</span></div>
+      <div style="${lbl}">Last Sign-in: <span style="${val}">${lastSign?new Date(lastSign.createdDateTime).toLocaleString('en-GB'):'—'}</span></div>
+      <div style="${lbl}">AD Sync: <span style="${val}">${user.onPremisesSyncEnabled?'<span style="color:var(--accent-green)">Synced</span>'+( user.onPremisesLastSyncDateTime?' ('+new Date(user.onPremisesLastSyncDateTime).toLocaleDateString('en-GB')+')':''):'Cloud-only'}</span></div>
+    </div>`;
+    if(licNames.length){
+      h+=`<div style="font-weight:600;font-size:.82rem;margin-bottom:4px;color:var(--accent-green)">Licenses (${licNames.length})</div>`;
+      h+=`<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px">`;
+      licNames.forEach(n=>{h+=`<span style="background:rgba(16,185,129,.12);color:var(--accent-green);padding:2px 8px;border-radius:10px;font-size:.74rem">${esc(n)}</span>`});
+      h+=`</div>`;
+    }
+    if(roles.length){
+      h+=`<div style="font-weight:600;font-size:.82rem;margin-bottom:4px;color:var(--accent-red)">Directory Roles (${roles.length})</div>`;
+      h+=`<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px">`;
+      roles.forEach(g=>{h+=`<span style="background:rgba(239,68,68,.12);color:var(--accent-red);padding:2px 8px;border-radius:10px;font-size:.74rem">${esc(g.displayName)}</span>`});
+      h+=`</div>`;
+    }
+    if(groups.length){
+      h+=`<div style="font-weight:600;font-size:.82rem;margin-bottom:4px;color:var(--accent-blue)">Groups (${groups.length})</div>`;
+      h+=`<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px">`;
+      groups.slice(0,20).forEach(g=>{h+=`<span style="background:rgba(59,130,246,.12);color:var(--accent-blue);padding:2px 8px;border-radius:10px;font-size:.74rem">${esc(g.displayName)}</span>`});
+      if(groups.length>20)h+=`<span style="font-size:.76rem;color:var(--text-muted)">+${groups.length-20} more</span>`;
+      h+=`</div>`;
+    }
+    h+=`</div>`;
+    r.innerHTML=h;
+  }catch(e){G.scopes=null;r.innerHTML=`<span style="color:var(--accent-red)">✗ ${esc(e.message)}</span>`}
+}
+
 /* ── Purview & Compliance Tools ── */
 function toolPurview(){
   const c=$('toolContent');
@@ -6156,8 +6395,12 @@ function toolPurview(){
 <div><label class="form-label">Start</label><input id="purAuditStart" class="form-input" type="date"></div>
 <div><label class="form-label">End</label><input id="purAuditEnd" class="form-input" type="date"></div>
 </div>
+<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap">
 <button class="btn btn-primary btn-sm" onclick="purviewAuditSearch()">🔍 Search Audit Log</button>
-<div id="purAuditResult" style="margin-top:10px;font-size:.82rem;max-height:400px;overflow:auto"></div>
+<label style="display:flex;align-items:center;gap:6px;font-size:.82rem;color:var(--text-secondary);cursor:pointer"><input id="purAuditFilterErrors" type="checkbox" onchange="purviewFilterAudit()"> Errors &amp; warnings only</label>
+<span id="purAuditCount" style="font-size:.78rem;color:var(--text-muted)"></span>
+</div>
+<div id="purAuditResult" style="margin-top:10px;font-size:.82rem;max-height:500px;overflow:auto"></div>
 </div>
 
 <div class="card">
@@ -6234,21 +6477,100 @@ function purviewDlpGuide(type){
   </div>`;
 }
 
-async function purviewAuditSearch(){
-  const r=$('purAuditResult');r.innerHTML='<span style="color:var(--text-muted)">Searching...</span>';
-  if(!A.ok())return r.innerHTML='<span style="color:var(--accent-red)">Sign in first</span>';
-  try{
-    const resp=await G.call(`/auditLogs/signIns?$top=50&$orderby=createdDateTime desc&$filter=createdDateTime ge ${$('purAuditStart').value}T00:00:00Z and createdDateTime le ${$('purAuditEnd').value}T23:59:59Z${$('purAuditUser').value.trim()?` and userPrincipalName eq '${$('purAuditUser').value.trim()}'`:''}`);
-    const logs=resp.value||[];
-    if(!logs.length)return r.innerHTML='<span style="color:var(--text-muted)">No sign-in events found for this period</span>';
-    let h='<table class="disc-table" style="font-size:.72rem"><thead><tr><th>Time</th><th>User</th><th>App</th><th>Status</th><th>Location</th></tr></thead><tbody>';
-    logs.forEach(l=>{
-      const ok=l.status?.errorCode===0;
-      h+=`<tr><td>${new Date(l.createdDateTime).toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}</td><td>${esc(l.userPrincipalName||'')}</td><td style="max-width:120px;overflow:hidden;text-overflow:ellipsis">${esc(l.appDisplayName||'—')}</td><td><span class="badge ${ok?'badge-green':'badge-red'}">${ok?'OK':l.status?.failureReason?.slice(0,20)||'Failed'}</span></td><td>${esc(l.location?.city||'')} ${esc(l.location?.countryOrRegion||'')}</td></tr>`;
+let _auditLogData=[];
+function _renderAuditLog(logs,filterErrors){
+  const filtered=filterErrors?logs.filter(l=>l.status?.errorCode!==0):logs;
+  const r=$('purAuditResult');
+  const countEl=$('purAuditCount');
+  if(countEl)countEl.textContent=filterErrors?`Showing ${filtered.length} of ${logs.length} entries`:`${logs.length} entries`;
+  if(!filtered.length)return r.innerHTML=filterErrors?'<span style="color:var(--accent-green)">No errors or warnings found — all sign-ins successful</span>':'<span style="color:var(--text-muted)">No sign-in events found</span>';
+  let h='<table class="disc-table" style="font-size:.78rem"><thead><tr><th>Time</th><th>User</th><th>App</th><th>Status</th><th>Location</th></tr></thead><tbody>';
+  filtered.forEach((l,i)=>{
+    const ok=l.status?.errorCode===0;
+    const idx=logs.indexOf(l);
+    h+=`<tr style="cursor:pointer" onclick="_showAuditDetail(${idx})" title="Click for details"><td>${new Date(l.createdDateTime).toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}</td><td>${esc(l.userPrincipalName||'')}</td><td style="max-width:140px;overflow:hidden;text-overflow:ellipsis">${esc(l.appDisplayName||'—')}</td><td><span class="badge ${ok?'badge-green':'badge-red'}">${ok?'OK':esc(l.status?.failureReason?.slice(0,25)||'Failed')}</span></td><td>${esc(l.location?.city||'')} ${esc(l.location?.countryOrRegion||'')}</td></tr>`;
+  });
+  h+='</tbody></table>';
+  r.innerHTML=h;
+}
+function purviewFilterAudit(){
+  if(_auditLogData.length)_renderAuditLog(_auditLogData,$('purAuditFilterErrors')?.checked);
+}
+function _showAuditDetail(idx){
+  const l=_auditLogData[idx];if(!l)return;
+  const ok=l.status?.errorCode===0;
+  const ca=(l.appliedConditionalAccessPolicies||[]);
+  let h=`<div class="modal-overlay" id="auditDetailModal" onclick="if(event.target===this)this.remove()" style="position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;z-index:1000">
+  <div class="card" style="width:640px;max-width:92vw;max-height:85vh;overflow-y:auto;border:1px solid rgba(59,130,246,.25);box-shadow:0 0 60px rgba(59,130,246,.08);animation:fadeIn .2s ease">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <div class="card-header" style="margin-bottom:0">Sign-in Detail</div>
+      <button onclick="this.closest('.modal-overlay').remove()" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:1.2rem;padding:4px 8px">✕</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+      <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--accent-violet),var(--accent-blue));display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:.9rem">${esc((l.userDisplayName||l.userPrincipalName||'?')[0])}</div>
+      <div>
+        <div style="font-weight:600">${esc(l.userDisplayName||l.userPrincipalName||'—')}</div>
+        <div style="font-size:.78rem;color:var(--accent-cyan)">${esc(l.userPrincipalName||'')}</div>
+      </div>
+      <div style="margin-left:auto"><span class="badge ${ok?'badge-green':'badge-red'}" style="font-size:.78rem;padding:4px 10px">${ok?'Success':'Failed'}</span></div>
+    </div>`;
+  // Details grid
+  const lbl='font-size:.8rem;color:var(--text-muted)';const val='font-size:.8rem;color:var(--text-secondary)';
+  h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;padding:12px;background:var(--bg-input);border-radius:var(--radius-md);margin-bottom:12px">
+    <div style="${lbl}">Time: <span style="${val}">${new Date(l.createdDateTime).toLocaleString('en-GB')}</span></div>
+    <div style="${lbl}">App: <span style="${val}">${esc(l.appDisplayName||'—')}</span></div>
+    <div style="${lbl}">Client App: <span style="${val}">${esc(l.clientAppUsed||'—')}</span></div>
+    <div style="${lbl}">Resource: <span style="${val}">${esc(l.resourceDisplayName||'—')}</span></div>
+    <div style="${lbl}">IP Address: <span style="${val}">${esc(l.ipAddress||'—')}</span></div>
+    <div style="${lbl}">Location: <span style="${val}">${esc(l.location?.city||'')} ${esc(l.location?.state||'')} ${esc(l.location?.countryOrRegion||'')}</span></div>
+    <div style="${lbl}">Device: <span style="${val}">${esc(l.deviceDetail?.operatingSystem||'—')} ${esc(l.deviceDetail?.browser||'')}</span></div>
+    <div style="${lbl}">Device Trust: <span style="${val}">${esc(l.deviceDetail?.trustType||'—')}</span></div>
+    <div style="${lbl}">Is Interactive: <span style="${val}">${l.isInteractive?'Yes':'No'}</span></div>
+    <div style="${lbl}">Risk Level: <span style="${val};${l.riskLevelDuringSignIn&&l.riskLevelDuringSignIn!=='none'?'color:var(--accent-red);font-weight:600':''}">${esc(l.riskLevelDuringSignIn||'none')}</span></div>
+    <div style="${lbl}">Risk State: <span style="${val}">${esc(l.riskState||'—')}</span></div>
+    <div style="${lbl}">MFA Result: <span style="${val}">${esc(l.mfaDetail?.authMethod||'—')} ${l.mfaDetail?.authDetail?'('+esc(l.mfaDetail.authDetail)+')':''}</span></div>
+  </div>`;
+  // Status detail
+  if(l.status){
+    h+=`<div style="margin-bottom:12px;padding:10px;background:${ok?'rgba(16,185,129,.06)':'rgba(239,68,68,.06)'};border:1px solid ${ok?'rgba(16,185,129,.2)':'rgba(239,68,68,.2)'};border-radius:var(--radius-md)">
+      <div style="font-weight:600;font-size:.82rem;color:${ok?'var(--accent-green)':'var(--accent-red)'}">Status: ${ok?'Success':'Error '+l.status.errorCode}</div>
+      ${l.status.failureReason?`<div style="font-size:.8rem;color:var(--text-secondary);margin-top:4px">${esc(l.status.failureReason)}</div>`:''}
+      ${l.status.additionalDetails?`<div style="font-size:.78rem;color:var(--text-muted);margin-top:2px">${esc(l.status.additionalDetails)}</div>`:''}
+    </div>`;
+  }
+  // Conditional Access policies
+  if(ca.length){
+    h+=`<div style="font-weight:600;font-size:.82rem;margin-bottom:6px;color:var(--accent-violet)">Conditional Access Policies (${ca.length})</div>`;
+    h+='<table class="disc-table" style="font-size:.78rem;margin-bottom:12px"><thead><tr><th>Policy</th><th>Result</th></tr></thead><tbody>';
+    ca.forEach(p=>{
+      const res=p.result||'notApplied';
+      const col=res==='success'?'badge-green':res==='failure'?'badge-red':'badge-muted';
+      h+=`<tr><td>${esc(p.displayName||p.id||'—')}</td><td><span class="badge ${col}">${esc(res)}</span></td></tr>`;
     });
     h+='</tbody></table>';
-    r.innerHTML=h;
-  }catch(e){r.innerHTML=`<span style="color:var(--accent-red)">✗ ${esc(e.message)}<br><span style="font-size:.76rem">Requires AuditLog.Read.All permission and Azure AD Premium</span></span>`}
+  }
+  // Auth method details
+  if(l.authenticationDetails?.length){
+    h+=`<div style="font-weight:600;font-size:.82rem;margin-bottom:6px;color:var(--accent-blue)">Authentication Steps</div>`;
+    h+='<table class="disc-table" style="font-size:.78rem;margin-bottom:12px"><thead><tr><th>Step</th><th>Method</th><th>Result</th></tr></thead><tbody>';
+    l.authenticationDetails.forEach((a,i)=>{
+      h+=`<tr><td>${i+1}</td><td>${esc(a.authenticationMethod||'—')}</td><td><span class="badge ${a.succeeded?'badge-green':'badge-red'}">${a.succeeded?'OK':'Failed'}</span>${a.authenticationStepResultDetail?` <span style="font-size:.74rem;color:var(--text-muted)">${esc(a.authenticationStepResultDetail)}</span>`:''}</td></tr>`;
+    });
+    h+='</tbody></table>';
+  }
+  h+=`<div style="font-size:.72rem;color:var(--text-muted);margin-top:8px">Sign-in ID: ${esc(l.id||'—')}</div>`;
+  h+=`</div></div>`;
+  document.body.insertAdjacentHTML('beforeend',h);
+}
+async function purviewAuditSearch(){
+  const r=$('purAuditResult');r.innerHTML='<span style="color:var(--text-muted)">Searching…</span>';
+  if(!A.ok())return r.innerHTML='<span style="color:var(--accent-red)">Sign in first</span>';
+  try{
+    const resp=await G.call(`/auditLogs/signIns?$top=100&$orderby=createdDateTime desc&$filter=createdDateTime ge ${$('purAuditStart').value}T00:00:00Z and createdDateTime le ${$('purAuditEnd').value}T23:59:59Z${$('purAuditUser').value.trim()?` and userPrincipalName eq '${$('purAuditUser').value.trim()}'`:''}`);
+    _auditLogData=resp.value||[];
+    if(!_auditLogData.length)return r.innerHTML='<span style="color:var(--text-muted)">No sign-in events found for this period</span>';
+    _renderAuditLog(_auditLogData,$('purAuditFilterErrors')?.checked);
+  }catch(e){r.innerHTML=`<span style="color:var(--accent-red)">✗ ${esc(e.message)}<br><span style="font-size:.78rem">Requires AuditLog.Read.All permission and Azure AD Premium</span></span>`}
 }
 
 async function purviewGetScore(){
@@ -6453,7 +6775,45 @@ function toolHealth(){
 <p style="font-size:.84rem;color:var(--text-secondary);line-height:1.6;font-family:var(--font-display);margin-bottom:14px">Real-time overview of your tenant's health, security posture, and resource utilisation.</p>
 <button class="btn btn-primary" onclick="healthScan()">💊 Run Health Check</button>
 </div>
-<div id="healthResults"></div>`;
+<div id="healthResults"></div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px">
+<div class="card">
+<div class="card-header"><span class="dot" style="background:var(--accent-cyan)"></span> M365 Service Health</div>
+<button class="btn btn-primary btn-sm" onclick="healthServiceStatus()">📡 Check Service Status</button>
+<div id="healthServiceResult" style="margin-top:10px;font-size:.82rem;max-height:500px;overflow:auto"></div>
+</div>
+
+<div class="card">
+<div class="card-header"><span class="dot" style="background:var(--accent-green)"></span> Tenant Details</div>
+<button class="btn btn-primary btn-sm" onclick="healthTenantInfo()">🏢 Load Tenant Info</button>
+<div id="healthTenantResult" style="margin-top:10px;font-size:.82rem"></div>
+</div>
+
+<div class="card">
+<div class="card-header"><span class="dot" style="background:var(--accent-amber)"></span> Global Admin Accounts</div>
+<button class="btn btn-primary btn-sm" onclick="healthListGlobalAdmins()">👑 List Global Admins</button>
+<div id="healthAdminResult" style="margin-top:10px;font-size:.82rem;max-height:400px;overflow:auto"></div>
+</div>
+
+<div class="card">
+<div class="card-header"><span class="dot" style="background:var(--accent-blue)"></span> Domain Status</div>
+<button class="btn btn-primary btn-sm" onclick="healthDomainStatus()">🌐 Check Domains</button>
+<div id="healthDomainResult" style="margin-top:10px;font-size:.82rem"></div>
+</div>
+
+<div class="card">
+<div class="card-header"><span class="dot" style="background:var(--accent-violet)"></span> Secure Score Breakdown</div>
+<button class="btn btn-primary btn-sm" onclick="healthSecureScoreDetail()">📊 View Recommendations</button>
+<div id="healthScoreResult" style="margin-top:10px;font-size:.82rem;max-height:500px;overflow:auto"></div>
+</div>
+
+<div class="card">
+<div class="card-header"><span class="dot" style="background:var(--accent-red)"></span> Recent Directory Changes</div>
+<button class="btn btn-primary btn-sm" onclick="healthDirectoryAudit()">📋 View Audit Log</button>
+<div id="healthAuditResult" style="margin-top:10px;font-size:.82rem;max-height:500px;overflow:auto"></div>
+</div>
+</div>`;
 }
 
 async function healthScan(){
@@ -6572,6 +6932,180 @@ async function healthScan(){
   }
   
   r.innerHTML=h;
+}
+
+async function healthServiceStatus(){
+  const r=$('healthServiceResult');r.innerHTML='<span style="color:var(--text-muted)">Checking service health…</span>';
+  if(!A.ok())return r.innerHTML='<span style="color:var(--accent-red)">Sign in first</span>';
+  try{
+    G.scopes=Auth.DISCOVERY_SCOPES;
+    const resp=await G.call('/admin/serviceAnnouncement/healthOverviews?$expand=issues($top=5)&$top=20');
+    G.scopes=null;
+    const services=resp.value||[];
+    if(!services.length)return r.innerHTML='<span style="color:var(--text-muted)">No service health data available — requires ServiceHealth.Read.All</span>';
+    const degraded=services.filter(s=>s.status!=='serviceDegradation'&&s.status!=='serviceOperational'?false:s.status!=='serviceOperational');
+    const issues=services.flatMap(s=>(s.issues||[]).filter(i=>!i.isResolved));
+    let h='';
+    if(issues.length){
+      h+=`<div style="padding:10px;background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.2);border-radius:var(--radius-md);margin-bottom:12px">
+        <div style="font-weight:600;color:var(--accent-red);margin-bottom:6px">${issues.length} Active Issue${issues.length===1?'':'s'}</div>`;
+      issues.slice(0,10).forEach(i=>{
+        h+=`<div style="padding:6px 0;border-bottom:1px solid var(--border-subtle);font-size:.8rem">
+          <div style="font-weight:500">${esc(i.title||i.id)}</div>
+          <div style="font-size:.76rem;color:var(--text-muted)">${esc(i.service||'')} — ${esc(i.classification||'')} — Started: ${i.startDateTime?new Date(i.startDateTime).toLocaleString('en-GB'):''}</div>
+        </div>`;
+      });
+      h+=`</div>`;
+    }
+    h+='<table class="disc-table" style="font-size:.8rem"><thead><tr><th>Service</th><th>Status</th></tr></thead><tbody>';
+    services.forEach(s=>{
+      const ok=s.status==='serviceOperational';
+      const col=ok?'badge-green':s.status==='serviceDegradation'?'badge-amber':'badge-red';
+      const label=ok?'Operational':s.status==='serviceDegradation'?'Degraded':s.status?.replace(/([A-Z])/g,' $1').trim()||'Unknown';
+      h+=`<tr><td style="font-weight:500">${esc(s.service||'')}</td><td><span class="badge ${col}">${label}</span></td></tr>`;
+    });
+    h+='</tbody></table>';
+    r.innerHTML=h;
+  }catch(e){G.scopes=null;r.innerHTML=`<span style="color:var(--accent-red)">✗ ${esc(e.message)}<br><span style="font-size:.78rem">Requires ServiceHealth.Read.All permission</span></span>`}
+}
+
+async function healthTenantInfo(){
+  const r=$('healthTenantResult');r.innerHTML='<span style="color:var(--text-muted)">Loading…</span>';
+  if(!A.ok())return r.innerHTML='<span style="color:var(--accent-red)">Sign in first</span>';
+  try{
+    G.scopes=Auth.DISCOVERY_SCOPES;
+    const org=await G.call('/organization?$select=displayName,verifiedDomains,assignedPlans,createdDateTime,tenantType,countryLetterCode,city,state,postalCode,street,technicalNotificationMails');
+    G.scopes=null;
+    const o=org.value?.[0];
+    if(!o)return r.innerHTML='<span style="color:var(--text-muted)">No org data found</span>';
+    const domains=(o.verifiedDomains||[]);
+    const defaultDomain=domains.find(d=>d.isDefault)?.name||'—';
+    const plans=[...new Set((o.assignedPlans||[]).filter(p=>p.capabilityStatus==='Enabled').map(p=>p.service))];
+    const lbl='font-size:.82rem;color:var(--text-muted)';const val='font-size:.82rem;color:var(--text-secondary)';
+    let h=`<div style="padding:12px;background:var(--bg-input);border-radius:var(--radius-md)">
+      <div style="font-weight:700;font-size:1rem;margin-bottom:8px">${esc(o.displayName||'')}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 16px">
+        <div style="${lbl}">Default Domain: <span style="${val};color:var(--accent-cyan)">${esc(defaultDomain)}</span></div>
+        <div style="${lbl}">Tenant Type: <span style="${val}">${esc(o.tenantType||'—')}</span></div>
+        <div style="${lbl}">Country: <span style="${val}">${esc(o.countryLetterCode||'—')}</span></div>
+        <div style="${lbl}">Created: <span style="${val}">${o.createdDateTime?new Date(o.createdDateTime).toLocaleDateString('en-GB'):'—'}</span></div>
+        <div style="${lbl}">Tech Contact: <span style="${val}">${(o.technicalNotificationMails||[]).map(m=>esc(m)).join(', ')||'—'}</span></div>
+        <div style="${lbl}">Domains: <span style="${val}">${domains.length}</span></div>
+      </div>
+      ${plans.length?`<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border-subtle)"><div style="${lbl};margin-bottom:4px">Enabled Services:</div><div style="display:flex;flex-wrap:wrap;gap:4px">${plans.map(p=>`<span style="background:rgba(59,130,246,.12);color:var(--accent-blue);padding:2px 6px;border-radius:8px;font-size:.72rem">${esc(p)}</span>`).join('')}</div></div>`:''}
+    </div>`;
+    r.innerHTML=h;
+  }catch(e){G.scopes=null;r.innerHTML=`<span style="color:var(--accent-red)">✗ ${esc(e.message)}</span>`}
+}
+
+async function healthListGlobalAdmins(){
+  const r=$('healthAdminResult');r.innerHTML='<span style="color:var(--text-muted)">Loading…</span>';
+  if(!A.ok())return r.innerHTML='<span style="color:var(--accent-red)">Sign in first</span>';
+  try{
+    // Global Administrator role template ID is always 62e90394-69f5-4237-9190-012177145e10
+    const resp=await G.call("/directoryRoles?$filter=roleTemplateId eq '62e90394-69f5-4237-9190-012177145e10'&$select=id,displayName");
+    let gaRole=(resp.value||[])[0];
+    if(!gaRole){
+      const allRoles=await G.call('/directoryRoles?$select=id,displayName,roleTemplateId');
+      gaRole=(allRoles.value||[]).find(r=>r.roleTemplateId==='62e90394-69f5-4237-9190-012177145e10'||/global admin/i.test(r.displayName));
+      if(!gaRole)return r.innerHTML='<span style="color:var(--text-muted)">Global Administrator role not found</span>';
+    }
+    const members=await G.call(`/directoryRoles/${gaRole.id}/members?$select=displayName,userPrincipalName,accountEnabled,createdDateTime`);
+    const admins=members.value||[];
+    if(!admins.length)return r.innerHTML='<span style="color:var(--text-muted)">No Global Administrators found</span>';
+    const count=admins.length;
+    const col=count>5?'var(--accent-amber)':count<2?'var(--accent-red)':'var(--accent-green)';
+    let h=`<div style="margin-bottom:10px;padding:10px;background:var(--bg-elevated);border-radius:var(--radius-md);border-left:3px solid ${col}">
+      <span style="font-weight:600;font-size:.88rem">${count} Global Admin${count===1?'':'s'}</span>
+      <span style="font-size:.78rem;color:var(--text-muted);margin-left:8px">${count>5?'Consider reducing — Microsoft recommends ≤5':'Good'}</span>
+    </div>`;
+    h+='<table class="disc-table" style="font-size:.8rem"><thead><tr><th>Name</th><th>UPN</th><th>Status</th><th>Created</th></tr></thead><tbody>';
+    admins.forEach(a=>{
+      h+=`<tr><td style="font-weight:500">${esc(a.displayName||'')}</td><td style="color:var(--accent-cyan)">${esc(a.userPrincipalName||'')}</td><td>${a.accountEnabled?'<span style="color:var(--accent-green)">Active</span>':'<span style="color:var(--accent-red)">Disabled</span>'}</td><td>${a.createdDateTime?new Date(a.createdDateTime).toLocaleDateString('en-GB'):'—'}</td></tr>`;
+    });
+    h+='</tbody></table>';
+    r.innerHTML=h;
+  }catch(e){r.innerHTML=`<span style="color:var(--accent-red)">✗ ${esc(e.message)}</span>`}
+}
+
+async function healthDomainStatus(){
+  const r=$('healthDomainResult');r.innerHTML='<span style="color:var(--text-muted)">Loading…</span>';
+  if(!A.ok())return r.innerHTML='<span style="color:var(--accent-red)">Sign in first</span>';
+  try{
+    const resp=await G.call('/domains?$select=id,isVerified,isDefault,authenticationType,supportedServices,passwordValidityPeriodInDays,passwordNotificationWindowInDays');
+    const domains=resp.value||[];
+    if(!domains.length)return r.innerHTML='<span style="color:var(--text-muted)">No domains found</span>';
+    let h='<table class="disc-table" style="font-size:.8rem"><thead><tr><th>Domain</th><th>Default</th><th>Verified</th><th>Auth</th><th>Services</th><th>Password Expiry</th></tr></thead><tbody>';
+    domains.forEach(d=>{
+      const svcs=(d.supportedServices||[]).join(', ')||'—';
+      const pwExp=d.passwordValidityPeriodInDays?d.passwordValidityPeriodInDays+' days':'Not set';
+      h+=`<tr><td style="font-weight:500;color:var(--accent-cyan)">${esc(d.id)}</td><td>${d.isDefault?'<span style="color:var(--accent-green);font-weight:600">Yes</span>':'No'}</td><td>${d.isVerified?'<span style="color:var(--accent-green)">Yes</span>':'<span style="color:var(--accent-red)">No</span>'}</td><td>${esc(d.authenticationType||'—')}</td><td style="font-size:.76rem">${esc(svcs)}</td><td>${esc(pwExp)}</td></tr>`;
+    });
+    h+='</tbody></table>';
+    r.innerHTML=h;
+  }catch(e){r.innerHTML=`<span style="color:var(--accent-red)">✗ ${esc(e.message)}</span>`}
+}
+
+async function healthSecureScoreDetail(){
+  const r=$('healthScoreResult');r.innerHTML='<span style="color:var(--text-muted)">Loading…</span>';
+  if(!A.ok())return r.innerHTML='<span style="color:var(--accent-red)">Sign in first</span>';
+  try{
+    G.scopes=Auth.DISCOVERY_SCOPES;
+    const[score,profiles]=await Promise.all([
+      G.call('/security/secureScores?$top=1').catch(()=>({value:[]})),
+      G.call('/security/secureScoreControlProfiles?$top=50').catch(()=>({value:[]}))
+    ]);
+    G.scopes=null;
+    const ss=(score.value||[])[0];
+    const controls=profiles.value||[];
+    if(!ss&&!controls.length)return r.innerHTML='<span style="color:var(--text-muted)">Secure Score data not available</span>';
+    let h='';
+    if(ss){
+      const pct=Math.round(ss.currentScore/ss.maxScore*100);
+      const col=pct>=70?'var(--accent-green)':pct>=40?'var(--accent-amber)':'var(--accent-red)';
+      h+=`<div style="text-align:center;padding:16px;background:var(--bg-elevated);border-radius:var(--radius-md);margin-bottom:12px">
+        <div style="font-size:2.5rem;font-weight:800;color:${col};font-family:var(--font-display)">${pct}%</div>
+        <div style="font-size:.84rem;color:var(--text-muted)">${ss.currentScore.toFixed(1)} / ${ss.maxScore.toFixed(1)} points</div>
+      </div>`;
+    }
+    if(controls.length){
+      // Sort by potential score impact (maxScore - current implementation)
+      const sorted=controls.filter(c=>c.maxScore>0).sort((a,b)=>(b.maxScore||0)-(a.maxScore||0));
+      h+=`<div style="font-weight:600;font-size:.88rem;margin-bottom:8px">Top Recommendations</div>`;
+      sorted.slice(0,15).forEach(c=>{
+        const impScore=c.maxScore||0;
+        const implStatus=c.implementationStatus||'—';
+        const statusCol=implStatus==='implemented'?'var(--accent-green)':implStatus==='thirdParty'?'var(--accent-blue)':'var(--accent-amber)';
+        h+=`<div style="padding:10px;background:var(--bg-elevated);border-radius:var(--radius-md);margin-bottom:6px;border-left:3px solid ${statusCol}">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div style="font-weight:500;font-size:.84rem">${esc(c.title||c.id||'')}</div>
+            <span style="font-size:.76rem;font-weight:600;color:var(--accent-blue)">+${impScore.toFixed(1)} pts</span>
+          </div>
+          <div style="font-size:.78rem;color:var(--text-muted);margin-top:2px">${esc(c.category||'')} — <span style="color:${statusCol}">${esc(implStatus)}</span></div>
+        </div>`;
+      });
+    }
+    r.innerHTML=h||'<span style="color:var(--text-muted)">No recommendations available</span>';
+  }catch(e){G.scopes=null;r.innerHTML=`<span style="color:var(--accent-red)">✗ ${esc(e.message)}<br><span style="font-size:.78rem">Requires SecurityEvents.Read.All permission</span></span>`}
+}
+
+async function healthDirectoryAudit(){
+  const r=$('healthAuditResult');r.innerHTML='<span style="color:var(--text-muted)">Loading…</span>';
+  if(!A.ok())return r.innerHTML='<span style="color:var(--accent-red)">Sign in first</span>';
+  try{
+    const resp=await G.call('/auditLogs/directoryAudits?$top=30&$orderby=activityDateTime desc');
+    const logs=resp.value||[];
+    if(!logs.length)return r.innerHTML='<span style="color:var(--text-muted)">No directory audit events found</span>';
+    let h='<table class="disc-table" style="font-size:.78rem"><thead><tr><th>Time</th><th>Activity</th><th>Initiated By</th><th>Target</th><th>Result</th></tr></thead><tbody>';
+    logs.forEach(l=>{
+      const actor=l.initiatedBy?.user?.displayName||l.initiatedBy?.app?.displayName||'System';
+      const targets=(l.targetResources||[]).map(t=>t.displayName||t.userPrincipalName||'').filter(Boolean).join(', ')||'—';
+      const ok=l.result==='success';
+      h+=`<tr><td style="white-space:nowrap">${new Date(l.activityDateTime).toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}</td><td style="max-width:200px;overflow:hidden;text-overflow:ellipsis">${esc(l.activityDisplayName||'')}</td><td>${esc(actor)}</td><td style="max-width:150px;overflow:hidden;text-overflow:ellipsis">${esc(targets)}</td><td><span class="badge ${ok?'badge-green':'badge-red'}">${ok?'OK':'Failed'}</span></td></tr>`;
+    });
+    h+='</tbody></table>';
+    r.innerHTML=h;
+  }catch(e){r.innerHTML=`<span style="color:var(--accent-red)">✗ ${esc(e.message)}<br><span style="font-size:.78rem">Requires AuditLog.Read.All permission</span></span>`}
 }
 
 /* ── Bulk Operations ── */
