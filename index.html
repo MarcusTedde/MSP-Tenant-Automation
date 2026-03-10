@@ -159,7 +159,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .flex{display:flex}.flex-col{flex-direction:column}.items-center{align-items:center}.justify-between{justify-content:space-between}.gap-sm{gap:8px}.gap-md{gap:14px}.gap-lg{gap:22px}.w-full{width:100%}.hidden{display:none!important}
 @media(max-width:1024px){.setup-layout{flex-direction:column!important}.setup-sidebar{width:100%!important}.disc-grid-2,.disc-grid-3,.disc-grid-4{grid-template-columns:1fr 1fr}}
 @media(max-width:640px){.main-content{padding:16px}.header{padding:12px 16px}.tab-bar{padding-left:16px;overflow-x:auto}.tab-btn{padding:10px 14px;font-size:.82rem}.risk-grid{grid-template-columns:1fr}.disc-grid-2,.disc-grid-3,.disc-grid-4{grid-template-columns:1fr}}
-.flatpickr-calendar{background:var(--bg-card)!important;border:1px solid var(--border-subtle)!important;box-shadow:0 8px 32px rgba(0,0,0,.4)!important;border-radius:var(--radius-lg)!important;font-family:var(--font-display)!important}
+.flatpickr-calendar{background:var(--bg-elevated,#111a2e)!important;border:1px solid var(--border-default)!important;box-shadow:0 8px 32px rgba(0,0,0,.6)!important;border-radius:var(--radius-lg)!important;font-family:var(--font-display)!important}
 .flatpickr-calendar .flatpickr-months,.flatpickr-calendar .flatpickr-month{background:var(--bg-elevated)!important;border-radius:var(--radius-md) var(--radius-md) 0 0!important}
 .flatpickr-calendar .flatpickr-current-month .flatpickr-monthDropdown-months,.flatpickr-calendar .flatpickr-current-month input.cur-year{color:var(--text-primary)!important;background:transparent!important;font-weight:600!important}
 .flatpickr-calendar .flatpickr-prev-month,.flatpickr-calendar .flatpickr-next-month{color:var(--text-secondary)!important;fill:var(--text-secondary)!important}
@@ -5093,26 +5093,190 @@ async function exoGrantPerm(){
   r.innerHTML=`<span style="color:var(--accent-amber)">⚠ Mailbox permissions (${esc(perm)}) require Exchange Online PowerShell.<br><code style="font-size:.76rem">Add-MailboxPermission -Identity "${mailbox}" -User "${user}" -AccessRights ${perm}</code><br>Or use Exchange Admin Center → Mailboxes → ${esc(mailbox)} → Delegation</span>`;
 }
 
+// Mailbox quota limits by license type (primary MB / archive MB)
+const EXO_QUOTAS={
+  'O365_BUSINESS_ESSENTIALS':{primary:50,archive:50,name:'Business Basic'},
+  'SMB_BUSINESS_ESSENTIALS':{primary:50,archive:50,name:'Business Basic'},
+  'O365_BUSINESS_PREMIUM':{primary:50,archive:50,name:'Business Standard'},
+  'SMB_BUSINESS_PREMIUM':{primary:50,archive:50,name:'Business Standard'},
+  'SPB':{primary:50,archive:50,name:'Business Premium'},
+  'MICROSOFT_365_BUSINESS_PREMIUM':{primary:50,archive:50,name:'Business Premium'},
+  'SMB_BUSINESS':{primary:50,archive:50,name:'Apps for Business'},
+  'STANDARDPACK':{primary:50,archive:50,name:'Office 365 E1'},
+  'ENTERPRISEPACK':{primary:50,archive:50,name:'Office 365 E3'},
+  'ENTERPRISEPREMIUM':{primary:50,archive:100,name:'Office 365 E5'},
+  'ENTERPRISEPREMIUM_NOPSTNCONF':{primary:50,archive:100,name:'Office 365 E5'},
+  'SPE_E3':{primary:50,archive:50,name:'M365 E3'},
+  'SPE_E5':{primary:50,archive:100,name:'M365 E5'},
+  'MICROSOFT_365_E3':{primary:50,archive:50,name:'M365 E3'},
+  'MICROSOFT_365_E5':{primary:50,archive:100,name:'M365 E5'},
+  'SPE_F1':{primary:2,archive:0,name:'M365 F1'},
+  'SPE_F3':{primary:2,archive:0,name:'M365 F3'},
+  'DESKLESSPACK':{primary:2,archive:0,name:'Office 365 F3'},
+  'EXCHANGESTANDARD':{primary:50,archive:50,name:'Exchange Plan 1'},
+  'EXCHANGEENTERPRISE':{primary:100,archive:100,name:'Exchange Plan 2'},
+  'EXCHANGE_S_ESSENTIALS':{primary:50,archive:50,name:'Exchange Essentials'},
+  'EXCHANGE_ONLINE_ESSENTIALS':{primary:50,archive:50,name:'Exchange Essentials'},
+  'EXCHANGEDESKLESS':{primary:2,archive:0,name:'Exchange Kiosk'},
+  'EXCHANGEARCHIVE_ADDON':{primary:0,archive:100,name:'Archiving Add-on'},
+};
+
+function _getMailboxQuota(skuPartNumbers){
+  // Return the highest quota from assigned licenses
+  let best={primary:0,archive:0,name:null,hasArchiveAddon:false};
+  for(const pn of skuPartNumbers){
+    const q=EXO_QUOTAS[pn.toUpperCase()];
+    if(!q)continue;
+    if(pn.toUpperCase()==='EXCHANGEARCHIVE_ADDON')best.hasArchiveAddon=true;
+    if(q.primary>best.primary){best.primary=q.primary;best.name=q.name}
+    if(q.archive>best.archive)best.archive=q.archive;
+  }
+  // Archive add-on provides unlimited auto-expanding archive
+  if(best.hasArchiveAddon)best.archive='Unlimited';
+  return best;
+}
+
+function _sizeBar(usedGB,quotaGB,label){
+  if(!quotaGB||quotaGB==='Unlimited')return`<div style="font-size:.76rem;margin:2px 0"><span style="color:var(--text-secondary)">${esc(label)}:</span> <strong>${usedGB.toFixed(2)} GB</strong> / Unlimited</div>`;
+  const pct=Math.min((usedGB/quotaGB)*100,100);
+  const color=pct>=90?'var(--accent-red)':pct>=75?'var(--accent-amber)':pct>=50?'var(--accent-blue)':'var(--accent-green)';
+  return`<div style="font-size:.76rem;margin:4px 0">
+    <div style="display:flex;justify-content:space-between;margin-bottom:2px"><span style="color:var(--text-secondary)">${esc(label)}</span><span><strong>${usedGB.toFixed(2)} GB</strong> / ${quotaGB} GB (${pct.toFixed(0)}%)</span></div>
+    <div style="height:6px;background:var(--bg-input);border-radius:3px;overflow:hidden"><div style="height:100%;width:${pct}%;background:${color};border-radius:3px;transition:width .3s"></div></div>
+  </div>`;
+}
+
 async function exoLookupUser(){
   const r=$('exoLookupResult');r.innerHTML='<span style="color:var(--text-muted)">Looking up...</span>';
   if(!A.ok())return r.innerHTML='<span style="color:var(--accent-red)">Sign in first</span>';
   const upn=$('exoLookup').value.trim();if(!upn)return r.innerHTML='<span style="color:var(--accent-red)">Enter a UPN</span>';
   try{
-    const[user,settings]=await Promise.all([
-      G.call(`/users/${upn}?$select=displayName,userPrincipalName,mail,proxyAddresses,assignedLicenses,accountEnabled,createdDateTime,lastSignInDateTime`),
-      G.call(`/users/${upn}/mailboxSettings`).catch(()=>null)
+    // Fetch user, mailbox settings, mailbox statistics, and tenant SKUs in parallel
+    const[user,settings,stats,skus]=await Promise.all([
+      G.call(`/users/${upn}?$select=displayName,userPrincipalName,mail,proxyAddresses,assignedLicenses,accountEnabled,createdDateTime,jobTitle,department,officeLocation,mobilePhone,companyName`),
+      G.call(`/users/${upn}/mailboxSettings`).catch(()=>null),
+      G.call(`/users/${upn}/mailFolders/msgfolderroot?$select=totalItemCount,sizeInBytes,childFolderCount`).catch(()=>null),
+      G.call('/subscribedSkus?$select=skuId,skuPartNumber').catch(()=>({value:[]}))
     ]);
-    let h=`<div style="padding:10px;background:var(--bg-elevated);border-radius:var(--radius-md);margin-top:8px">
-    <div style="font-weight:600">${esc(user.displayName)}</div>
-    <div style="font-size:.78rem;color:var(--text-muted);margin-top:4px">UPN: ${esc(user.userPrincipalName)}</div>
-    <div style="font-size:.78rem;color:var(--text-muted)">Mail: ${esc(user.mail||'—')}</div>
-    <div style="font-size:.78rem;color:var(--text-muted)">Enabled: ${user.accountEnabled?'<span style="color:var(--accent-green)">Yes</span>':'<span style="color:var(--accent-red)">No</span>'}</div>
-    <div style="font-size:.78rem;color:var(--text-muted)">Licenses: ${(user.assignedLicenses||[]).length}</div>
-    <div style="font-size:.78rem;color:var(--text-muted)">Aliases: ${(user.proxyAddresses||[]).join(', ')||'None'}</div>`;
-    if(settings){
-      h+=`<div style="font-size:.78rem;color:var(--text-muted)">Timezone: ${settings.timeZone||'—'}</div>`;
-      h+=`<div style="font-size:.78rem;color:var(--text-muted)">OOO: ${settings.automaticRepliesSetting?.status||'disabled'}</div>`;
+    // Fetch archive folder stats (if archive exists)
+    const archiveStats=await G.call(`/users/${upn}/mailFolders('ArchiveMsgFolderRoot')?$select=totalItemCount,sizeInBytes,childFolderCount`).catch(()=>null);
+
+    // Build SKU ID → partNumber map
+    const skuIdMap={};(skus.value||[]).forEach(s=>{skuIdMap[s.skuId]=s.skuPartNumber});
+    const userSkuParts=(user.assignedLicenses||[]).map(l=>skuIdMap[l.skuId]||'').filter(Boolean);
+    const quota=_getMailboxQuota(userSkuParts);
+
+    // Mailbox sizes
+    const primaryGB=stats?.sizeInBytes?(stats.sizeInBytes/1073741824):0;
+    const archiveGB=archiveStats?.sizeInBytes?(archiveStats.sizeInBytes/1073741824):0;
+    const itemCount=stats?.totalItemCount||0;
+    const archiveItemCount=archiveStats?.totalItemCount||0;
+    const archiveEnabled=!!archiveStats;
+
+    // Aliases — separate SMTP (email) from other proxy types
+    const proxies=user.proxyAddresses||[];
+    const primarySmtp=proxies.find(p=>p.startsWith('SMTP:'));
+    const aliases=proxies.filter(p=>p.startsWith('smtp:')).map(p=>p.substring(5));
+    const sipAddrs=proxies.filter(p=>p.toLowerCase().startsWith('sip:')).map(p=>p.substring(4));
+
+    // License names
+    const licNames=userSkuParts.map(pn=>skuName(pn));
+
+    const lbl='font-size:.76rem;color:var(--text-muted)';
+    const val='font-size:.76rem;color:var(--text-secondary)';
+
+    let h=`<div style="padding:14px;background:var(--bg-elevated);border-radius:var(--radius-md);margin-top:8px">`;
+
+    // Header
+    h+=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+      <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--accent-blue),var(--accent-violet));display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:.9rem">${esc((user.displayName||'?')[0])}</div>
+      <div>
+        <div style="font-weight:600;font-size:.95rem">${esc(user.displayName)}</div>
+        <div style="font-size:.76rem;color:var(--accent-cyan)">${esc(user.userPrincipalName)}</div>
+      </div>
+      <div style="margin-left:auto">${user.accountEnabled?'<span style="background:rgba(16,185,129,.15);color:var(--accent-green);padding:2px 8px;border-radius:10px;font-size:.72rem;font-weight:600">Active</span>':'<span style="background:rgba(239,68,68,.15);color:var(--accent-red);padding:2px 8px;border-radius:10px;font-size:.72rem;font-weight:600">Disabled</span>'}</div>
+    </div>`;
+
+    // User details grid
+    h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:2px 16px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border-subtle)">
+      <div style="${lbl}">Job Title: <span style="${val}">${esc(user.jobTitle||'—')}</span></div>
+      <div style="${lbl}">Department: <span style="${val}">${esc(user.department||'—')}</span></div>
+      <div style="${lbl}">Office: <span style="${val}">${esc(user.officeLocation||'—')}</span></div>
+      <div style="${lbl}">Phone: <span style="${val}">${esc(user.mobilePhone||'—')}</span></div>
+      <div style="${lbl}">Company: <span style="${val}">${esc(user.companyName||'—')}</span></div>
+      <div style="${lbl}">Created: <span style="${val}">${user.createdDateTime?new Date(user.createdDateTime).toLocaleDateString('en-GB'):'—'}</span></div>
+    </div>`;
+
+    // Licenses
+    h+=`<div style="font-weight:600;font-size:.82rem;margin-bottom:6px;color:var(--accent-green)">Licenses (${licNames.length})</div>`;
+    if(licNames.length){
+      h+=`<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px">`;
+      licNames.forEach(n=>{h+=`<span style="background:rgba(16,185,129,.12);color:var(--accent-green);padding:2px 8px;border-radius:10px;font-size:.72rem">${esc(n)}</span>`});
+      h+=`</div>`;
+    }else{
+      h+=`<div style="font-size:.76rem;color:var(--text-muted);margin-bottom:12px">No licenses assigned</div>`;
     }
+
+    // Mailbox Statistics
+    h+=`<div style="font-weight:600;font-size:.82rem;margin-bottom:6px;color:var(--accent-blue)">Mailbox Statistics</div>`;
+    h+=`<div style="padding:10px;background:var(--bg-input);border-radius:var(--radius-md);margin-bottom:12px">`;
+    if(stats){
+      h+=_sizeBar(primaryGB,quota.primary||50,'Primary Mailbox');
+      h+=`<div style="font-size:.74rem;color:var(--text-muted);margin-bottom:6px">Items: ${itemCount.toLocaleString()}</div>`;
+      h+=`<div style="display:flex;align-items:center;gap:6px;margin:6px 0"><span style="font-size:.76rem;color:var(--text-muted)">Archive Mailbox:</span>`;
+      if(archiveEnabled){
+        h+=`<span style="background:rgba(16,185,129,.15);color:var(--accent-green);padding:1px 7px;border-radius:10px;font-size:.72rem;font-weight:600">Enabled</span></div>`;
+        h+=_sizeBar(archiveGB,quota.archive||50,'Archive Mailbox');
+        h+=`<div style="font-size:.74rem;color:var(--text-muted)">Archive Items: ${archiveItemCount.toLocaleString()}</div>`;
+      }else{
+        h+=`<span style="background:rgba(239,68,68,.12);color:var(--accent-red);padding:1px 7px;border-radius:10px;font-size:.72rem;font-weight:600">Not Enabled</span></div>`;
+      }
+      if(quota.name){
+        h+=`<div style="font-size:.72rem;color:var(--text-muted);margin-top:4px">Quota based on: <strong>${esc(quota.name)}</strong> — Primary ${quota.primary} GB / Archive ${quota.archive==='Unlimited'?'Unlimited':quota.archive+' GB'}</div>`;
+      }
+    }else{
+      h+=`<div style="font-size:.76rem;color:var(--text-muted)">Mailbox statistics unavailable (user may not have a mailbox provisioned)</div>`;
+    }
+    h+=`</div>`;
+
+    // Mailbox Settings
+    if(settings){
+      h+=`<div style="font-weight:600;font-size:.82rem;margin-bottom:6px;color:var(--accent-violet)">Mailbox Settings</div>`;
+      h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:2px 16px;margin-bottom:12px">`;
+      h+=`<div style="${lbl}">Timezone: <span style="${val}">${esc(settings.timeZone||'—')}</span></div>`;
+      h+=`<div style="${lbl}">Language: <span style="${val}">${esc(settings.language?.locale||'—')}</span></div>`;
+      h+=`<div style="${lbl}">Date Format: <span style="${val}">${esc(settings.dateFormat||'—')}</span></div>`;
+      h+=`<div style="${lbl}">Time Format: <span style="${val}">${esc(settings.timeFormat||'—')}</span></div>`;
+      const oof=settings.automaticRepliesSetting;
+      if(oof){
+        const oofActive=oof.status==='alwaysEnabled'||oof.status==='scheduled';
+        h+=`<div style="${lbl}">Out of Office: ${oofActive?'<span style="color:var(--accent-amber);font-weight:600">'+esc(oof.status)+'</span>':'<span style="color:var(--accent-green)">Disabled</span>'}</div>`;
+        if(oof.status==='scheduled'){
+          h+=`<div style="${lbl}">OOO Schedule: <span style="${val}">${oof.scheduledStartDateTime?.dateTime?new Date(oof.scheduledStartDateTime.dateTime).toLocaleDateString('en-GB'):''} — ${oof.scheduledEndDateTime?.dateTime?new Date(oof.scheduledEndDateTime.dateTime).toLocaleDateString('en-GB'):''}</span></div>`;
+        }
+      }
+      h+=`</div>`;
+    }
+
+    // Email Aliases
+    h+=`<div style="font-weight:600;font-size:.82rem;margin-bottom:6px;color:var(--accent-orange)">Email Addresses</div>`;
+    h+=`<div style="padding:8px 10px;background:var(--bg-input);border-radius:var(--radius-md);margin-bottom:12px">`;
+    if(primarySmtp){
+      h+=`<div style="font-size:.76rem;margin-bottom:2px"><span style="background:rgba(59,130,246,.15);color:var(--accent-blue);padding:1px 6px;border-radius:8px;font-size:.68rem;font-weight:600;margin-right:4px">PRIMARY</span>${esc(primarySmtp.substring(5))}</div>`;
+    }
+    if(aliases.length){
+      aliases.forEach(a=>{
+        h+=`<div style="font-size:.76rem;margin-bottom:2px"><span style="background:rgba(139,92,246,.12);color:var(--accent-violet);padding:1px 6px;border-radius:8px;font-size:.68rem;margin-right:4px">ALIAS</span>${esc(a)}</div>`;
+      });
+    }
+    if(sipAddrs.length){
+      sipAddrs.forEach(s=>{
+        h+=`<div style="font-size:.76rem;margin-bottom:2px"><span style="background:rgba(6,182,212,.12);color:var(--accent-cyan);padding:1px 6px;border-radius:8px;font-size:.68rem;margin-right:4px">SIP</span>${esc(s)}</div>`;
+      });
+    }
+    if(!primarySmtp&&!aliases.length)h+=`<div style="font-size:.76rem;color:var(--text-muted)">No email addresses found</div>`;
+    h+=`</div>`;
+
     h+=`</div>`;
     r.innerHTML=h;
   }catch(e){r.innerHTML=`<span style="color:var(--accent-red)">✗ ${esc(e.message)}</span>`}
