@@ -77,7 +77,7 @@ if(typeof msal==='undefined'){
 .guide-skip:hover{color:var(--text-secondary)}
 @media(max-width:600px){.guide-feat{grid-template-columns:1fr 1fr}.guide-card{padding:0}.guide-header{padding:24px 20px 0}.guide-body{padding:16px 20px 24px}}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html{font-size:14px;-webkit-font-smoothing:antialiased}
+html{font-size:15px;-webkit-font-smoothing:antialiased}
 body{background:var(--bg-root);color:var(--text-primary);font-family:var(--font-mono);min-height:100vh;overflow-x:hidden}
 ::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:var(--bg-root)}::-webkit-scrollbar-thumb{background:var(--border-subtle);border-radius:3px}
 body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 20% 0%,rgba(59,130,246,0.04) 0%,transparent 60%),radial-gradient(ellipse at 80% 100%,rgba(6,182,212,0.03) 0%,transparent 60%);pointer-events:none;z-index:0}
@@ -91,16 +91,16 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .tab-bar{display:flex;border-bottom:1px solid var(--border-subtle);padding-left:28px;background:rgba(12,18,32,.6);backdrop-filter:blur(8px);position:sticky;top:53px;z-index:99;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none}.tab-bar::-webkit-scrollbar{display:none}
 .tab-btn{font-family:var(--font-display);padding:13px 22px;background:0 0;border:none;color:var(--text-muted);font-size:.92rem;font-weight:500;cursor:pointer;border-bottom:2px solid transparent;transition:all var(--t-fast);display:flex;align-items:center;gap:8px;white-space:nowrap;flex-shrink:0}.tab-btn:hover{color:var(--text-secondary)}.tab-btn.active{color:var(--accent-blue);border-bottom-color:var(--accent-blue)}
 .main-content{padding:28px;max-width:1440px;margin:0 auto}.tab-panel{display:none}.tab-panel.active{display:block;animation:fadeIn .25s ease}
-.card{background:var(--bg-surface);border:1px solid var(--border-subtle);border-radius:var(--radius-lg);padding:22px;transition:border-color var(--t-norm)}.card:hover{border-color:var(--border-default)}.card-header{font-family:var(--font-display);font-size:.92rem;font-weight:700;color:var(--text-primary);margin-bottom:16px;display:flex;align-items:center;gap:8px}.card-header .dot{width:6px;height:6px;border-radius:50%;background:var(--accent-blue)}
-.form-label{display:block;font-family:var(--font-display);font-size:.7rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px}
-.form-input{font-family:var(--font-mono);background:var(--bg-input);border:1px solid var(--border-subtle);color:var(--text-primary);padding:9px 13px;border-radius:var(--radius-md);font-size:.85rem;width:100%;outline:none;transition:border-color var(--t-fast),box-shadow var(--t-fast)}.form-input:focus{border-color:var(--accent-blue);box-shadow:0 0 0 2px rgba(59,130,246,.12)}.form-input::placeholder{color:var(--text-dim)}.form-input:disabled{opacity:.5;cursor:not-allowed}
+.card{background:var(--bg-surface);border:1px solid var(--border-subtle);border-radius:var(--radius-lg);padding:22px;transition:border-color var(--t-norm)}.card:hover{border-color:var(--border-default)}.card-header{font-family:var(--font-display);font-size:1rem;font-weight:700;color:var(--text-primary);margin-bottom:16px;display:flex;align-items:center;gap:8px}.card-header .dot{width:7px;height:7px;border-radius:50%;background:var(--accent-blue)}
+.form-label{display:block;font-family:var(--font-display);font-size:.78rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px}
+.form-input{font-family:var(--font-mono);background:var(--bg-input);border:1px solid var(--border-subtle);color:var(--text-primary);padding:10px 13px;border-radius:var(--radius-md);font-size:.9rem;width:100%;outline:none;transition:border-color var(--t-fast),box-shadow var(--t-fast)}.form-input:focus{border-color:var(--accent-blue);box-shadow:0 0 0 2px rgba(59,130,246,.12)}.form-input::placeholder{color:var(--text-dim)}.form-input:disabled{opacity:.5;cursor:not-allowed}
 .btn{font-family:var(--font-display);font-weight:600;padding:9px 18px;border-radius:var(--radius-md);border:none;cursor:pointer;font-size:.85rem;transition:all var(--t-fast);display:inline-flex;align-items:center;gap:7px;white-space:nowrap}.btn:active{transform:scale(.97)}.btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
 .btn-primary{background:linear-gradient(135deg,var(--accent-blue),#1d4ed8);color:#fff;box-shadow:0 2px 12px rgba(59,130,246,.25)}.btn-primary:hover:not(:disabled){box-shadow:0 4px 20px rgba(59,130,246,.35);transform:translateY(-1px)}
 .btn-secondary{background:var(--bg-elevated);color:var(--text-secondary);border:1px solid var(--border-subtle)}.btn-secondary:hover:not(:disabled){background:var(--border-subtle);color:var(--text-primary)}
 .btn-danger{background:linear-gradient(135deg,var(--accent-red),#dc2626);color:#fff}
 .btn-success{background:linear-gradient(135deg,var(--accent-green),#059669);color:#fff}
 .btn-ghost{background:0 0;color:var(--text-secondary);padding:6px 10px}.btn-ghost:hover{color:var(--text-primary);background:var(--bg-elevated)}
-.btn-sm{padding:5px 12px;font-size:.78rem}
+.btn-sm{padding:7px 14px;font-size:.85rem}
 .btn-fix{background:rgba(59,130,246,.1);color:var(--accent-blue);border:1px solid rgba(59,130,246,.25);padding:4px 12px;font-size:.72rem;border-radius:999px}.btn-fix:hover{background:rgba(59,130,246,.2)}
 .btn-fix.applied{background:rgba(16,185,129,.1);color:var(--accent-green);border-color:rgba(16,185,129,.25);cursor:default;opacity:.8}
 .badge{display:inline-flex;align-items:center;padding:2px 9px;border-radius:999px;font-size:.68rem;font-weight:600;font-family:var(--font-display);letter-spacing:.04em;text-transform:uppercase}
@@ -121,9 +121,9 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .disc-kv .kv-label{font-family:var(--font-display);font-size:.66rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px}
 .disc-kv .kv-value{font-size:.88rem;color:var(--text-primary);font-weight:500;word-break:break-all}
 .disc-kv .kv-value.mono{font-family:var(--font-mono);font-size:.8rem}
-.disc-table{width:100%;border-collapse:collapse;font-family:var(--font-display);font-size:.82rem}
-.disc-table th{padding:8px 12px;text-align:left;font-size:.66rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;background:var(--bg-elevated);border-bottom:1px solid var(--border-subtle)}
-.disc-table td{padding:8px 12px;border-bottom:1px solid rgba(26,37,64,.5)}
+.disc-table{width:100%;border-collapse:collapse;font-family:var(--font-display);font-size:.88rem}
+.disc-table th{padding:9px 12px;text-align:left;font-size:.74rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;background:var(--bg-elevated);border-bottom:1px solid var(--border-subtle)}
+.disc-table td{padding:9px 12px;border-bottom:1px solid rgba(26,37,64,.5)}
 .disc-table tr:hover td{background:rgba(59,130,246,.02)}
 .disc-table .user-row{display:flex;align-items:center;gap:8px}
 .disc-table .avatar{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;color:#fff;flex-shrink:0}
@@ -5457,9 +5457,76 @@ function toolSpo(){
 <div id="spoSitesList" style="margin-top:10px;font-size:.82rem;max-height:400px;overflow:auto"></div>
 </div>
 
+<div class="card">
+<div class="card-header"><span class="dot" style="background:var(--accent-green)"></span> Site Permissions</div>
+<div style="margin-bottom:12px;position:relative">
+<label class="form-label">Site</label>
+<input id="spoPermSite" class="form-input" placeholder="Start typing a site name..." autocomplete="off">
+</div>
+<div style="margin-bottom:12px;position:relative">
+<label class="form-label">User UPN</label>
+<input id="spoPermUser" class="form-input" placeholder="Start typing a name or UPN..." autocomplete="off">
+</div>
+<div style="margin-bottom:12px">
+<label class="form-label">Role</label>
+<select id="spoPermRole" class="form-input">
+<option value="owner">Owner (Full Control)</option>
+<option value="member">Member (Edit)</option>
+<option value="reader">Visitor (Read Only)</option>
+</select>
+</div>
+<div style="display:flex;gap:8px;flex-wrap:wrap">
+<button class="btn btn-primary btn-sm" onclick="spoAddSitePerm()">🔑 Add Permission</button>
+<button class="btn btn-secondary btn-sm" onclick="spoRemoveSitePerm()">✗ Remove</button>
+<button class="btn btn-secondary btn-sm" onclick="spoViewSiteMembers()">👥 View Members</button>
+</div>
+<div id="spoPermResult" style="margin-top:10px;font-size:.82rem;max-height:350px;overflow:auto"></div>
+</div>
+
+<div class="card">
+<div class="card-header"><span class="dot" style="background:var(--accent-green)"></span> Create Site</div>
+<div style="margin-bottom:12px">
+<label class="form-label">Site Type</label>
+<select id="spoNewSiteType" class="form-input" onchange="spoSiteTypeChanged()">
+<option value="team">Team Site (with M365 Group)</option>
+<option value="communication">Communication Site</option>
+</select>
+</div>
+<div style="margin-bottom:12px">
+<label class="form-label">Site Name</label>
+<input id="spoNewSiteName" class="form-input" placeholder="e.g. Marketing Team">
+</div>
+<div style="margin-bottom:12px">
+<label class="form-label">Description</label>
+<input id="spoNewSiteDesc" class="form-input" placeholder="Optional description">
+</div>
+<div id="spoNewSiteOwnerWrap" style="margin-bottom:12px;position:relative">
+<label class="form-label">Owner UPN</label>
+<input id="spoNewSiteOwner" class="form-input" placeholder="Start typing a name or UPN..." autocomplete="off">
+</div>
+<div id="spoNewSiteVisibilityWrap" style="margin-bottom:12px">
+<label class="form-label">Visibility</label>
+<select id="spoNewSiteVisibility" class="form-input">
+<option value="private">Private — Members Only</option>
+<option value="public">Public — Anyone in Org</option>
+</select>
+</div>
+<div id="spoNewSiteAliasWrap" style="margin-bottom:12px">
+<label class="form-label">Mail Alias</label>
+<input id="spoNewSiteAlias" class="form-input" placeholder="e.g. marketing-team (no spaces)">
+<div style="font-size:.72rem;color:var(--text-muted);margin-top:2px">Used for group email & site URL</div>
+</div>
+<button class="btn btn-primary btn-sm" onclick="spoCreateSite()">🌐 Create Site</button>
+<div id="spoCreateResult" style="margin-top:10px;font-size:.82rem"></div>
+</div>
+
 </div>`;
   _initSiteTypeahead('spoSiteUrl');
+  _initSiteTypeahead('spoPermSite');
+  _initUpnTypeahead('spoPermUser');
+  _initUpnTypeahead('spoNewSiteOwner');
   _fetchSites();
+  _fetchUpns();
 }
 
 async function spoApplySettings(){
@@ -5601,6 +5668,262 @@ async function spoListSites(){
     });
     h+='</tbody></table>';
     r.innerHTML=h;
+  }catch(e){G.scopes=null;r.innerHTML=`<span style="color:var(--accent-red)">✗ ${esc(e.message)}</span>`}
+}
+
+// ── SharePoint Site Permissions ──
+async function spoAddSitePerm(){
+  const r=$('spoPermResult');r.innerHTML='<span style="color:var(--text-muted)">Adding permission…</span>';
+  if(!A.ok())return r.innerHTML='<span style="color:var(--accent-red)">Sign in first</span>';
+  const siteId=$('spoPermSite').value.trim(),userUpn=$('spoPermUser').value.trim(),role=$('spoPermRole').value;
+  if(!siteId||!userUpn)return r.innerHTML='<span style="color:var(--accent-red)">Select a site and user</span>';
+  try{
+    G.scopes=Auth.DISCOVERY_SCOPES;
+    // Look up site to find its associated M365 group
+    const site=await G.call(`/sites/${siteId}?$select=id,displayName,webUrl`);
+    // Try group-based approach first (Team Sites have an associated M365 group)
+    let groupId=null;
+    try{
+      const groups=await G.call(`/sites/${siteId}/groups`).catch(()=>null);
+      // Sites associated with M365 groups expose the group
+      if(!groups){
+        // Try extracting group from site's drives or directly
+        const grpResp=await G.call(`/groups?$filter=resourceProvisioningOptions/any(x:x eq 'Team') and mailNickname ne null&$select=id,displayName,resourceProvisioningOptions&$top=999`).catch(()=>null);
+        // Alternative: check site.group directly on beta
+        const siteGroup=await G.call(`/sites/${siteId}?$select=id`,null,null,true).catch(()=>null);
+      }
+    }catch{}
+    // Get the user ID
+    const user=await G.call(`/users/${userUpn}?$select=id,displayName,userPrincipalName`);
+    // Try to find the M365 group associated with the site
+    try{
+      // Most reliable: look for a unified group whose site matches
+      const siteGroups=await G.call(`/sites/${siteId}/drive?$select=id`).catch(()=>null);
+      // Check if site has a group via the sites/{id} endpoint beta properties
+      const siteBeta=await G.call(`/sites/${siteId}?$select=id,displayName`,null,null,true);
+    }catch{}
+    // Best approach: use the Graph site permissions API to add permissions directly
+    // This works for all site types including communication sites
+    const roleMap={owner:'owner',member:'write',reader:'read'};
+    try{
+      await G.call(`/sites/${siteId}/permissions`,'POST',{
+        roles:[roleMap[role]],
+        grantedToIdentities:[{user:{id:user.id}}]
+      });
+      G.scopes=null;
+      r.innerHTML=`<span style="color:var(--accent-green)">✓ Granted <strong>${esc(role)}</strong> to ${esc(user.displayName)} on ${esc(site.displayName)}</span>`;
+      return;
+    }catch(permErr){
+      // Site permissions API requires Sites.FullControl.All (app-only usually)
+      // Fall back to group membership for Team Sites
+    }
+    // Fallback: try adding via M365 group membership
+    // Find group by matching the site URL pattern to group's SPO site
+    let foundGroup=false;
+    try{
+      const allGroups=await G.call("/groups?$filter=groupTypes/any(g:g eq 'Unified')&$select=id,displayName,mail&$top=999");
+      for(const grp of (allGroups.value||[])){
+        try{
+          const grpSites=await G.call(`/groups/${grp.id}/sites/root?$select=id`);
+          if(grpSites.id===siteId||grpSites.id===site.id){
+            groupId=grp.id;foundGroup=true;break;
+          }
+        }catch{}
+      }
+    }catch{}
+    if(groupId){
+      if(role==='owner'){
+        await G.call(`/groups/${groupId}/owners/$ref`,'POST',{'@odata.id':`https://graph.microsoft.com/v1.0/users/${user.id}`});
+        // Also add as member (owners must be members too)
+        await G.call(`/groups/${groupId}/members/$ref`,'POST',{'@odata.id':`https://graph.microsoft.com/v1.0/users/${user.id}`}).catch(()=>null);
+      }else{
+        await G.call(`/groups/${groupId}/members/$ref`,'POST',{'@odata.id':`https://graph.microsoft.com/v1.0/users/${user.id}`});
+      }
+      G.scopes=null;
+      r.innerHTML=`<span style="color:var(--accent-green)">✓ Added ${esc(user.displayName)} as <strong>${esc(role)}</strong> to the M365 group for ${esc(site.displayName)}</span>`;
+    }else{
+      G.scopes=null;
+      r.innerHTML=`<span style="color:var(--accent-amber)">⚠ Could not add permissions directly via Graph API.<br><br>
+      <span style="font-size:.78rem">For <strong>Team Sites</strong>: Add the user to the site's M365 group via Entra ID → Groups<br>
+      For <strong>Communication Sites</strong>: Use SharePoint Admin Center → Sites → ${esc(site.displayName)} → Permissions<br>
+      Or PowerShell: <code>Set-SPOUser -Site "${esc(site.webUrl)}" -LoginName "${esc(userUpn)}" -IsSiteCollectionAdmin $${role==='owner'?'true':'false'}</code></span></span>`;
+    }
+  }catch(e){G.scopes=null;r.innerHTML=`<span style="color:var(--accent-red)">✗ ${esc(e.message)}</span>`}
+}
+
+async function spoRemoveSitePerm(){
+  const r=$('spoPermResult');r.innerHTML='<span style="color:var(--text-muted)">Removing…</span>';
+  if(!A.ok())return r.innerHTML='<span style="color:var(--accent-red)">Sign in first</span>';
+  const siteId=$('spoPermSite').value.trim(),userUpn=$('spoPermUser').value.trim(),role=$('spoPermRole').value;
+  if(!siteId||!userUpn)return r.innerHTML='<span style="color:var(--accent-red)">Select a site and user</span>';
+  try{
+    G.scopes=Auth.DISCOVERY_SCOPES;
+    const user=await G.call(`/users/${userUpn}?$select=id,displayName`);
+    const site=await G.call(`/sites/${siteId}?$select=id,displayName`);
+    // Try finding the M365 group
+    let groupId=null;
+    const allGroups=await G.call("/groups?$filter=groupTypes/any(g:g eq 'Unified')&$select=id,displayName&$top=999").catch(()=>({value:[]}));
+    for(const grp of (allGroups.value||[])){
+      try{
+        const grpSite=await G.call(`/groups/${grp.id}/sites/root?$select=id`);
+        if(grpSite.id===siteId||grpSite.id===site.id){groupId=grp.id;break}
+      }catch{}
+    }
+    if(groupId){
+      if(role==='owner')await G.call(`/groups/${groupId}/owners/${user.id}/$ref`,'DELETE').catch(()=>null);
+      await G.call(`/groups/${groupId}/members/${user.id}/$ref`,'DELETE');
+      G.scopes=null;
+      r.innerHTML=`<span style="color:var(--accent-green)">✓ Removed ${esc(user.displayName)} from the M365 group for ${esc(site.displayName)}</span>`;
+    }else{
+      G.scopes=null;
+      r.innerHTML=`<span style="color:var(--accent-amber)">⚠ No M365 group found for this site. Remove permissions via SharePoint Admin Center → Sites → Permissions</span>`;
+    }
+  }catch(e){G.scopes=null;r.innerHTML=`<span style="color:var(--accent-red)">✗ ${esc(e.message)}</span>`}
+}
+
+async function spoViewSiteMembers(){
+  const r=$('spoPermResult');r.innerHTML='<span style="color:var(--text-muted)">Loading members…</span>';
+  if(!A.ok())return r.innerHTML='<span style="color:var(--accent-red)">Sign in first</span>';
+  const siteId=$('spoPermSite').value.trim();
+  if(!siteId)return r.innerHTML='<span style="color:var(--accent-red)">Select a site first</span>';
+  try{
+    G.scopes=Auth.DISCOVERY_SCOPES;
+    const site=await G.call(`/sites/${siteId}?$select=id,displayName,webUrl`);
+    // Try site permissions API first
+    let perms=null;
+    try{perms=await G.call(`/sites/${siteId}/permissions`)}catch{}
+    // Try to find associated M365 group
+    let groupId=null,owners=[],members=[];
+    const allGroups=await G.call("/groups?$filter=groupTypes/any(g:g eq 'Unified')&$select=id,displayName&$top=999").catch(()=>({value:[]}));
+    for(const grp of (allGroups.value||[])){
+      try{
+        const grpSite=await G.call(`/groups/${grp.id}/sites/root?$select=id`);
+        if(grpSite.id===siteId||grpSite.id===site.id){groupId=grp.id;break}
+      }catch{}
+    }
+    if(groupId){
+      const[ownResp,memResp]=await Promise.all([
+        G.call(`/groups/${groupId}/owners?$select=displayName,userPrincipalName,mail`),
+        G.call(`/groups/${groupId}/members?$select=displayName,userPrincipalName,mail`)
+      ]);
+      owners=ownResp.value||[];members=memResp.value||[];
+    }
+    G.scopes=null;
+
+    let h=`<div style="padding:10px;background:var(--bg-elevated);border-radius:var(--radius-md);margin-bottom:8px">
+      <div style="font-weight:600;font-size:.9rem">${esc(site.displayName)}</div>
+      <div style="font-size:.76rem;color:var(--accent-cyan)">${esc(site.webUrl)}</div>
+    </div>`;
+
+    // Site permissions API results
+    if(perms?.value?.length){
+      h+=`<div style="font-weight:600;font-size:.82rem;margin:8px 0 4px;color:var(--accent-violet)">Site Permissions (${perms.value.length})</div>`;
+      h+='<table class="disc-table" style="font-size:.74rem"><thead><tr><th>Identity</th><th>Roles</th></tr></thead><tbody>';
+      perms.value.forEach(p=>{
+        const ids=p.grantedToIdentitiesV2||p.grantedToIdentities||[];
+        const names=ids.map(i=>i.user?.displayName||i.application?.displayName||'Unknown').join(', ');
+        h+=`<tr><td>${esc(names||'—')}</td><td>${(p.roles||[]).map(ro=>`<span style="background:${ro==='owner'?'rgba(239,68,68,.12);color:var(--accent-red)':ro==='write'?'rgba(59,130,246,.12);color:var(--accent-blue)':'rgba(16,185,129,.12);color:var(--accent-green)'};padding:1px 6px;border-radius:8px;font-size:.68rem">${esc(ro)}</span>`).join(' ')}</td></tr>`;
+      });
+      h+='</tbody></table>';
+    }
+
+    // M365 Group owners & members
+    if(groupId){
+      if(owners.length){
+        h+=`<div style="font-weight:600;font-size:.82rem;margin:10px 0 4px;color:var(--accent-red)">Owners (${owners.length})</div>`;
+        h+='<table class="disc-table" style="font-size:.74rem"><thead><tr><th>Name</th><th>UPN / Email</th></tr></thead><tbody>';
+        owners.forEach(o=>{h+=`<tr><td style="font-weight:500">${esc(o.displayName||'')}</td><td style="color:var(--accent-cyan)">${esc(o.userPrincipalName||o.mail||'')}</td></tr>`});
+        h+='</tbody></table>';
+      }
+      if(members.length){
+        h+=`<div style="font-weight:600;font-size:.82rem;margin:10px 0 4px;color:var(--accent-blue)">Members (${members.length})</div>`;
+        h+='<table class="disc-table" style="font-size:.74rem"><thead><tr><th>Name</th><th>UPN / Email</th></tr></thead><tbody>';
+        members.forEach(m=>{h+=`<tr><td style="font-weight:500">${esc(m.displayName||'')}</td><td style="color:var(--accent-cyan)">${esc(m.userPrincipalName||m.mail||'')}</td></tr>`});
+        h+='</tbody></table>';
+      }
+      if(!owners.length&&!members.length)h+=`<div style="font-size:.76rem;color:var(--text-muted)">M365 group found but no owners or members</div>`;
+    }else if(!perms?.value?.length){
+      h+=`<div style="font-size:.76rem;color:var(--text-muted)">No M365 group associated with this site. This may be a Communication Site — permissions are managed in SharePoint Admin Center.</div>`;
+    }
+    r.innerHTML=h;
+  }catch(e){G.scopes=null;r.innerHTML=`<span style="color:var(--accent-red)">✗ ${esc(e.message)}</span>`}
+}
+
+// ── SharePoint Create Site ──
+function spoSiteTypeChanged(){
+  const isCommunication=$('spoNewSiteType').value==='communication';
+  $('spoNewSiteVisibilityWrap').style.display=isCommunication?'none':'block';
+  $('spoNewSiteAliasWrap').style.display=isCommunication?'none':'block';
+  $('spoNewSiteOwnerWrap').style.display='block';
+}
+
+async function spoCreateSite(){
+  const r=$('spoCreateResult');r.innerHTML='<span style="color:var(--text-muted)">Creating site…</span>';
+  if(!A.ok())return r.innerHTML='<span style="color:var(--accent-red)">Sign in first</span>';
+  const siteType=$('spoNewSiteType').value;
+  const name=$('spoNewSiteName').value.trim();
+  const desc=$('spoNewSiteDesc').value.trim();
+  const ownerUpn=$('spoNewSiteOwner').value.trim();
+  if(!name)return r.innerHTML='<span style="color:var(--accent-red)">Enter a site name</span>';
+  try{
+    G.scopes=Auth.DISCOVERY_SCOPES;
+    if(siteType==='team'){
+      // Team Site = create an M365 group (which auto-provisions a SPO site)
+      const alias=$('spoNewSiteAlias').value.trim()||name.toLowerCase().replace(/[^a-z0-9]/g,'');
+      const visibility=$('spoNewSiteVisibility').value;
+      const groupPayload={
+        displayName:name,
+        description:desc||name,
+        mailNickname:alias,
+        mailEnabled:true,
+        securityEnabled:false,
+        groupTypes:['Unified'],
+        visibility:visibility==='public'?'Public':'Private',
+        resourceProvisioningOptions:['SharePoint']
+      };
+      // Add owner if specified
+      if(ownerUpn){
+        const owner=await G.call(`/users/${ownerUpn}?$select=id`);
+        groupPayload['owners@odata.bind']=[`https://graph.microsoft.com/v1.0/users/${owner.id}`];
+        groupPayload['members@odata.bind']=[`https://graph.microsoft.com/v1.0/users/${owner.id}`];
+      }
+      const grp=await G.call('/groups','POST',groupPayload);
+      G.scopes=null;
+      // The SPO site is provisioned asynchronously — may take a few seconds
+      r.innerHTML=`<span style="color:var(--accent-green)">✓ Created M365 Group <strong>${esc(grp.displayName)}</strong></span><br>
+      <span style="font-size:.76rem;color:var(--text-muted)">Group ID: ${esc(grp.id)}</span><br>
+      <span style="font-size:.76rem;color:var(--accent-cyan)">Email: ${esc(grp.mail||alias+'@...')}</span><br>
+      <span style="font-size:.76rem;color:var(--accent-amber)">SharePoint site will be provisioned automatically (may take 30–60 seconds)</span>`;
+      // Refresh sites cache
+      setTimeout(()=>_fetchSites(true),5000);
+    }else{
+      // Communication Site — use the beta sites endpoint
+      // Communication sites don't have M365 groups, created via SPO API
+      try{
+        const siteDef=await G.call('/sites','POST',{
+          displayName:name,
+          description:desc||'',
+          webTemplate:'STS#3',
+          isPersonalSite:false
+        },true);
+        G.scopes=null;
+        r.innerHTML=`<span style="color:var(--accent-green)">✓ Created communication site <strong>${esc(name)}</strong></span><br>
+        <span style="font-size:.76rem;color:var(--accent-cyan)">${esc(siteDef.webUrl||'')}</span>`;
+        setTimeout(()=>_fetchSites(true),3000);
+      }catch(commErr){
+        G.scopes=null;
+        // Communication site creation via Graph is limited — provide guidance
+        if(ownerUpn){
+          r.innerHTML=`<span style="color:var(--accent-amber)">⚠ Communication sites cannot always be created via Graph API (requires SharePoint Admin permissions).</span><br><br>
+          <span style="font-size:.78rem"><strong>Option 1:</strong> Use SharePoint Admin Center → Sites → Create → Communication site<br><br>
+          <strong>Option 2:</strong> PowerShell:<br>
+          <code>New-SPOSite -Url "https://tenant.sharepoint.com/sites/${esc(name.toLowerCase().replace(/[^a-z0-9]/g,''))}" -Title "${esc(name)}" -Owner "${esc(ownerUpn)}" -Template "SITEPAGEPUBLISHING#0" -StorageQuota 1048576</code></span>`;
+        }else{
+          r.innerHTML=`<span style="color:var(--accent-amber)">⚠ Communication sites cannot always be created via Graph API.</span><br>
+          <span style="font-size:.78rem">Use <strong>SharePoint Admin Center</strong> → Sites → Create → Communication site</span>`;
+        }
+      }
+    }
   }catch(e){G.scopes=null;r.innerHTML=`<span style="color:var(--accent-red)">✗ ${esc(e.message)}</span>`}
 }
 
