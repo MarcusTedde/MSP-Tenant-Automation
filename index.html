@@ -6188,15 +6188,124 @@ async function entraUserGroups(){
   }catch(e){r.innerHTML=`<span style="color:var(--accent-red)">✗ ${esc(e.message)}</span>`}
 }
 
+let _caPolicyData=[];
+function _showCAPolicyDetail(idx){
+  const p=_caPolicyData[idx];if(!p)return;
+  const stateCol=p.state==='enabled'?'var(--accent-green)':p.state==='enabledForReportingButNotEnforced'?'var(--accent-amber)':'var(--accent-red)';
+  const stateLabel=p.state==='enabled'?'Enabled':p.state==='enabledForReportingButNotEnforced'?'Report Only':'Disabled';
+  const cond=p.conditions||{};
+  const users=cond.users||{};
+  const apps=cond.applications||{};
+  const platforms=cond.platforms||{};
+  const locations=cond.locations||{};
+  const grant=p.grantControls||{};
+  const session=p.sessionControls||{};
+
+  function listOrAll(arr,allLabel){if(!arr||!arr.length)return'None';if(arr.includes('All'))return allLabel||'All';if(arr.includes('None'))return'None';return arr.map(v=>esc(v)).join(', ')}
+  function badgeList(items,col){if(!items||!items.length)return'<span style="color:var(--text-muted)">None</span>';return items.map(i=>`<span style="background:${col};padding:2px 7px;border-radius:8px;font-size:.74rem;margin:1px">${esc(i)}</span>`).join(' ')}
+
+  const lbl='font-size:.82rem;color:var(--text-muted);margin-bottom:2px';
+  const sec='font-weight:600;font-size:.84rem;margin:12px 0 6px;padding-bottom:4px;border-bottom:1px solid var(--border-subtle)';
+
+  let h=`<div class="modal-overlay" id="caDetailModal" onclick="if(event.target===this)this.remove()" style="position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;z-index:1000">
+  <div class="card" style="width:680px;max-width:92vw;max-height:85vh;overflow-y:auto;border:1px solid rgba(59,130,246,.25);box-shadow:0 0 60px rgba(59,130,246,.08);animation:fadeIn .2s ease">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <div class="card-header" style="margin-bottom:0">Conditional Access Policy</div>
+      <button onclick="this.closest('.modal-overlay').remove()" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:1.2rem;padding:4px 8px">✕</button>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+      <div style="width:38px;height:38px;border-radius:var(--radius-md);background:linear-gradient(135deg,var(--accent-violet),var(--accent-blue));display:flex;align-items:center;justify-content:center;font-size:1.1rem">🛡️</div>
+      <div style="flex:1">
+        <div style="font-weight:700;font-size:1rem">${esc(p.displayName)}</div>
+        ${p.createdDateTime?`<div style="font-size:.76rem;color:var(--text-muted)">Created: ${new Date(p.createdDateTime).toLocaleDateString('en-GB')}${p.modifiedDateTime?' — Modified: '+new Date(p.modifiedDateTime).toLocaleDateString('en-GB'):''}</div>`:''}
+      </div>
+      <span style="background:${stateCol==='var(--accent-green)'?'rgba(16,185,129,.15)':stateCol==='var(--accent-amber)'?'rgba(245,158,11,.15)':'rgba(239,68,68,.15)'};color:${stateCol};padding:4px 12px;border-radius:10px;font-size:.8rem;font-weight:600">${stateLabel}</span>
+    </div>`;
+
+  // Users & Groups section
+  h+=`<div style="${sec};color:var(--accent-blue)">Users &amp; Groups</div>
+  <div style="padding:10px;background:var(--bg-input);border-radius:var(--radius-md);margin-bottom:8px">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <div><div style="${lbl}">Include Users</div>${badgeList(users.includeUsers?.includes('All')?['All Users']:users.includeUsers||[],'rgba(59,130,246,.12)')}</div>
+      <div><div style="${lbl}">Exclude Users</div>${badgeList(users.excludeUsers||[],'rgba(239,68,68,.1)')}</div>
+      <div><div style="${lbl}">Include Groups</div>${badgeList(users.includeGroups||[],'rgba(59,130,246,.12)')}</div>
+      <div><div style="${lbl}">Exclude Groups</div>${badgeList(users.excludeGroups||[],'rgba(239,68,68,.1)')}</div>
+      <div><div style="${lbl}">Include Roles</div>${badgeList(users.includeRoles||[],'rgba(139,92,246,.12)')}</div>
+      <div><div style="${lbl}">Exclude Roles</div>${badgeList(users.excludeRoles||[],'rgba(239,68,68,.1)')}</div>
+    </div>
+    ${users.includeGuestsOrExternalUsers?`<div style="margin-top:6px"><div style="${lbl}">Guest/External Users</div><span style="font-size:.8rem;color:var(--text-secondary)">Included</span></div>`:''}
+  </div>`;
+
+  // Cloud Apps section
+  h+=`<div style="${sec};color:var(--accent-cyan)">Cloud Apps &amp; Actions</div>
+  <div style="padding:10px;background:var(--bg-input);border-radius:var(--radius-md);margin-bottom:8px">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <div><div style="${lbl}">Include Apps</div>${badgeList(apps.includeApplications?.includes('All')?['All Cloud Apps']:apps.includeApplications||[],'rgba(6,182,212,.12)')}</div>
+      <div><div style="${lbl}">Exclude Apps</div>${badgeList(apps.excludeApplications||[],'rgba(239,68,68,.1)')}</div>
+    </div>
+    ${apps.includeUserActions?.length?`<div style="margin-top:6px"><div style="${lbl}">User Actions</div>${badgeList(apps.includeUserActions,'rgba(245,158,11,.12)')}</div>`:''}
+  </div>`;
+
+  // Conditions section
+  const hasConditions=platforms.includePlatforms?.length||locations.includeLocations?.length||cond.clientAppTypes?.length||cond.signInRiskLevels?.length||cond.userRiskLevels?.length||cond.deviceStates;
+  if(hasConditions){
+    h+=`<div style="${sec};color:var(--accent-amber)">Conditions</div>
+    <div style="padding:10px;background:var(--bg-input);border-radius:var(--radius-md);margin-bottom:8px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">`;
+    if(platforms.includePlatforms?.length)h+=`<div><div style="${lbl}">Platforms (Include)</div>${badgeList(platforms.includePlatforms,'rgba(245,158,11,.12)')}</div>`;
+    if(platforms.excludePlatforms?.length)h+=`<div><div style="${lbl}">Platforms (Exclude)</div>${badgeList(platforms.excludePlatforms,'rgba(239,68,68,.1)')}</div>`;
+    if(locations.includeLocations?.length)h+=`<div><div style="${lbl}">Locations (Include)</div>${badgeList(locations.includeLocations?.includes('All')?['All Locations']:locations.includeLocations,'rgba(16,185,129,.12)')}</div>`;
+    if(locations.excludeLocations?.length)h+=`<div><div style="${lbl}">Locations (Exclude)</div>${badgeList(locations.excludeLocations,'rgba(239,68,68,.1)')}</div>`;
+    if(cond.clientAppTypes?.length)h+=`<div><div style="${lbl}">Client App Types</div>${badgeList(cond.clientAppTypes,'rgba(139,92,246,.12)')}</div>`;
+    if(cond.signInRiskLevels?.length)h+=`<div><div style="${lbl}">Sign-in Risk Levels</div>${badgeList(cond.signInRiskLevels,'rgba(239,68,68,.12)')}</div>`;
+    if(cond.userRiskLevels?.length)h+=`<div><div style="${lbl}">User Risk Levels</div>${badgeList(cond.userRiskLevels,'rgba(239,68,68,.12)')}</div>`;
+    h+=`</div></div>`;
+  }
+
+  // Grant Controls section
+  h+=`<div style="${sec};color:var(--accent-green)">Grant Controls</div>
+  <div style="padding:10px;background:var(--bg-input);border-radius:var(--radius-md);margin-bottom:8px">`;
+  if(grant.operator)h+=`<div style="${lbl}">Operator: <span style="font-size:.82rem;color:var(--text-secondary);font-weight:600">${esc(grant.operator)}</span></div>`;
+  if(grant.builtInControls?.length){
+    h+=`<div style="margin-top:4px"><div style="${lbl}">Controls</div>${badgeList(grant.builtInControls,'rgba(16,185,129,.12)')}</div>`;
+  }
+  if(grant.customAuthenticationFactors?.length){
+    h+=`<div style="margin-top:4px"><div style="${lbl}">Custom Auth Factors</div>${badgeList(grant.customAuthenticationFactors,'rgba(139,92,246,.12)')}</div>`;
+  }
+  if(grant.termsOfUse?.length){
+    h+=`<div style="margin-top:4px"><div style="${lbl}">Terms of Use</div>${badgeList(grant.termsOfUse,'rgba(245,158,11,.12)')}</div>`;
+  }
+  if(!grant.builtInControls?.length&&!grant.customAuthenticationFactors?.length)h+=`<div style="font-size:.82rem;color:var(--text-muted)">Block access or no specific grant controls configured</div>`;
+  h+=`</div>`;
+
+  // Session Controls section
+  const hasSession=session.applicationEnforcedRestrictions?.isEnabled||session.cloudAppSecurity?.isEnabled||session.persistentBrowser||session.signInFrequency?.isEnabled||session.continuousAccessEvaluation;
+  if(hasSession){
+    h+=`<div style="${sec};color:var(--accent-violet)">Session Controls</div>
+    <div style="padding:10px;background:var(--bg-input);border-radius:var(--radius-md);margin-bottom:8px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">`;
+    if(session.applicationEnforcedRestrictions?.isEnabled)h+=`<div style="font-size:.82rem"><span style="color:var(--accent-green)">✓</span> App Enforced Restrictions</div>`;
+    if(session.cloudAppSecurity?.isEnabled)h+=`<div style="font-size:.82rem"><span style="color:var(--accent-green)">✓</span> Cloud App Security: ${esc(session.cloudAppSecurity.cloudAppSecurityType||'')}</div>`;
+    if(session.signInFrequency?.isEnabled)h+=`<div style="font-size:.82rem"><span style="color:var(--accent-green)">✓</span> Sign-in Frequency: ${session.signInFrequency.value||''} ${esc(session.signInFrequency.type||'')}</div>`;
+    if(session.persistentBrowser)h+=`<div style="font-size:.82rem"><span style="color:var(--accent-green)">✓</span> Persistent Browser: ${esc(session.persistentBrowser.mode||'')}</div>`;
+    if(session.continuousAccessEvaluation)h+=`<div style="font-size:.82rem"><span style="color:var(--accent-green)">✓</span> Continuous Access Evaluation: ${esc(session.continuousAccessEvaluation.mode||'')}</div>`;
+    h+=`</div></div>`;
+  }
+
+  h+=`<div style="font-size:.72rem;color:var(--text-muted);margin-top:8px">Policy ID: ${esc(p.id||'—')}</div>`;
+  h+=`</div></div>`;
+  document.body.insertAdjacentHTML('beforeend',h);
+}
 async function entraListCAPolicies(){
   const r=$('entraCaResult');r.innerHTML='<span style="color:var(--text-muted)">Loading…</span>';
   if(!A.ok())return r.innerHTML='<span style="color:var(--accent-red)">Sign in first</span>';
   try{
-    const resp=await G.call('/identity/conditionalAccess/policies?$select=displayName,state,conditions,grantControls,sessionControls,createdDateTime,modifiedDateTime');
-    const policies=resp.value||[];
-    if(!policies.length)return r.innerHTML='<span style="color:var(--text-muted)">No Conditional Access policies found</span>';
-    let h=`<div style="margin-bottom:10px;font-weight:600">${policies.length} Conditional Access polic${policies.length===1?'y':'ies'}</div>`;
-    policies.forEach(p=>{
+    const resp=await G.call('/identity/conditionalAccess/policies');
+    _caPolicyData=resp.value||[];
+    if(!_caPolicyData.length)return r.innerHTML='<span style="color:var(--text-muted)">No Conditional Access policies found</span>';
+    let h=`<div style="margin-bottom:10px;font-weight:600">${_caPolicyData.length} Conditional Access polic${_caPolicyData.length===1?'y':'ies'}</div>`;
+    _caPolicyData.forEach((p,i)=>{
       const stateCol=p.state==='enabled'?'var(--accent-green)':p.state==='enabledForReportingButNotEnforced'?'var(--accent-amber)':'var(--accent-red)';
       const stateLabel=p.state==='enabled'?'On':p.state==='enabledForReportingButNotEnforced'?'Report Only':'Off';
       const grants=(p.grantControls?.builtInControls||[]).join(', ')||'—';
@@ -6204,7 +6313,7 @@ async function entraListCAPolicies(){
       const appLabel=apps.includes('All')?'All Apps':apps.length+' app(s)';
       const users=p.conditions?.users;
       const userLabel=users?.includeUsers?.includes('All')?'All Users':(users?.includeUsers?.length||0)+(users?.includeGroups?.length||0)+' target(s)';
-      h+=`<div style="padding:12px;background:var(--bg-elevated);border-radius:var(--radius-md);margin-bottom:8px;border-left:3px solid ${stateCol}">
+      h+=`<div onclick="_showCAPolicyDetail(${i})" style="padding:12px;background:var(--bg-elevated);border-radius:var(--radius-md);margin-bottom:8px;border-left:3px solid ${stateCol};cursor:pointer;transition:background .15s" onmouseenter="this.style.background='var(--bg-input)'" onmouseleave="this.style.background='var(--bg-elevated)'" title="Click for full policy details">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
           <div style="font-weight:600;font-size:.88rem">${esc(p.displayName)}</div>
           <span style="background:${stateCol==='var(--accent-green)'?'rgba(16,185,129,.15)':stateCol==='var(--accent-amber)'?'rgba(245,158,11,.15)':'rgba(239,68,68,.15)'};color:${stateCol};padding:2px 8px;border-radius:10px;font-size:.74rem;font-weight:600">${stateLabel}</span>
