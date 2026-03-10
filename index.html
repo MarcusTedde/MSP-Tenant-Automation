@@ -3854,13 +3854,14 @@ function intRenderDevices(d){
   h+=`<div id="intDeviceTable" style="overflow-x:auto;max-height:400px;overflow-y:auto"><table class="disc-table"><thead style="position:sticky;top:0;background:var(--bg-surface);z-index:1"><tr>
     <th>Device Name</th><th>User</th><th>OS</th><th>Version</th><th>Compliance</th><th>Encrypted</th><th>Ownership</th><th>Manufacturer / Model</th><th>Last Sync</th>
   </tr></thead><tbody id="intDeviceBody">`;
-  devs.forEach(v=>{
+  window._intDeviceData=devs;
+  devs.forEach((v,idx)=>{
     const cs=v.complianceState;
     const cBadge=cs==='compliant'?'badge-green':cs==='noncompliant'?'badge-red':'badge-amber';
     const cText=cs==='compliant'?'✓ Compliant':cs==='noncompliant'?'✗ Non-Compliant':cs||'Unknown';
     const enc=v.isEncrypted===true?'<span class="badge badge-green" style="font-size:.62rem">✓ Yes</span>':v.isEncrypted===false?'<span class="badge badge-red" style="font-size:.62rem">✗ No</span>':'<span class="badge badge-muted" style="font-size:.62rem">—</span>';
     const own=v.managedDeviceOwnerType==='company'?'<span class="badge badge-blue" style="font-size:.62rem">Corporate</span>':'<span class="badge badge-violet" style="font-size:.62rem">Personal</span>';
-    h+=`<tr data-compliance="${cs||'unknown'}" data-search="${esc((v.deviceName||'')+(v.userPrincipalName||'')+(v.manufacturer||'')+(v.model||'')).toLowerCase()}">
+    h+=`<tr data-compliance="${cs||'unknown'}" data-search="${esc((v.deviceName||'')+(v.userPrincipalName||'')+(v.manufacturer||'')+(v.model||'')).toLowerCase()}" style="cursor:pointer" onclick="_showDeviceComplianceDetail(${idx})" title="Click for compliance details">
       <td style="font-weight:500;font-size:.8rem">${esc(v.deviceName||'—')}</td>
       <td style="font-size:.76rem;color:var(--accent-cyan)">${esc(v.userPrincipalName||'—')}</td>
       <td style="font-size:.76rem">${esc(v.operatingSystem||'—')}</td>
@@ -3892,6 +3893,142 @@ function intSearchDevices(q){
   document.querySelectorAll('#intDeviceBody tr').forEach(tr=>{
     tr.style.display=(!q||tr.dataset.search?.includes(q))?'':'none';
   });
+}
+
+async function _showDeviceComplianceDetail(idx){
+  const v=(window._intDeviceData||[])[idx];if(!v)return;
+  const cs=v.complianceState;
+  const cCol=cs==='compliant'?'var(--accent-green)':cs==='noncompliant'?'var(--accent-red)':'var(--accent-amber)';
+  const cText=cs==='compliant'?'Compliant':cs==='noncompliant'?'Non-Compliant':cs||'Unknown';
+  const lbl='font-size:.82rem;color:var(--text-muted)';const val='font-size:.82rem;color:var(--text-secondary)';
+
+  // Build the popup immediately with device info, then fetch compliance states
+  let h=`<div class="modal-overlay" id="devCompModal" onclick="if(event.target===this)this.remove()" style="position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;z-index:1000">
+  <div class="card" style="width:700px;max-width:92vw;max-height:85vh;overflow-y:auto;border:1px solid ${cs==='compliant'?'rgba(16,185,129,.25)':'rgba(239,68,68,.25)'};box-shadow:0 0 60px ${cs==='compliant'?'rgba(16,185,129,.08)':'rgba(239,68,68,.08)'};animation:fadeIn .2s ease">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <div class="card-header" style="margin-bottom:0">Device Compliance Detail</div>
+      <button onclick="this.closest('.modal-overlay').remove()" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:1.2rem;padding:4px 8px">✕</button>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+      <div style="width:40px;height:40px;border-radius:var(--radius-md);background:linear-gradient(135deg,var(--accent-blue),var(--accent-cyan));display:flex;align-items:center;justify-content:center;font-size:1.2rem">💻</div>
+      <div style="flex:1">
+        <div style="font-weight:700;font-size:1rem">${esc(v.deviceName||'—')}</div>
+        <div style="font-size:.8rem;color:var(--accent-cyan)">${esc(v.userPrincipalName||'—')}</div>
+      </div>
+      <span style="background:${cs==='compliant'?'rgba(16,185,129,.15)':cs==='noncompliant'?'rgba(239,68,68,.15)':'rgba(245,158,11,.15)'};color:${cCol};padding:4px 12px;border-radius:10px;font-size:.8rem;font-weight:600">${cText}</span>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;padding:12px;background:var(--bg-input);border-radius:var(--radius-md);margin-bottom:12px">
+      <div style="${lbl}">OS: <span style="${val}">${esc(v.operatingSystem||'—')} ${esc(v.osVersion||'')}</span></div>
+      <div style="${lbl}">Manufacturer: <span style="${val}">${esc(v.manufacturer||'—')}</span></div>
+      <div style="${lbl}">Model: <span style="${val}">${esc(v.model||'—')}</span></div>
+      <div style="${lbl}">Serial: <span style="${val};font-family:var(--font-mono)">${esc(v.serialNumber||'—')}</span></div>
+      <div style="${lbl}">Ownership: <span style="${val}">${v.managedDeviceOwnerType==='company'?'Corporate':'Personal'}</span></div>
+      <div style="${lbl}">Management: <span style="${val}">${esc(v.managementAgent||'—')}</span></div>
+      <div style="${lbl}">Encrypted: <span style="${val};color:${v.isEncrypted?'var(--accent-green)':'var(--accent-red)'}">${v.isEncrypted?'Yes':'No'}</span></div>
+      <div style="${lbl}">Enrolled: <span style="${val}">${v.enrolledDateTime?new Date(v.enrolledDateTime).toLocaleDateString('en-GB'):'—'}</span></div>
+      <div style="${lbl}">Last Sync: <span style="${val}">${v.lastSyncDateTime?new Date(v.lastSyncDateTime).toLocaleString('en-GB'):'—'}</span></div>
+    </div>
+
+    <div id="devCompStates" style="margin-top:4px"><div style="text-align:center;padding:16px;color:var(--text-muted)"><span class="animate-spin" style="display:inline-block;font-size:1.2rem">◌</span> Loading compliance policy states…</div></div>
+
+  </div></div>`;
+  document.body.insertAdjacentHTML('beforeend',h);
+
+  // Fetch device compliance policy states
+  try{
+    G.scopes=Auth.DISCOVERY_SCOPES;
+    const[compStates,catStates]=await Promise.all([
+      G.call(`/deviceManagement/managedDevices/${v.id}/deviceCompliancePolicyStates`,null,null,false).catch(()=>({value:[]})),
+      G.call(`/deviceManagement/managedDevices/${v.id}/deviceConfigurationStates`,null,null,false).catch(()=>({value:[]}))
+    ]);
+    G.scopes=null;
+
+    const pols=compStates.value||[];
+    const cfgs=catStates.value||[];
+    const el=document.getElementById('devCompStates');if(!el)return;
+
+    let ch='';
+    if(pols.length){
+      const nonComp=pols.filter(p=>p.state!=='compliant'&&p.state!=='notApplicable');
+      const compliant=pols.filter(p=>p.state==='compliant');
+      const na=pols.filter(p=>p.state==='notApplicable');
+
+      if(nonComp.length){
+        ch+=`<div style="padding:12px;background:rgba(239,68,68,.05);border:1px solid rgba(239,68,68,.2);border-radius:var(--radius-md);margin-bottom:12px">
+          <div style="font-weight:700;font-size:.86rem;color:var(--accent-red);margin-bottom:8px">Non-Compliant Policies (${nonComp.length})</div>`;
+        nonComp.forEach(p=>{
+          const stCol=p.state==='error'?'var(--accent-red)':p.state==='conflict'?'var(--accent-violet)':'var(--accent-amber)';
+          ch+=`<div style="padding:10px;background:var(--bg-elevated);border-radius:var(--radius-md);margin-bottom:6px;border-left:3px solid ${stCol}">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+              <span style="font-weight:600;font-size:.84rem">${esc(p.displayName||'Unknown Policy')}</span>
+              <span style="background:rgba(239,68,68,.12);color:var(--accent-red);padding:2px 8px;border-radius:8px;font-size:.72rem;font-weight:600">${esc(p.state||'')}</span>
+            </div>
+            <div style="font-size:.78rem;color:var(--text-muted)">Platform: ${esc(p.platformType||'—')} — Version: ${esc(p.settingCount||0)} setting(s)</div>`;
+          // Show individual settings if available
+          if(p.settingStates?.length){
+            const failedSettings=p.settingStates.filter(s=>s.state!=='compliant'&&s.state!=='notApplicable');
+            if(failedSettings.length){
+              ch+=`<div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border-subtle)">
+                <div style="font-size:.78rem;font-weight:600;color:var(--accent-amber);margin-bottom:4px">Failed Settings:</div>`;
+              failedSettings.forEach(s=>{
+                ch+=`<div style="font-size:.78rem;padding:3px 0;display:flex;align-items:center;gap:6px">
+                  <span style="color:var(--accent-red)">✗</span>
+                  <span style="font-weight:500">${esc(s.setting||'')}</span>
+                  <span style="color:var(--text-muted);font-size:.74rem">${esc(s.state||'')}${s.currentValue?' — Current: '+esc(String(s.currentValue)):''}${s.errorDescription?' — '+esc(s.errorDescription):''}</span>
+                </div>`;
+              });
+              ch+=`</div>`;
+            }
+          }
+          ch+=`</div>`;
+        });
+        ch+=`</div>`;
+      }
+
+      if(compliant.length){
+        ch+=`<div style="margin-bottom:12px">
+          <div style="font-weight:600;font-size:.84rem;color:var(--accent-green);margin-bottom:6px">Compliant Policies (${compliant.length})</div>`;
+        compliant.forEach(p=>{
+          ch+=`<div style="padding:6px 10px;background:var(--bg-elevated);border-radius:var(--radius-md);margin-bottom:4px;border-left:3px solid var(--accent-green);font-size:.82rem;display:flex;align-items:center;justify-content:space-between">
+            <span style="font-weight:500">${esc(p.displayName||'Unknown Policy')}</span>
+            <span class="badge badge-green" style="font-size:.66rem">Compliant</span>
+          </div>`;
+        });
+        ch+=`</div>`;
+      }
+
+      if(na.length){
+        ch+=`<div style="margin-bottom:12px">
+          <div style="font-size:.78rem;color:var(--text-muted);margin-bottom:4px">Not Applicable (${na.length}): ${na.map(p=>esc(p.displayName||'Unknown')).join(', ')}</div>
+        </div>`;
+      }
+    } else {
+      ch+=`<div style="padding:10px;background:var(--bg-elevated);border-radius:var(--radius-md);color:var(--text-muted);font-size:.84rem">No compliance policy states returned. The device may not have compliance policies assigned, or detailed policy states require additional permissions (DeviceManagementConfiguration.Read.All).</div>`;
+    }
+
+    if(cfgs.length){
+      const failedCfgs=cfgs.filter(c=>c.state!=='compliant'&&c.state!=='notApplicable');
+      if(failedCfgs.length){
+        ch+=`<div style="padding:12px;background:rgba(245,158,11,.05);border:1px solid rgba(245,158,11,.2);border-radius:var(--radius-md);margin-bottom:8px">
+          <div style="font-weight:600;font-size:.84rem;color:var(--accent-amber);margin-bottom:6px">Configuration Profile Issues (${failedCfgs.length})</div>`;
+        failedCfgs.forEach(c=>{
+          ch+=`<div style="padding:6px 10px;background:var(--bg-elevated);border-radius:var(--radius-md);margin-bottom:4px;border-left:3px solid var(--accent-amber);font-size:.82rem;display:flex;align-items:center;justify-content:space-between">
+            <span style="font-weight:500">${esc(c.displayName||'')}</span>
+            <span class="badge badge-amber" style="font-size:.66rem">${esc(c.state||'')}</span>
+          </div>`;
+        });
+        ch+=`</div>`;
+      }
+    }
+
+    el.innerHTML=ch||'<div style="color:var(--text-muted);font-size:.84rem;padding:8px">No compliance data available.</div>';
+  }catch(e){
+    G.scopes=null;
+    const el=document.getElementById('devCompStates');
+    if(el)el.innerHTML=`<div style="color:var(--accent-red);font-size:.84rem">✗ ${esc(e.message)}<br><span style="font-size:.78rem;color:var(--text-muted)">Requires DeviceManagementManagedDevices.Read.All permission</span></div>`;
+  }
 }
 
 // ── Remediation modal (reuses the existing rem modal) ──
@@ -6188,15 +6325,124 @@ async function entraUserGroups(){
   }catch(e){r.innerHTML=`<span style="color:var(--accent-red)">✗ ${esc(e.message)}</span>`}
 }
 
+let _caPolicyData=[];
+function _showCAPolicyDetail(idx){
+  const p=_caPolicyData[idx];if(!p)return;
+  const stateCol=p.state==='enabled'?'var(--accent-green)':p.state==='enabledForReportingButNotEnforced'?'var(--accent-amber)':'var(--accent-red)';
+  const stateLabel=p.state==='enabled'?'Enabled':p.state==='enabledForReportingButNotEnforced'?'Report Only':'Disabled';
+  const cond=p.conditions||{};
+  const users=cond.users||{};
+  const apps=cond.applications||{};
+  const platforms=cond.platforms||{};
+  const locations=cond.locations||{};
+  const grant=p.grantControls||{};
+  const session=p.sessionControls||{};
+
+  function listOrAll(arr,allLabel){if(!arr||!arr.length)return'None';if(arr.includes('All'))return allLabel||'All';if(arr.includes('None'))return'None';return arr.map(v=>esc(v)).join(', ')}
+  function badgeList(items,col){if(!items||!items.length)return'<span style="color:var(--text-muted)">None</span>';return items.map(i=>`<span style="background:${col};padding:2px 7px;border-radius:8px;font-size:.74rem;margin:1px">${esc(i)}</span>`).join(' ')}
+
+  const lbl='font-size:.82rem;color:var(--text-muted);margin-bottom:2px';
+  const sec='font-weight:600;font-size:.84rem;margin:12px 0 6px;padding-bottom:4px;border-bottom:1px solid var(--border-subtle)';
+
+  let h=`<div class="modal-overlay" id="caDetailModal" onclick="if(event.target===this)this.remove()" style="position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;z-index:1000">
+  <div class="card" style="width:680px;max-width:92vw;max-height:85vh;overflow-y:auto;border:1px solid rgba(59,130,246,.25);box-shadow:0 0 60px rgba(59,130,246,.08);animation:fadeIn .2s ease">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <div class="card-header" style="margin-bottom:0">Conditional Access Policy</div>
+      <button onclick="this.closest('.modal-overlay').remove()" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:1.2rem;padding:4px 8px">✕</button>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+      <div style="width:38px;height:38px;border-radius:var(--radius-md);background:linear-gradient(135deg,var(--accent-violet),var(--accent-blue));display:flex;align-items:center;justify-content:center;font-size:1.1rem">🛡️</div>
+      <div style="flex:1">
+        <div style="font-weight:700;font-size:1rem">${esc(p.displayName)}</div>
+        ${p.createdDateTime?`<div style="font-size:.76rem;color:var(--text-muted)">Created: ${new Date(p.createdDateTime).toLocaleDateString('en-GB')}${p.modifiedDateTime?' — Modified: '+new Date(p.modifiedDateTime).toLocaleDateString('en-GB'):''}</div>`:''}
+      </div>
+      <span style="background:${stateCol==='var(--accent-green)'?'rgba(16,185,129,.15)':stateCol==='var(--accent-amber)'?'rgba(245,158,11,.15)':'rgba(239,68,68,.15)'};color:${stateCol};padding:4px 12px;border-radius:10px;font-size:.8rem;font-weight:600">${stateLabel}</span>
+    </div>`;
+
+  // Users & Groups section
+  h+=`<div style="${sec};color:var(--accent-blue)">Users &amp; Groups</div>
+  <div style="padding:10px;background:var(--bg-input);border-radius:var(--radius-md);margin-bottom:8px">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <div><div style="${lbl}">Include Users</div>${badgeList(users.includeUsers?.includes('All')?['All Users']:users.includeUsers||[],'rgba(59,130,246,.12)')}</div>
+      <div><div style="${lbl}">Exclude Users</div>${badgeList(users.excludeUsers||[],'rgba(239,68,68,.1)')}</div>
+      <div><div style="${lbl}">Include Groups</div>${badgeList(users.includeGroups||[],'rgba(59,130,246,.12)')}</div>
+      <div><div style="${lbl}">Exclude Groups</div>${badgeList(users.excludeGroups||[],'rgba(239,68,68,.1)')}</div>
+      <div><div style="${lbl}">Include Roles</div>${badgeList(users.includeRoles||[],'rgba(139,92,246,.12)')}</div>
+      <div><div style="${lbl}">Exclude Roles</div>${badgeList(users.excludeRoles||[],'rgba(239,68,68,.1)')}</div>
+    </div>
+    ${users.includeGuestsOrExternalUsers?`<div style="margin-top:6px"><div style="${lbl}">Guest/External Users</div><span style="font-size:.8rem;color:var(--text-secondary)">Included</span></div>`:''}
+  </div>`;
+
+  // Cloud Apps section
+  h+=`<div style="${sec};color:var(--accent-cyan)">Cloud Apps &amp; Actions</div>
+  <div style="padding:10px;background:var(--bg-input);border-radius:var(--radius-md);margin-bottom:8px">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <div><div style="${lbl}">Include Apps</div>${badgeList(apps.includeApplications?.includes('All')?['All Cloud Apps']:apps.includeApplications||[],'rgba(6,182,212,.12)')}</div>
+      <div><div style="${lbl}">Exclude Apps</div>${badgeList(apps.excludeApplications||[],'rgba(239,68,68,.1)')}</div>
+    </div>
+    ${apps.includeUserActions?.length?`<div style="margin-top:6px"><div style="${lbl}">User Actions</div>${badgeList(apps.includeUserActions,'rgba(245,158,11,.12)')}</div>`:''}
+  </div>`;
+
+  // Conditions section
+  const hasConditions=platforms.includePlatforms?.length||locations.includeLocations?.length||cond.clientAppTypes?.length||cond.signInRiskLevels?.length||cond.userRiskLevels?.length||cond.deviceStates;
+  if(hasConditions){
+    h+=`<div style="${sec};color:var(--accent-amber)">Conditions</div>
+    <div style="padding:10px;background:var(--bg-input);border-radius:var(--radius-md);margin-bottom:8px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">`;
+    if(platforms.includePlatforms?.length)h+=`<div><div style="${lbl}">Platforms (Include)</div>${badgeList(platforms.includePlatforms,'rgba(245,158,11,.12)')}</div>`;
+    if(platforms.excludePlatforms?.length)h+=`<div><div style="${lbl}">Platforms (Exclude)</div>${badgeList(platforms.excludePlatforms,'rgba(239,68,68,.1)')}</div>`;
+    if(locations.includeLocations?.length)h+=`<div><div style="${lbl}">Locations (Include)</div>${badgeList(locations.includeLocations?.includes('All')?['All Locations']:locations.includeLocations,'rgba(16,185,129,.12)')}</div>`;
+    if(locations.excludeLocations?.length)h+=`<div><div style="${lbl}">Locations (Exclude)</div>${badgeList(locations.excludeLocations,'rgba(239,68,68,.1)')}</div>`;
+    if(cond.clientAppTypes?.length)h+=`<div><div style="${lbl}">Client App Types</div>${badgeList(cond.clientAppTypes,'rgba(139,92,246,.12)')}</div>`;
+    if(cond.signInRiskLevels?.length)h+=`<div><div style="${lbl}">Sign-in Risk Levels</div>${badgeList(cond.signInRiskLevels,'rgba(239,68,68,.12)')}</div>`;
+    if(cond.userRiskLevels?.length)h+=`<div><div style="${lbl}">User Risk Levels</div>${badgeList(cond.userRiskLevels,'rgba(239,68,68,.12)')}</div>`;
+    h+=`</div></div>`;
+  }
+
+  // Grant Controls section
+  h+=`<div style="${sec};color:var(--accent-green)">Grant Controls</div>
+  <div style="padding:10px;background:var(--bg-input);border-radius:var(--radius-md);margin-bottom:8px">`;
+  if(grant.operator)h+=`<div style="${lbl}">Operator: <span style="font-size:.82rem;color:var(--text-secondary);font-weight:600">${esc(grant.operator)}</span></div>`;
+  if(grant.builtInControls?.length){
+    h+=`<div style="margin-top:4px"><div style="${lbl}">Controls</div>${badgeList(grant.builtInControls,'rgba(16,185,129,.12)')}</div>`;
+  }
+  if(grant.customAuthenticationFactors?.length){
+    h+=`<div style="margin-top:4px"><div style="${lbl}">Custom Auth Factors</div>${badgeList(grant.customAuthenticationFactors,'rgba(139,92,246,.12)')}</div>`;
+  }
+  if(grant.termsOfUse?.length){
+    h+=`<div style="margin-top:4px"><div style="${lbl}">Terms of Use</div>${badgeList(grant.termsOfUse,'rgba(245,158,11,.12)')}</div>`;
+  }
+  if(!grant.builtInControls?.length&&!grant.customAuthenticationFactors?.length)h+=`<div style="font-size:.82rem;color:var(--text-muted)">Block access or no specific grant controls configured</div>`;
+  h+=`</div>`;
+
+  // Session Controls section
+  const hasSession=session.applicationEnforcedRestrictions?.isEnabled||session.cloudAppSecurity?.isEnabled||session.persistentBrowser||session.signInFrequency?.isEnabled||session.continuousAccessEvaluation;
+  if(hasSession){
+    h+=`<div style="${sec};color:var(--accent-violet)">Session Controls</div>
+    <div style="padding:10px;background:var(--bg-input);border-radius:var(--radius-md);margin-bottom:8px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">`;
+    if(session.applicationEnforcedRestrictions?.isEnabled)h+=`<div style="font-size:.82rem"><span style="color:var(--accent-green)">✓</span> App Enforced Restrictions</div>`;
+    if(session.cloudAppSecurity?.isEnabled)h+=`<div style="font-size:.82rem"><span style="color:var(--accent-green)">✓</span> Cloud App Security: ${esc(session.cloudAppSecurity.cloudAppSecurityType||'')}</div>`;
+    if(session.signInFrequency?.isEnabled)h+=`<div style="font-size:.82rem"><span style="color:var(--accent-green)">✓</span> Sign-in Frequency: ${session.signInFrequency.value||''} ${esc(session.signInFrequency.type||'')}</div>`;
+    if(session.persistentBrowser)h+=`<div style="font-size:.82rem"><span style="color:var(--accent-green)">✓</span> Persistent Browser: ${esc(session.persistentBrowser.mode||'')}</div>`;
+    if(session.continuousAccessEvaluation)h+=`<div style="font-size:.82rem"><span style="color:var(--accent-green)">✓</span> Continuous Access Evaluation: ${esc(session.continuousAccessEvaluation.mode||'')}</div>`;
+    h+=`</div></div>`;
+  }
+
+  h+=`<div style="font-size:.72rem;color:var(--text-muted);margin-top:8px">Policy ID: ${esc(p.id||'—')}</div>`;
+  h+=`</div></div>`;
+  document.body.insertAdjacentHTML('beforeend',h);
+}
 async function entraListCAPolicies(){
   const r=$('entraCaResult');r.innerHTML='<span style="color:var(--text-muted)">Loading…</span>';
   if(!A.ok())return r.innerHTML='<span style="color:var(--accent-red)">Sign in first</span>';
   try{
-    const resp=await G.call('/identity/conditionalAccess/policies?$select=displayName,state,conditions,grantControls,sessionControls,createdDateTime,modifiedDateTime');
-    const policies=resp.value||[];
-    if(!policies.length)return r.innerHTML='<span style="color:var(--text-muted)">No Conditional Access policies found</span>';
-    let h=`<div style="margin-bottom:10px;font-weight:600">${policies.length} Conditional Access polic${policies.length===1?'y':'ies'}</div>`;
-    policies.forEach(p=>{
+    const resp=await G.call('/identity/conditionalAccess/policies');
+    _caPolicyData=resp.value||[];
+    if(!_caPolicyData.length)return r.innerHTML='<span style="color:var(--text-muted)">No Conditional Access policies found</span>';
+    let h=`<div style="margin-bottom:10px;font-weight:600">${_caPolicyData.length} Conditional Access polic${_caPolicyData.length===1?'y':'ies'}</div>`;
+    _caPolicyData.forEach((p,i)=>{
       const stateCol=p.state==='enabled'?'var(--accent-green)':p.state==='enabledForReportingButNotEnforced'?'var(--accent-amber)':'var(--accent-red)';
       const stateLabel=p.state==='enabled'?'On':p.state==='enabledForReportingButNotEnforced'?'Report Only':'Off';
       const grants=(p.grantControls?.builtInControls||[]).join(', ')||'—';
@@ -6204,7 +6450,7 @@ async function entraListCAPolicies(){
       const appLabel=apps.includes('All')?'All Apps':apps.length+' app(s)';
       const users=p.conditions?.users;
       const userLabel=users?.includeUsers?.includes('All')?'All Users':(users?.includeUsers?.length||0)+(users?.includeGroups?.length||0)+' target(s)';
-      h+=`<div style="padding:12px;background:var(--bg-elevated);border-radius:var(--radius-md);margin-bottom:8px;border-left:3px solid ${stateCol}">
+      h+=`<div onclick="_showCAPolicyDetail(${i})" style="padding:12px;background:var(--bg-elevated);border-radius:var(--radius-md);margin-bottom:8px;border-left:3px solid ${stateCol};cursor:pointer;transition:background .15s" onmouseenter="this.style.background='var(--bg-input)'" onmouseleave="this.style.background='var(--bg-elevated)'" title="Click for full policy details">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
           <div style="font-weight:600;font-size:.88rem">${esc(p.displayName)}</div>
           <span style="background:${stateCol==='var(--accent-green)'?'rgba(16,185,129,.15)':stateCol==='var(--accent-amber)'?'rgba(245,158,11,.15)':'rgba(239,68,68,.15)'};color:${stateCol};padding:2px 8px;border-radius:10px;font-size:.74rem;font-weight:600">${stateLabel}</span>
@@ -6660,8 +6906,15 @@ function toolIntDeploy(){
   </div>
   <button class="btn btn-primary btn-sm" onclick="intDeployScript()">🚀 Deploy Script to Intune</button>
   <div id="intScriptResult" style="margin-top:10px;font-size:.82rem"></div>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+  <div class="card-header"><span class="dot" style="background:var(--accent-green)"></span> Autopilot Readiness Health Check</div>
+  <p style="font-size:.84rem;color:var(--text-secondary);line-height:1.7;font-family:var(--font-display);margin-bottom:14px">Analyse your Windows Autopilot configuration against Microsoft best practices. Checks deployment profiles, ESP settings, MDM enrolment, branding, compliance policies, and device registration to produce a readiness score with actionable recommendations.</p>
+  <button class="btn btn-primary" onclick="autopilotHealthCheck()">🩺 Run Autopilot Health Check</button>
+  <div id="apHealthResult" style="margin-top:14px"></div>
   </div>`;
-  
+
   c.innerHTML=h;
 }
 
@@ -6764,6 +7017,254 @@ async function intDeployScript(){
     },true);
     r.innerHTML='<span style="color:var(--accent-green)">✓ Script deployed! Assign to a device group in Intune > Devices > Scripts.</span>';
   }catch(e){r.innerHTML=`<span style="color:var(--accent-red)">✗ ${esc(e.message)}</span>`}
+}
+
+async function autopilotHealthCheck(){
+  const r=$('apHealthResult');
+  r.innerHTML='<div style="text-align:center;padding:30px;color:var(--text-muted)"><span class="animate-spin" style="display:inline-block;font-size:1.5rem">◌</span><br>Analysing Autopilot configuration…</div>';
+  if(!A.ok())return r.innerHTML='<div class="card"><span style="color:var(--accent-red)">Sign in first</span></div>';
+
+  G.scopes=Auth.DISCOVERY_SCOPES;
+  // Fetch all the data we need in parallel
+  const [apProfiles,apDevices,enrollConfigs,compPolicies,espProfiles,branding,mdmPolicies,ca,deviceConfigs,secDef]=await Promise.allSettled([
+    G.call('/deviceManagement/windowsAutopilotDeploymentProfiles',null,null,true).catch(()=>({value:[]})),
+    G.call('/deviceManagement/windowsAutopilotDeviceIdentities?$select=id,serialNumber,deploymentProfileAssignmentStatus,groupTag&$top=999',null,null,true).catch(()=>({value:[]})),
+    G.call('/deviceManagement/deviceEnrollmentConfigurations',null,null,false).catch(()=>({value:[]})),
+    G.call('/deviceManagement/deviceCompliancePolicies?$select=id,displayName,lastModifiedDateTime',null,null,false).catch(()=>({value:[]})),
+    G.call("/deviceManagement/deviceEnrollmentConfigurations?$filter=deviceEnrollmentConfigurationType eq 'windows10EnrollmentCompletionPageConfiguration'",null,null,false).catch(()=>({value:[]})),
+    G.call('/organization?$select=displayName',null,null,false).then(()=>G.call('/organizationalBranding/localizations',null,null,true)).catch(()=>null),
+    G.call('/policies/mobileDeviceManagementPolicies',null,null,true).catch(()=>({value:[]})),
+    G.call('/identity/conditionalAccess/policies?$select=id,displayName,state,conditions,grantControls',null,null,false).catch(()=>({value:[]})),
+    G.call('/deviceManagement/deviceConfigurations?$select=id,displayName',null,null,false).catch(()=>({value:[]})),
+    G.call('/policies/identitySecurityDefaultsEnforcementPolicy',null,null,false).catch(()=>null)
+  ]);
+  G.scopes=null;
+
+  const v=i=>i.status==='fulfilled'?i.value:null;
+  const profiles=(v(apProfiles))?.value||[];
+  const devices=(v(apDevices))?.value||[];
+  const enrollCfgs=(v(enrollConfigs))?.value||[];
+  const compPols=(v(compPolicies))?.value||[];
+  const espCfgs=(v(espProfiles))?.value||[];
+  const brandingData=v(branding);
+  const mdm=(v(mdmPolicies))?.value||[];
+  const caPols=(v(ca))?.value||[];
+  const devCfgs=(v(deviceConfigs))?.value||[];
+  const secDefData=v(secDef);
+
+  // All ESP configs
+  const allEsp=enrollCfgs.filter(c=>(c['@odata.type']||'').includes('EnrollmentCompletionPage')||c.deviceEnrollmentConfigurationType==='windows10EnrollmentCompletionPageConfiguration');
+  const espEnabled=allEsp.some(e=>e.showInstallationProgress===true);
+
+  // MDM auto-enrollment scope
+  const mdmAll=mdm.some(p=>(p.appliesTo||'').toLowerCase()==='all');
+  const mdmSome=mdm.some(p=>(p.appliesTo||'').toLowerCase()!=='none');
+
+  // Device limit
+  const limitCfgs=enrollCfgs.filter(c=>(c['@odata.type']||'').includes('DeviceEnrollmentLimit'));
+  const devLimit=limitCfgs.length?Math.max(...limitCfgs.map(c=>c.limit||5)):5;
+
+  // Assigned vs unassigned autopilot devices
+  const apAssigned=devices.filter(d=>d.deploymentProfileAssignmentStatus==='assigned'||d.deploymentProfileAssignmentStatus==='assignedInSync').length;
+  const apUnassigned=devices.length-apAssigned;
+
+  // Profile analysis
+  const hasUserDriven=profiles.some(p=>!p.extractHardwareHash);
+  const hasSelfDeploy=profiles.some(p=>p.extractHardwareHash);
+  const hasPreProv=profiles.some(p=>p.enableWhiteGlove===true||p.preprovisioningAllowed===true);
+  const hasOobeCustom=profiles.some(p=>{const o=p.outOfBoxExperienceSettings;return o&&(o.hidePrivacySettings||o.hideEULA||o.skipKeyboardSelectionPage)});
+  const hasStdUser=profiles.some(p=>p.outOfBoxExperienceSettings?.userType==='standard');
+  const hasDeviceNameTemplate=profiles.some(p=>p.deviceNameTemplate);
+
+  // CA policies targeting device registration/enrollment
+  const caForDevices=caPols.filter(p=>p.state==='enabled'&&p.grantControls?.builtInControls?.some(c=>c==='compliantDevice'||c==='domainJoinedDevice'||c==='mfa'));
+
+  // Define all checks
+  const checks=[
+    // Deployment Profiles
+    {cat:'Deployment Profiles',icon:'📋',id:'ap-profile-exists',name:'At least one Autopilot deployment profile exists',best:'Create at least one Autopilot deployment profile to define the out-of-box experience for new devices.',pass:profiles.length>0,sev:'critical',action:'Create an Autopilot deployment profile in Intune → Devices → Enroll devices → Deployment Profiles → Create Profile'},
+    {cat:'Deployment Profiles',icon:'📋',id:'ap-user-driven',name:'User-driven deployment mode configured',best:'User-driven mode is the most common and recommended for general use — users sign in during OOBE and the device is associated with their identity.',pass:hasUserDriven,sev:'medium',action:'Ensure at least one profile uses user-driven mode. Self-deploying is for shared/kiosk devices only.'},
+    {cat:'Deployment Profiles',icon:'📋',id:'ap-oobe-customised',name:'OOBE experience customised (privacy/EULA/keyboard hidden)',best:'Hide unnecessary OOBE screens to streamline the enrolment experience. Users should not see privacy settings, EULA, or keyboard selection pages.',pass:hasOobeCustom,sev:'high',action:'Edit your Autopilot profile → Out-of-box experience → Hide Privacy settings: Yes, Hide EULA: Yes, Skip keyboard selection: Yes'},
+    {cat:'Deployment Profiles',icon:'📋',id:'ap-std-user',name:'Users enrol as Standard users (not local admin)',best:'Users should be enrolled as Standard users to reduce attack surface. Local admin rights should be granted via PIM/JIT only when needed.',pass:hasStdUser,sev:'high',action:'Edit your Autopilot profile → Out-of-box experience → User account type: Standard'},
+    {cat:'Deployment Profiles',icon:'📋',id:'ap-device-naming',name:'Device name template configured',best:'Use a naming convention (e.g. %SERIAL%, CORP-%RAND:5%) so devices have meaningful names in Intune/Entra rather than generic "DESKTOP-XXXXX".',pass:hasDeviceNameTemplate,sev:'medium',action:'Edit your Autopilot profile → Set "Apply device name template" to Yes, and define a template like CORP-%SERIAL% or %RAND:8%'},
+    {cat:'Deployment Profiles',icon:'📋',id:'ap-pre-prov',name:'Pre-provisioning (White Glove) enabled',best:'Enable pre-provisioning to allow IT technicians to prepare devices before handing them to end users, reducing first-login wait times.',pass:hasPreProv,sev:'low',action:'Edit your Autopilot profile → "Allow White Glove OOBE" → Yes. This enables the technician flow with Windows key pressed 5 times.'},
+
+    // Enrollment Status Page
+    {cat:'Enrollment Status Page',icon:'⏳',id:'ap-esp-enabled',name:'Enrollment Status Page (ESP) is enabled',best:'The ESP ensures all required apps, policies, and certificates are installed before the user reaches the desktop. Without it, users may reach an unconfigured desktop.',pass:espEnabled,sev:'critical',action:'Intune → Devices → Enroll devices → Enrollment Status Page → Create or edit the default profile → Show app and profile installation progress: Yes'},
+
+    // MDM Auto-Enrollment
+    {cat:'MDM Enrolment',icon:'🔄',id:'ap-mdm-scope',name:'MDM auto-enrolment scope is configured',best:'Devices must be auto-enrolled into Intune when they join Azure AD. If MDM scope is "None", Autopilot-joined devices will not be managed.',pass:mdmSome,sev:'critical',action:'Entra ID → Mobility (MDM and MAM) → Microsoft Intune → MDM user scope → Set to "All" or select specific groups'},
+    {cat:'MDM Enrolment',icon:'🔄',id:'ap-mdm-all',name:'MDM auto-enrolment scope covers All users',best:'Setting scope to "All" ensures every user who joins a device to Azure AD gets automatically enrolled. Group-scoped enrolment risks missing users.',pass:mdmAll,sev:'high',action:'Entra ID → Mobility (MDM and MAM) → Microsoft Intune → MDM user scope → All'},
+    {cat:'MDM Enrolment',icon:'🔄',id:'ap-dev-limit',name:'Device enrolment limit is reasonable (≤15)',best:'An overly generous device limit (>15) can lead to unmanaged sprawl. Microsoft recommends 5-15 per user.',pass:devLimit<=15,sev:'medium',action:'Intune → Devices → Enroll devices → Enrollment device limit restrictions → Ensure limit is between 5 and 15'},
+
+    // Device Registration
+    {cat:'Device Registration',icon:'📱',id:'ap-devices-exist',name:'Autopilot devices are registered',best:'Hardware hashes must be imported for Autopilot to recognise devices during OOBE. Without registered devices, Autopilot will not trigger.',pass:devices.length>0,sev:'critical',action:'Import hardware hashes via CSV, OEM registration, or Windows Autopilot partner. Intune → Devices → Enroll devices → Devices → Import'},
+    {cat:'Device Registration',icon:'📱',id:'ap-devices-assigned',name:'All Autopilot devices have profiles assigned',best:'Every registered Autopilot device should be assigned to a deployment profile. Unassigned devices will not get the intended OOBE experience.',pass:devices.length>0&&apUnassigned===0,sev:'high',action:`${apUnassigned} device(s) are unassigned. Use dynamic device groups with the Autopilot attribute or manually assign profiles in Intune → Devices → Enroll devices → Devices`},
+    {cat:'Device Registration',icon:'📱',id:'ap-group-tags',name:'Group tags are used for device organisation',best:'Group tags allow you to categorise Autopilot devices by department, location, or role and assign different profiles via dynamic groups.',pass:devices.some(d=>d.groupTag),sev:'low',action:'Assign group tags when importing hardware hashes or edit devices in Intune → Devices → Enroll devices → Devices → Select device → Group tag'},
+
+    // Compliance & Security
+    {cat:'Compliance & Security',icon:'🔒',id:'ap-compliance-policy',name:'At least one Windows compliance policy exists',best:'Without compliance policies, devices cannot be evaluated for health. Compliance is required for Conditional Access to block non-compliant devices.',pass:compPols.length>0,sev:'critical',action:'Intune → Devices → Compliance policies → Create Policy → Windows 10 and later. Set minimum OS version, BitLocker required, firewall enabled, antivirus required.'},
+    {cat:'Compliance & Security',icon:'🔒',id:'ap-ca-device-compliance',name:'Conditional Access requires compliant devices',best:'Create a CA policy that requires device compliance for access to cloud apps. This ensures only healthy, enrolled devices can access corporate resources.',pass:caForDevices.some(p=>p.grantControls?.builtInControls?.includes('compliantDevice')),sev:'high',action:'Entra ID → Conditional Access → Create policy → Grant: Require device to be marked as compliant'},
+    {cat:'Compliance & Security',icon:'🔒',id:'ap-ca-mfa-enrollment',name:'MFA required during device enrolment',best:'Requiring MFA during device enrolment prevents unauthorised users from enrolling devices. This is a critical security control for Autopilot.',pass:caForDevices.some(p=>p.grantControls?.builtInControls?.includes('mfa')),sev:'high',action:'Create a Conditional Access policy targeting "Microsoft Intune Enrollment" cloud app with Grant: Require MFA'},
+    {cat:'Compliance & Security',icon:'🔒',id:'ap-config-profiles',name:'Device configuration profiles are deployed',best:'Configuration profiles push Wi-Fi, VPN, certificates, and security settings to devices. Without them, Autopilot-provisioned devices will lack corporate configuration.',pass:devCfgs.length>0,sev:'high',action:'Intune → Devices → Configuration profiles → Create profile → Windows 10 and later. Deploy Wi-Fi, VPN, certificates, and endpoint protection settings.'},
+
+    // Branding
+    {cat:'Company Branding',icon:'🎨',id:'ap-branding',name:'Company branding is configured for sign-in page',best:'Company branding customises the Azure AD sign-in page users see during Autopilot OOBE with your logo, background, and colours.',pass:brandingData&&(Array.isArray(brandingData.value)?brandingData.value.length>0:!!brandingData.id),sev:'low',action:'Entra ID → Company branding → Configure default branding with logo, background image, and sign-in page text'},
+  ];
+
+  // Calculate score
+  const passed=checks.filter(c=>c.pass).length;
+  const total=checks.length;
+  const score=Math.round(passed/total*100);
+  const sCol=score>=80?'var(--accent-green)':score>=50?'var(--accent-amber)':'var(--accent-red)';
+  const sBg=score>=80?'rgba(16,185,129,.06)':score>=50?'rgba(245,158,11,.06)':'rgba(239,68,68,.06)';
+  const sBor=score>=80?'rgba(16,185,129,.25)':score>=50?'rgba(245,158,11,.25)':'rgba(239,68,68,.25)';
+  const failed=checks.filter(c=>!c.pass);
+  const critical=failed.filter(c=>c.sev==='critical');
+  const high=failed.filter(c=>c.sev==='high');
+
+  let h='';
+
+  // Score dashboard
+  h+=`<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;gap:10px;margin-bottom:16px">
+    <div class="card" style="text-align:center;padding:18px;background:${sBg};border-color:${sBor}"><div style="font-family:var(--font-display);font-size:2.5rem;font-weight:800;color:${sCol};line-height:1">${score}%</div><div style="font-size:.76rem;color:var(--text-muted);margin-top:4px">Autopilot Score</div></div>
+    <div class="card" style="text-align:center;padding:18px"><div style="font-family:var(--font-display);font-size:1.6rem;font-weight:800;color:var(--accent-green)">${passed}</div><div style="font-size:.76rem;color:var(--text-muted);margin-top:4px">Passed</div></div>
+    <div class="card" style="text-align:center;padding:18px"><div style="font-family:var(--font-display);font-size:1.6rem;font-weight:800;color:var(--accent-red)">${failed.length}</div><div style="font-size:.76rem;color:var(--text-muted);margin-top:4px">Failed</div></div>
+    <div class="card" style="text-align:center;padding:18px"><div style="font-family:var(--font-display);font-size:1.6rem;font-weight:800;color:var(--accent-blue)">${profiles.length}</div><div style="font-size:.76rem;color:var(--text-muted);margin-top:4px">Profiles</div></div>
+    <div class="card" style="text-align:center;padding:18px"><div style="font-family:var(--font-display);font-size:1.6rem;font-weight:800;color:var(--accent-cyan)">${devices.length}</div><div style="font-size:.76rem;color:var(--text-muted);margin-top:4px">AP Devices</div></div>
+  </div>`;
+
+  // Summary alert
+  if(score>=80){
+    h+=`<div style="padding:12px 16px;background:rgba(16,185,129,.06);border:1px solid rgba(16,185,129,.2);border-radius:var(--radius-md);margin-bottom:16px;font-size:.86rem">
+      <span style="color:var(--accent-green);font-weight:700">Autopilot is well configured.</span> <span style="color:var(--text-secondary)">${failed.length?failed.length+' minor item(s) could be improved.':'All best-practice checks passed.'}</span></div>`;
+  } else if(score>=50){
+    h+=`<div style="padding:12px 16px;background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.2);border-radius:var(--radius-md);margin-bottom:16px;font-size:.86rem">
+      <span style="color:var(--accent-amber);font-weight:700">Autopilot needs attention.</span> <span style="color:var(--text-secondary)">${critical.length?critical.length+' critical':'No critical'} and ${high.length} high-severity issue(s) found. Address the items below to ensure reliable device provisioning.</span></div>`;
+  } else {
+    h+=`<div style="padding:12px 16px;background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.2);border-radius:var(--radius-md);margin-bottom:16px;font-size:.86rem">
+      <span style="color:var(--accent-red);font-weight:700">Autopilot is not ready for production.</span> <span style="color:var(--text-secondary)">${critical.length} critical issue(s) must be resolved. Devices will likely fail enrolment or arrive in an unconfigured state.</span></div>`;
+  }
+
+  // Group checks by category
+  const cats=[...new Set(checks.map(c=>c.cat))];
+
+  cats.forEach(cat=>{
+    const catChecks=checks.filter(c=>c.cat===cat);
+    const catPassed=catChecks.filter(c=>c.pass).length;
+    const catIcon=catChecks[0].icon;
+    const catCol=catPassed===catChecks.length?'var(--accent-green)':catPassed>=catChecks.length/2?'var(--accent-amber)':'var(--accent-red)';
+
+    h+=`<div class="card" style="margin-bottom:12px;padding:0">
+      <div style="padding:12px 16px;border-bottom:1px solid var(--border-subtle);display:flex;align-items:center;gap:8px">
+        <span style="font-size:1.1rem">${catIcon}</span>
+        <span style="font-weight:700;font-size:.9rem">${esc(cat)}</span>
+        <span style="margin-left:auto;font-size:.78rem;color:${catCol};font-weight:600">${catPassed}/${catChecks.length} passed</span>
+      </div>
+      <table class="disc-table" style="font-size:.8rem;margin:0"><tbody>`;
+
+    catChecks.forEach(c=>{
+      const badge=c.pass?'badge-green':'badge-red';
+      const label=c.pass?'✓ Pass':'✗ Fail';
+      const sevBadge=c.sev==='critical'?'badge-red':c.sev==='high'?'badge-amber':c.sev==='medium'?'badge-muted':'badge-blue';
+      h+=`<tr style="${!c.pass?'background:rgba(239,68,68,.03)':''}">
+        <td style="width:80px"><span class="badge ${badge}" style="font-size:.7rem">${label}</span></td>
+        <td style="font-weight:500">${esc(c.name)}</td>
+        <td style="width:70px"><span class="badge ${sevBadge}" style="font-size:.66rem">${esc(c.sev)}</span></td>
+        <td style="width:36px;text-align:center">${!c.pass?`<button style="background:none;border:none;cursor:pointer;font-size:.9rem;padding:2px" onclick="_showApCheckDetail('${c.id}')" title="View details">🔍</button>`:''}</td>
+      </tr>`;
+      if(!c.pass){
+        h+=`<tr id="apDetail_${c.id}" class="hidden"><td colspan="4" style="padding:0"></td></tr>`;
+      }
+    });
+    h+=`</tbody></table></div>`;
+  });
+
+  // Store for popup
+  window._apHealthChecks=checks;
+
+  // Deviation report section — only show failed checks
+  if(failed.length){
+    h+=`<div class="card" style="margin-bottom:16px;border-color:rgba(239,68,68,.25)">
+      <div class="card-header" style="color:var(--accent-red)"><span class="dot" style="background:var(--accent-red)"></span> Deviations &amp; Recommended Actions (${failed.length})</div>
+      <p style="font-size:.82rem;color:var(--text-secondary);line-height:1.6;margin-bottom:12px">The following items deviate from Microsoft Autopilot best practices. Address critical and high-severity items first to ensure reliable device provisioning.</p>
+      <table class="disc-table" style="font-size:.8rem"><thead><tr><th>Severity</th><th>Category</th><th>Check</th><th>Best Practice</th><th>Recommended Action</th></tr></thead><tbody>`;
+    // Sort by severity: critical > high > medium > low
+    const sevOrder={critical:0,high:1,medium:2,low:3};
+    [...failed].sort((a,b)=>(sevOrder[a.sev]||9)-(sevOrder[b.sev]||9)).forEach(c=>{
+      const sevBadge=c.sev==='critical'?'badge-red':c.sev==='high'?'badge-amber':c.sev==='medium'?'badge-muted':'badge-blue';
+      h+=`<tr style="background:${c.sev==='critical'?'rgba(239,68,68,.04)':c.sev==='high'?'rgba(245,158,11,.03)':''}">
+        <td><span class="badge ${sevBadge}" style="font-size:.68rem">${esc(c.sev)}</span></td>
+        <td style="font-size:.78rem;white-space:nowrap">${c.icon} ${esc(c.cat)}</td>
+        <td style="font-weight:500">${esc(c.name)}</td>
+        <td style="font-size:.78rem;color:var(--text-secondary);max-width:250px">${esc(c.best)}</td>
+        <td style="font-size:.78rem;color:var(--accent-cyan);max-width:280px">${esc(c.action)}</td>
+      </tr>`;
+    });
+    h+=`</tbody></table></div>`;
+  }
+
+  // Profile & device summary
+  if(profiles.length||devices.length){
+    h+=`<div class="card" style="margin-bottom:16px">
+      <div class="card-header"><span class="dot" style="background:var(--accent-blue)"></span> Autopilot Configuration Summary</div>`;
+    if(profiles.length){
+      h+=`<div style="font-weight:600;font-size:.84rem;margin-bottom:6px">Deployment Profiles (${profiles.length})</div>`;
+      h+=`<table class="disc-table" style="font-size:.8rem;margin-bottom:12px"><thead><tr><th>Profile</th><th>Mode</th><th>Pre-Provisioning</th><th>OOBE Customised</th><th>User Type</th><th>Naming Template</th></tr></thead><tbody>`;
+      profiles.forEach(p=>{
+        const mode=p.extractHardwareHash?'Self-deploying':'User-driven';
+        const preP=p.enableWhiteGlove===true||p.preprovisioningAllowed===true;
+        const oobe=p.outOfBoxExperienceSettings;
+        const oobeOk=oobe&&(oobe.hidePrivacySettings||oobe.hideEULA||oobe.skipKeyboardSelectionPage);
+        h+=`<tr>
+          <td style="font-weight:500">${esc(p.displayName||'')}</td>
+          <td><span class="badge badge-blue" style="font-size:.68rem">${mode}</span></td>
+          <td>${preP?'<span class="badge badge-green" style="font-size:.66rem">Enabled</span>':'<span class="badge badge-muted" style="font-size:.66rem">Disabled</span>'}</td>
+          <td>${oobeOk?'<span class="badge badge-green" style="font-size:.66rem">Yes</span>':'<span class="badge badge-amber" style="font-size:.66rem">Default</span>'}</td>
+          <td>${oobe?.userType==='standard'?'<span style="color:var(--accent-green)">Standard</span>':'<span style="color:var(--accent-amber)">Admin</span>'}</td>
+          <td style="font-size:.76rem;font-family:var(--font-mono)">${esc(p.deviceNameTemplate||'Not set')}</td>
+        </tr>`;
+      });
+      h+=`</tbody></table>`;
+    }
+    if(devices.length){
+      h+=`<div style="font-weight:600;font-size:.84rem;margin-bottom:6px">Device Registration (${devices.length} devices — ${apAssigned} assigned, ${apUnassigned} unassigned)</div>`;
+      h+=`<div class="progress-track" style="margin-bottom:12px"><div class="progress-fill" style="width:${devices.length?Math.round(apAssigned/devices.length*100):0}%;background:${apUnassigned===0?'var(--accent-green)':'var(--accent-amber)'}"></div></div>`;
+    }
+    h+=`</div>`;
+  }
+
+  r.innerHTML=h;
+}
+
+function _showApCheckDetail(id){
+  const c=(window._apHealthChecks||[]).find(x=>x.id===id);if(!c)return;
+  const sevCol=c.sev==='critical'?'var(--accent-red)':c.sev==='high'?'var(--accent-amber)':'var(--accent-blue)';
+  let h=`<div class="modal-overlay" onclick="if(event.target===this)this.remove()" style="position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;z-index:1000">
+  <div class="card" style="width:600px;max-width:92vw;max-height:85vh;overflow-y:auto;border:1px solid rgba(239,68,68,.25);box-shadow:0 0 60px rgba(239,68,68,.08);animation:fadeIn .2s ease">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <div class="card-header" style="margin-bottom:0">Autopilot Check Detail</div>
+      <button onclick="this.closest('.modal-overlay').remove()" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:1.2rem;padding:4px 8px">✕</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+      <span style="font-size:1.4rem">${c.icon}</span>
+      <div style="flex:1">
+        <div style="font-weight:700;font-size:.96rem">${esc(c.name)}</div>
+        <div style="font-size:.78rem;color:var(--text-muted)">${esc(c.cat)}</div>
+      </div>
+      <span class="badge badge-red" style="font-size:.78rem;padding:4px 10px">Failed</span>
+      <span style="background:${c.sev==='critical'?'rgba(239,68,68,.15)':c.sev==='high'?'rgba(245,158,11,.15)':'rgba(99,102,241,.15)'};color:${sevCol};padding:3px 10px;border-radius:10px;font-size:.76rem;font-weight:600">${c.sev}</span>
+    </div>
+    <div style="margin-bottom:12px;padding:12px;background:var(--bg-input);border-radius:var(--radius-md)">
+      <div style="font-weight:600;font-size:.84rem;color:var(--accent-blue);margin-bottom:4px">Best Practice</div>
+      <div style="font-size:.84rem;color:var(--text-secondary);line-height:1.6">${esc(c.best)}</div>
+    </div>
+    <div style="padding:12px;background:rgba(6,182,212,.04);border:1px solid rgba(6,182,212,.2);border-radius:var(--radius-md)">
+      <div style="font-weight:600;font-size:.84rem;color:var(--accent-cyan);margin-bottom:4px">Recommended Action</div>
+      <div style="font-size:.84rem;color:var(--text-secondary);line-height:1.6">${esc(c.action)}</div>
+    </div>
+  </div></div>`;
+  document.body.insertAdjacentHTML('beforeend',h);
 }
 
 /* ── Tenant Health Dashboard ── */
