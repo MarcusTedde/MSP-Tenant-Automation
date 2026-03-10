@@ -11,6 +11,9 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%232563eb'/%3E%3Cstop offset='100%25' stop-color='%2306b6d4'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='180' height='180' rx='40' fill='url(%23g)'/%3E%3Ctext x='90' y='128' text-anchor='middle' font-family='system-ui,Segoe UI,sans-serif' font-weight='900' font-size='108' fill='white'%3EM%3C/text%3E%3C/svg%3E">
 <script src="https://alcdn.msauth.net/browser/2.38.3/js/msal-browser.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script>
 // Fallback: if Microsoft CDN failed, try jsdelivr (mirrors npm directly)
 if(typeof msal==='undefined'){
@@ -156,6 +159,25 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .flex{display:flex}.flex-col{flex-direction:column}.items-center{align-items:center}.justify-between{justify-content:space-between}.gap-sm{gap:8px}.gap-md{gap:14px}.gap-lg{gap:22px}.w-full{width:100%}.hidden{display:none!important}
 @media(max-width:1024px){.setup-layout{flex-direction:column!important}.setup-sidebar{width:100%!important}.disc-grid-2,.disc-grid-3,.disc-grid-4{grid-template-columns:1fr 1fr}}
 @media(max-width:640px){.main-content{padding:16px}.header{padding:12px 16px}.tab-bar{padding-left:16px;overflow-x:auto}.tab-btn{padding:10px 14px;font-size:.82rem}.risk-grid{grid-template-columns:1fr}.disc-grid-2,.disc-grid-3,.disc-grid-4{grid-template-columns:1fr}}
+.flatpickr-calendar{background:var(--bg-card)!important;border:1px solid var(--border-subtle)!important;box-shadow:0 8px 32px rgba(0,0,0,.4)!important;border-radius:var(--radius-lg)!important;font-family:var(--font-display)!important}
+.flatpickr-calendar .flatpickr-months,.flatpickr-calendar .flatpickr-month{background:var(--bg-elevated)!important;border-radius:var(--radius-md) var(--radius-md) 0 0!important}
+.flatpickr-calendar .flatpickr-current-month .flatpickr-monthDropdown-months,.flatpickr-calendar .flatpickr-current-month input.cur-year{color:var(--text-primary)!important;background:transparent!important;font-weight:600!important}
+.flatpickr-calendar .flatpickr-prev-month,.flatpickr-calendar .flatpickr-next-month{color:var(--text-secondary)!important;fill:var(--text-secondary)!important}
+.flatpickr-calendar .flatpickr-prev-month:hover,.flatpickr-calendar .flatpickr-next-month:hover{color:var(--accent-blue)!important;fill:var(--accent-blue)!important}
+.flatpickr-calendar .flatpickr-weekdays{background:var(--bg-elevated)!important}
+.flatpickr-calendar span.flatpickr-weekday{color:var(--text-muted)!important;font-weight:600!important;font-size:.78rem!important}
+.flatpickr-calendar .flatpickr-day{color:var(--text-primary)!important;border-radius:var(--radius-sm)!important}
+.flatpickr-calendar .flatpickr-day:hover{background:var(--bg-elevated)!important;border-color:var(--accent-blue)!important}
+.flatpickr-calendar .flatpickr-day.selected{background:var(--accent-blue)!important;border-color:var(--accent-blue)!important;color:#fff!important}
+.flatpickr-calendar .flatpickr-day.today{border-color:var(--accent-amber)!important}
+.flatpickr-calendar .flatpickr-day.flatpickr-disabled,.flatpickr-calendar .flatpickr-day.prevMonthDay,.flatpickr-calendar .flatpickr-day.nextMonthDay{color:var(--text-muted)!important;opacity:.4!important}
+.flatpickr-calendar .flatpickr-time{border-top:1px solid var(--border-subtle)!important}
+.flatpickr-calendar .flatpickr-time input,.flatpickr-calendar .flatpickr-time .flatpickr-am-pm{color:var(--text-primary)!important;background:var(--bg-input)!important;border-radius:var(--radius-sm)!important}
+.flatpickr-calendar .flatpickr-time input:hover,.flatpickr-calendar .flatpickr-time input:focus{background:var(--bg-elevated)!important}
+.flatpickr-calendar .flatpickr-time .flatpickr-time-separator{color:var(--text-muted)!important}
+.flatpickr-calendar .numInputWrapper span{border-color:var(--border-subtle)!important}
+.flatpickr-calendar .numInputWrapper span:hover{background:var(--bg-elevated)!important}
+.flatpickr-calendar .numInputWrapper span svg path{fill:var(--text-secondary)!important}
 </style>
 </head>
 <body>
@@ -4894,8 +4916,8 @@ function toolExo(){
 <textarea id="exoOooExternal" class="form-input" rows="3" placeholder="Thank you for your email..."></textarea>
 </div>
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
-<div><label class="form-label">Start</label><input id="exoOooStart" class="form-input" type="datetime-local"></div>
-<div><label class="form-label">End</label><input id="exoOooEnd" class="form-input" type="datetime-local"></div>
+<div><label class="form-label">Start</label><input id="exoOooStart" class="form-input" placeholder="Click to pick date &amp; time" readonly></div>
+<div><label class="form-label">End</label><input id="exoOooEnd" class="form-input" placeholder="Click to pick date &amp; time" readonly></div>
 </div>
 <div style="display:flex;gap:8px">
 <button class="btn btn-primary btn-sm" onclick="exoSetOoo()">⏰ Set OOO</button>
@@ -4975,8 +4997,13 @@ function toolExo(){
   _initUpnTypeahead('exoPermMailbox');
   _initUpnTypeahead('exoPermUser');
   _initUpnTypeahead('exoLookup');
-  // Pre-fetch users in background
   _fetchUpns();
+  // Initialize date/time pickers
+  const fpOpts={enableTime:true,dateFormat:'Y-m-d H:i',time_24hr:true,theme:'dark',allowInput:false,clickOpens:true,disableMobile:true};
+  if(typeof flatpickr!=='undefined'){
+    flatpickr('#exoOooStart',{...fpOpts,defaultDate:new Date(),minDate:'today'});
+    flatpickr('#exoOooEnd',{...fpOpts,defaultDate:new Date(Date.now()+7*86400000),minDate:'today'});
+  }
 }
 
 async function exoCreateShared(){
