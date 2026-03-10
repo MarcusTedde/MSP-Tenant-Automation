@@ -161,7 +161,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 <body>
 <div id="app">
 <header class="header"><div class="header-brand"><div class="header-logo">M</div><div><div class="header-title">M365 Tenant Automation</div><div class="header-subtitle">MSP Onboarding, Provisioning &amp; CE+ Compliance</div></div></div><div class="header-meta"><button id="themeBtn" class="btn btn-ghost btn-sm" onclick="toggleTheme()" title="Toggle light/dark theme" style="font-size:1.1rem;padding:4px 8px;line-height:1">🌙</button><span class="badge badge-cyan">Graph API v1.0</span><span class="badge badge-green" style="margin-left:4px">v3.4</span><div id="authStatus" class="auth-status disconnected"><span class="auth-dot"></span><span id="authStatusText">Not connected</span></div><button id="authBtn" class="btn btn-sm btn-secondary" onclick="handleAuth()">Sign In</button></div></header>
-<nav class="tab-bar"><button class="tab-btn active" data-tab="setup" onclick="switchTab('setup',this)"><span>⚡</span> New Tenant Setup</button><button class="tab-btn" data-tab="discovery" onclick="switchTab('discovery',this)"><span>🔍</span> Tenant Discovery</button><button class="tab-btn" data-tab="users" onclick="switchTab('users',this)"><span>👤</span> Users</button><button class="tab-btn" data-tab="domains" onclick="switchTab('domains',this)"><span>🌐</span> Domains</button><button class="tab-btn" data-tab="intune" onclick="switchTab('intune',this)"><span>📱</span> Intune</button><button class="tab-btn" data-tab="compliance" onclick="switchTab('compliance',this)"><span>✅</span> CE+ Compliance</button><button class="tab-btn" data-tab="config" onclick="switchTab('config',this)"><span>⚙</span> App Config</button></nav>
+<nav class="tab-bar"><button class="tab-btn active" data-tab="setup" onclick="switchTab('setup',this)"><span>⚡</span> New Tenant Setup</button><button class="tab-btn" data-tab="discovery" onclick="switchTab('discovery',this)"><span>🔍</span> Tenant Discovery</button><button class="tab-btn" data-tab="users" onclick="switchTab('users',this)"><span>👤</span> Users</button><button class="tab-btn" data-tab="domains" onclick="switchTab('domains',this)"><span>🌐</span> Domains</button><button class="tab-btn" data-tab="tools" onclick="switchTab('tools',this)"><span>🧰</span> MSP Tools</button><button class="tab-btn" data-tab="intune" onclick="switchTab('intune',this)"><span>📱</span> Intune</button><button class="tab-btn" data-tab="compliance" onclick="switchTab('compliance',this)"><span>✅</span> CE+ Compliance</button><button class="tab-btn" data-tab="config" onclick="switchTab('config',this)"><span>⚙</span> App Config</button></nav>
 <main class="main-content">
 
 <!-- SETUP -->
@@ -457,6 +457,95 @@ Jane,Doe,jane.doe,CFO,Finance,LIC — Business Premium"></textarea>
 </div>
 
 <div id="panel-compliance" class="tab-panel"><div class="card" style="margin-bottom:22px"><div class="flex items-center gap-md" style="flex-wrap:wrap"><div style="flex:1;min-width:280px;max-width:400px"><label class="form-label">Target Tenant Domain</label><input id="compDomain" class="form-input" placeholder="contoso.onmicrosoft.com"></div><button id="compScanBtn" class="btn btn-primary" onclick="startCompliance()" style="align-self:flex-end">✅ Run CE+ Scan</button><button id="compExBtn" class="btn btn-secondary hidden" onclick="exComp()" style="align-self:flex-end">📄 Export</button></div><div id="compProgress" class="hidden" style="margin-top:14px"><div class="flex justify-between" style="margin-bottom:5px"><span style="font-size:.8rem;color:var(--text-secondary)">Scanning...</span><span id="compPercent" style="font-size:.8rem;font-weight:600;color:var(--accent-blue)">0%</span></div><div class="progress-track"><div id="compBar" class="progress-fill" style="width:0%"></div></div></div></div><div id="compResults"></div><div id="compEmpty" class="empty-state"><div class="empty-icon">✅</div><div class="empty-title">CE+ Compliance Scanner</div><div class="empty-desc">Scans your tenant against all Cyber Essentials Plus requirements</div></div></div>
+
+<!-- MSP TOOLS -->
+<div id="panel-tools" class="tab-panel">
+
+<!-- Tool Category Grid -->
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;margin-bottom:24px" class="stagger">
+
+<!-- App Packager -->
+<div class="card" style="cursor:pointer" onclick="toolOpen('appPkg')">
+<div class="card-header"><span style="font-size:1.3rem">📦</span> App Packager</div>
+<p style="font-size:.82rem;color:var(--text-secondary);line-height:1.6;font-family:var(--font-display)">Convert EXE/MSI installers to Intune .intunewin format. Guided wizard generates the detection rules, install commands, and requirements.</p>
+<div style="margin-top:10px"><span class="badge badge-violet">Intune</span></div>
+</div>
+
+<!-- Logo Converter -->
+<div class="card" style="cursor:pointer" onclick="toolOpen('logoCvt')">
+<div class="card-header"><span style="font-size:1.3rem">🎨</span> Logo Converter</div>
+<p style="font-size:.82rem;color:var(--text-secondary);line-height:1.6;font-family:var(--font-display)">Resize and convert company logos to all required M365 branding dimensions. Banner, square, favicon — one upload does everything.</p>
+<div style="margin-top:10px"><span class="badge badge-cyan">Entra ID</span></div>
+</div>
+
+<!-- Exchange Online -->
+<div class="card" style="cursor:pointer" onclick="toolOpen('exo')">
+<div class="card-header"><span style="font-size:1.3rem">📧</span> Exchange Online</div>
+<p style="font-size:.82rem;color:var(--text-secondary);line-height:1.6;font-family:var(--font-display)">Manage shared mailboxes, distribution lists, mail contacts, out-of-office, forwarding, and room resources without the EAC.</p>
+<div style="margin-top:10px"><span class="badge badge-blue">Exchange</span></div>
+</div>
+
+<!-- SharePoint Online -->
+<div class="card" style="cursor:pointer" onclick="toolOpen('spo')">
+<div class="card-header"><span style="font-size:1.3rem">📄</span> SharePoint Online</div>
+<p style="font-size:.82rem;color:var(--text-secondary);line-height:1.6;font-family:var(--font-display)">Manage tenant sharing, site permissions, external access, storage quotas, and hub sites. Bulk site creation and permission audit.</p>
+<div style="margin-top:10px"><span class="badge badge-green">SharePoint</span></div>
+</div>
+
+<!-- Entra ID -->
+<div class="card" style="cursor:pointer" onclick="toolOpen('entra')">
+<div class="card-header"><span style="font-size:1.3rem">🔑</span> Entra ID</div>
+<p style="font-size:.82rem;color:var(--text-secondary);line-height:1.6;font-family:var(--font-display)">Manage roles, guest users, named locations, app registrations, enterprise apps, and consent. Bulk operations and stale account cleanup.</p>
+<div style="margin-top:10px"><span class="badge badge-violet">Entra</span></div>
+</div>
+
+<!-- Purview / Compliance -->
+<div class="card" style="cursor:pointer" onclick="toolOpen('purview')">
+<div class="card-header"><span style="font-size:1.3rem">🛡️</span> Purview &amp; Compliance</div>
+<p style="font-size:.82rem;color:var(--text-secondary);line-height:1.6;font-family:var(--font-display)">Configure DLP policies, sensitivity labels, retention policies, audit log, and compliance score tracking in one place.</p>
+<div style="margin-top:10px"><span class="badge badge-amber">Purview</span></div>
+</div>
+
+<!-- Intune Quick Deploy -->
+<div class="card" style="cursor:pointer" onclick="toolOpen('intDeploy')">
+<div class="card-header"><span style="font-size:1.3rem">🚀</span> Intune Quick Deploy</div>
+<p style="font-size:.82rem;color:var(--text-secondary);line-height:1.6;font-family:var(--font-display)">One-click deploy common apps (Chrome, Zoom, Adobe, 7-Zip, Teams). Generate PowerShell scripts and deploy custom scripts to devices.</p>
+<div style="margin-top:10px"><span class="badge badge-violet">Intune</span></div>
+</div>
+
+<!-- Tenant Health -->
+<div class="card" style="cursor:pointer" onclick="toolOpen('health')">
+<div class="card-header"><span style="font-size:1.3rem">💊</span> Tenant Health</div>
+<p style="font-size:.82rem;color:var(--text-secondary);line-height:1.6;font-family:var(--font-display)">Real-time tenant health dashboard. License utilisation, Secure Score, service health, sign-in failures, risky users, and MFA coverage.</p>
+<div style="margin-top:10px"><span class="badge badge-green">All</span></div>
+</div>
+
+<!-- Bulk Operations -->
+<div class="card" style="cursor:pointer" onclick="toolOpen('bulk')">
+<div class="card-header"><span style="font-size:1.3rem">📋</span> Bulk Operations</div>
+<p style="font-size:.82rem;color:var(--text-secondary);line-height:1.6;font-family:var(--font-display)">CSV import/export for users, groups, licenses, and devices. Bulk password reset, license assignment, and group membership changes.</p>
+<div style="margin-top:10px"><span class="badge badge-cyan">All</span></div>
+</div>
+
+<!-- Policy Templates -->
+<div class="card" style="cursor:pointer" onclick="toolOpen('templates')">
+<div class="card-header"><span style="font-size:1.3rem">📐</span> Policy Templates</div>
+<p style="font-size:.82rem;color:var(--text-secondary);line-height:1.6;font-family:var(--font-display)">Export and import CA policies, compliance policies, and config profiles across tenants. Standardise your MSP baseline across all clients.</p>
+<div style="margin-top:10px"><span class="badge badge-amber">MSP</span></div>
+</div>
+
+</div>
+
+<!-- Tool Workspace (dynamic content area) -->
+<div id="toolWorkspace" class="hidden">
+<div style="display:flex;align-items:center;gap:10px;margin-bottom:18px">
+<button class="btn btn-ghost btn-sm" onclick="toolClose()" style="font-size:1rem">&larr;</button>
+<span id="toolTitle" style="font-family:var(--font-display);font-weight:700;font-size:1.1rem"></span>
+</div>
+<div id="toolContent"></div>
+</div>
+
+</div>
 
 <!-- CONFIG -->
 <div id="panel-config" class="tab-panel"><div style="max-width:820px">
@@ -2032,8 +2121,8 @@ function renderDisc(){
   if(allTargetAll.length>0){const noExcl=allTargetAll.filter(p=>!(p.conditions?.users?.excludeGroups||[]).length&&!(p.conditions?.users?.excludeUsers||[]).length);if(noExcl.length)caWarnings.push({sev:'high',msg:`${noExcl.length} policy(ies) target "All Users" with no exclusions — ensure break-glass accounts are excluded`})}
   const reportOnly=ca.filter(p=>p.state==='enabledForReportingButNotEnforced');
   if(reportOnly.length)caWarnings.push({sev:'info',msg:`${reportOnly.length} policy(ies) in Report-Only mode — review sign-in logs before enabling`});
-  const disabled=ca.filter(p=>p.state==='disabled');
-  if(disabled.length)caWarnings.push({sev:'medium',msg:`${disabled.length} disabled policy(ies) found — review and remove or enable`});
+  const caDisabled=ca.filter(p=>p.state==='disabled');
+  if(caDisabled.length)caWarnings.push({sev:'medium',msg:`${caDisabled.length} disabled policy(ies) found — review and remove or enable`});
 
   h+=`<div class="disc-section">${errN('conditionalAccess')}<div class="disc-section-head"><div class="sec-icon" style="background:rgba(16,185,129,.1);color:var(--accent-green)">🔒</div>Conditional Access <span class="badge badge-muted" style="margin-left:auto">${ca.length}</span></div>`;
   if(caWarnings.length){h+=`<div style="margin-bottom:12px">`;caWarnings.forEach(w=>{
@@ -4174,6 +4263,1773 @@ acceptedDomains:[{domainName:o+'.com',domainType:'Authoritative'},{domainName:o+
 connectors:[{name:'Mimecast Inbound',connectorType:'Partner',enabled:true}],
 secureScore:[{currentScore:42,maxScore:78}]
 }[k]||{}}
+
+// ===== MSP TOOLS =====
+
+/* ============================================================
+   MSP TOOLS — Tool Framework
+   ============================================================ */
+function toolOpen(id){
+  const grid=document.querySelector('#panel-tools > div:first-child');
+  grid.classList.add('hidden');
+  $('toolWorkspace').classList.remove('hidden');
+  const titles={appPkg:'App Packager',logoCvt:'Logo Converter',exo:'Exchange Online',spo:'SharePoint Online',entra:'Entra ID',purview:'Purview & Compliance',intDeploy:'Intune Quick Deploy',health:'Tenant Health',bulk:'Bulk Operations',templates:'Policy Templates'};
+  $('toolTitle').textContent=titles[id]||id;
+  const fn={appPkg:toolAppPkg,logoCvt:toolLogoCvt,exo:toolExo,spo:toolSpo,entra:toolEntra,purview:toolPurview,intDeploy:toolIntDeploy,health:toolHealth,bulk:toolBulk,templates:toolTemplates};
+  if(fn[id])fn[id]();
+}
+function toolClose(){
+  $('toolWorkspace').classList.add('hidden');
+  const grid=document.querySelector('#panel-tools > div:first-child');
+  grid.classList.remove('hidden');
+  $('toolContent').innerHTML='';
+}
+
+/* ── App Packager ── */
+function toolAppPkg(){
+  const c=$('toolContent');
+  c.innerHTML=`
+<div class="card" style="margin-bottom:16px">
+<div class="card-header"><span class="dot" style="background:var(--accent-violet)"></span> Intune App Package Builder</div>
+<p style="font-size:.84rem;color:var(--text-secondary);line-height:1.7;font-family:var(--font-display);margin-bottom:18px">Convert EXE or MSI installers into Intune-ready packages. This tool generates the detection rules, install/uninstall commands, and requirement rules — then wraps everything into a deployment-ready configuration.</p>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px">
+<div>
+<label class="form-label">Application Name</label>
+<input id="pkgName" class="form-input" placeholder="e.g. Google Chrome Enterprise">
+</div>
+<div>
+<label class="form-label">Publisher</label>
+<input id="pkgPub" class="form-input" placeholder="e.g. Google LLC">
+</div>
+</div>
+
+<div style="margin-bottom:18px">
+<label class="form-label">Installer File (EXE or MSI)</label>
+<div id="pkgDropZone" style="border:2px dashed var(--border-default);border-radius:var(--radius-lg);padding:40px 20px;text-align:center;cursor:pointer;transition:all .2s" onclick="$('pkgFileInput').click()">
+<div style="font-size:2rem;margin-bottom:8px">📦</div>
+<div style="font-family:var(--font-display);font-weight:600;color:var(--text-secondary);margin-bottom:4px">Drop installer here or click to browse</div>
+<div style="font-size:.78rem;color:var(--text-muted)">Supports .exe, .msi, .msix, .appx files</div>
+</div>
+<input id="pkgFileInput" type="file" accept=".exe,.msi,.msix,.appx" style="display:none" onchange="pkgFileSelected(this)">
+</div>
+
+<div id="pkgFileInfo" class="hidden" style="padding:14px;background:var(--bg-elevated);border-radius:var(--radius-md);border:1px solid var(--border-subtle);margin-bottom:18px">
+<div style="display:flex;align-items:center;gap:10px">
+<span style="font-size:1.3rem">📄</span>
+<div style="flex:1">
+<div id="pkgFileName" style="font-weight:600;font-size:.88rem"></div>
+<div id="pkgFileSize" style="font-size:.78rem;color:var(--text-muted)"></div>
+</div>
+<span id="pkgFileType" class="badge badge-violet"></span>
+</div>
+</div>
+
+<div id="pkgWizard" class="hidden">
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px">
+<div>
+<label class="form-label">Install Command</label>
+<input id="pkgInstall" class="form-input mono" placeholder="Auto-detected">
+</div>
+<div>
+<label class="form-label">Uninstall Command</label>
+<input id="pkgUninstall" class="form-input mono" placeholder="Auto-detected">
+</div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px">
+<div>
+<label class="form-label">Detection Method</label>
+<select id="pkgDetect" class="form-input" onchange="pkgDetectChange()">
+<option value="msi">MSI Product Code</option>
+<option value="file">File Exists</option>
+<option value="reg">Registry Key</option>
+</select>
+</div>
+<div>
+<label class="form-label">Detection Value</label>
+<input id="pkgDetectVal" class="form-input mono" placeholder="Auto-detected">
+</div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:18px">
+<div>
+<label class="form-label">Install Behaviour</label>
+<select id="pkgBehav" class="form-input">
+<option value="system">System (install for all users)</option>
+<option value="user">User (current user only)</option>
+</select>
+</div>
+<div>
+<label class="form-label">Restart Behaviour</label>
+<select id="pkgRestart" class="form-input">
+<option value="suppress">Suppress restart</option>
+<option value="allow">Allow restart</option>
+<option value="force">Force restart</option>
+<option value="basedOnReturnCode">Based on return code</option>
+</select>
+</div>
+<div>
+<label class="form-label">Architecture</label>
+<select id="pkgArch" class="form-input">
+<option value="x64">64-bit (x64)</option>
+<option value="x86">32-bit (x86)</option>
+<option value="all">Both</option>
+</select>
+</div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px">
+<div>
+<label class="form-label">Minimum OS Version</label>
+<select id="pkgMinOS" class="form-input">
+<option value="10.0.19041.0">Windows 10 2004+</option>
+<option value="10.0.19044.0">Windows 10 21H2+</option>
+<option value="10.0.22000.0">Windows 11 21H2+</option>
+<option value="10.0.22621.0">Windows 11 22H2+</option>
+<option value="10.0.22631.0">Windows 11 23H2+</option>
+</select>
+</div>
+<div>
+<label class="form-label">Assignment Group (optional)</label>
+<input id="pkgGroup" class="form-input" placeholder="e.g. [Intune] All Windows Devices">
+</div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px">
+<div>
+<label class="form-label">Version</label>
+<input id="pkgVersion" class="form-input" placeholder="e.g. 120.0.6099.130">
+</div>
+<div>
+<label class="form-label">Description</label>
+<input id="pkgDesc" class="form-input" placeholder="Short description for Intune portal">
+</div>
+</div>
+
+<div style="display:flex;gap:10px;margin-bottom:18px">
+<button class="btn btn-primary" onclick="pkgGenerate()">📦 Generate Package Config</button>
+<button class="btn btn-secondary" onclick="pkgGenScript()">📜 Generate IntuneWin Script</button>
+</div>
+</div>
+
+<div id="pkgOutput" class="hidden">
+<div class="card-header" style="margin-top:10px"><span class="dot" style="background:var(--accent-green)"></span> Package Configuration</div>
+<div style="display:flex;gap:8px;margin-bottom:12px">
+<button class="btn btn-sm btn-secondary" onclick="pkgCopy('json')">📋 Copy JSON</button>
+<button class="btn btn-sm btn-secondary" onclick="pkgCopy('ps1')">📋 Copy PowerShell</button>
+<button class="btn btn-sm btn-success" onclick="pkgDeploy()">🚀 Deploy to Intune</button>
+</div>
+<pre id="pkgResult" style="background:var(--bg-input);border:1px solid var(--border-subtle);border-radius:var(--radius-md);padding:16px;font-size:.78rem;color:var(--text-secondary);overflow:auto;max-height:400px;line-height:1.6;margin:0"></pre>
+</div>
+
+</div>`;
+
+  // Drag and drop
+  const dz=$('pkgDropZone');
+  dz.ondragover=e=>{e.preventDefault();dz.style.borderColor='var(--accent-blue)';dz.style.background='rgba(59,130,246,.04)'};
+  dz.ondragleave=()=>{dz.style.borderColor='var(--border-default)';dz.style.background=''};
+  dz.ondrop=e=>{e.preventDefault();dz.style.borderColor='var(--border-default)';dz.style.background='';if(e.dataTransfer.files.length)pkgHandleFile(e.dataTransfer.files[0])};
+}
+
+let PKG_FILE=null;
+function pkgFileSelected(input){if(input.files.length)pkgHandleFile(input.files[0])}
+function pkgHandleFile(file){
+  PKG_FILE=file;
+  const ext=file.name.split('.').pop().toLowerCase();
+  $('pkgFileInfo').classList.remove('hidden');
+  $('pkgFileName').textContent=file.name;
+  $('pkgFileSize').textContent=(file.size/1024/1024).toFixed(2)+' MB';
+  $('pkgFileType').textContent=ext.toUpperCase();
+  $('pkgWizard').classList.remove('hidden');
+  
+  const name=file.name.replace(/\.[^.]+$/,'').replace(/[-_]/g,' ').replace(/\b\w/g,l=>l.toUpperCase());
+  if(!$('pkgName').value)$('pkgName').value=name;
+  
+  if(ext==='msi'){
+    $('pkgInstall').value=`msiexec /i "${file.name}" /qn /norestart`;
+    $('pkgUninstall').value=`msiexec /x "{ProductCode}" /qn /norestart`;
+    $('pkgDetect').value='msi';
+    $('pkgDetectVal').placeholder='{PRODUCT-CODE-GUID}';
+  } else if(ext==='exe'){
+    $('pkgInstall').value=`"${file.name}" /S /norestart`;
+    $('pkgUninstall').value=`"${file.name}" /S /uninstall`;
+    $('pkgDetect').value='file';
+    $('pkgDetectVal').value=`C:\\Program Files\\${name}\\${file.name.replace(/Setup|Installer|Install/gi,'').trim()}`;
+    $('pkgDetectVal').placeholder='C:\\Program Files\\AppName\\app.exe';
+  } else if(ext==='msix'||ext==='appx'){
+    $('pkgInstall').value=`Add-AppxPackage -Path "${file.name}"`;
+    $('pkgUninstall').value=`Get-AppxPackage *${name.replace(/\s/g,'')}* | Remove-AppxPackage`;
+    $('pkgDetect').value='reg';
+  }
+}
+function pkgDetectChange(){
+  const v=$('pkgDetect').value;
+  $('pkgDetectVal').placeholder=v==='msi'?'{PRODUCT-CODE-GUID}':v==='file'?'C:\\Program Files\\App\\app.exe':'HKLM\\SOFTWARE\\App\\Version';
+}
+let PKG_CONFIG=null;
+function pkgGenerate(){
+  const name=$('pkgName').value||'Application';
+  const pub=$('pkgPub').value||'Unknown';
+  const fname=PKG_FILE?PKG_FILE.name:'installer.exe';
+  const ext=fname.split('.').pop().toLowerCase();
+  PKG_CONFIG={
+    displayName:name,publisher:pub,description:$('pkgDesc').value||name,
+    fileName:fname,
+    installCommandLine:$('pkgInstall').value,
+    uninstallCommandLine:$('pkgUninstall').value,
+    installExperience:{runAsAccount:$('pkgBehav').value==='system'?'system':'user',deviceRestartBehavior:$('pkgRestart').value},
+    minimumSupportedOperatingSystem:{v10_2004:true},
+    returnCodes:[{returnCode:0,type:'success'},{returnCode:1707,type:'success'},{returnCode:3010,type:'softReboot'},{returnCode:1641,type:'hardReboot'},{returnCode:1618,type:'retry'}],
+    detectionRules:[{
+      detectionType:$('pkgDetect').value==='msi'?'msi':$('pkgDetect').value==='file'?'file':'registry',
+      detectionValue:$('pkgDetectVal').value
+    }],
+    requirementRules:{architecture:$('pkgArch').value,minimumOsVersion:$('pkgMinOS').value},
+    version:$('pkgVersion').value||'1.0',
+    assignmentGroup:$('pkgGroup').value
+  };
+  $('pkgOutput').classList.remove('hidden');
+  $('pkgResult').textContent=JSON.stringify(PKG_CONFIG,null,2);
+}
+
+function pkgGenScript(){
+  if(!PKG_FILE)return alert('Select an installer file first.');
+  const name=$('pkgName').value||'Application';
+  const fname=PKG_FILE.name;
+  const script=`# IntuneWin Packaging Script for: ${name}
+# Generated by MSP Tenant Automation
+# Prerequisites: Download IntuneWinAppUtil.exe from:
+# https://github.com/microsoft/Microsoft-Win32-Content-Prep-Tool
+
+$SourceFolder = ".\\Source"       # Folder containing ${fname}
+$SetupFile    = "${fname}"
+$OutputFolder = ".\\Output"      # .intunewin will be created here
+
+# Create folders if needed
+New-Item -ItemType Directory -Path $SourceFolder -Force | Out-Null
+New-Item -ItemType Directory -Path $OutputFolder -Force | Out-Null
+
+Write-Host "Place '${fname}' into the Source folder, then press Enter..." -ForegroundColor Cyan
+Read-Host
+
+# Package the app
+.\\IntuneWinAppUtil.exe -c $SourceFolder -s $SetupFile -o $OutputFolder -q
+
+Write-Host ""
+Write-Host "Package created! Upload the .intunewin file from the Output folder to Intune." -ForegroundColor Green
+Write-Host ""
+Write-Host "=== Intune Configuration ===" -ForegroundColor Yellow
+Write-Host "App Name:          ${name}"
+Write-Host "Install Command:   ${$('pkgInstall').value}"
+Write-Host "Uninstall Command: ${$('pkgUninstall').value}"
+Write-Host "Install Behaviour: ${$('pkgBehav').value}"
+Write-Host "Detection:         ${$('pkgDetect').value} = ${$('pkgDetectVal').value}"
+Write-Host ""
+Write-Host "Next steps:" -ForegroundColor Cyan
+Write-Host "1. Go to Intune > Apps > Windows > Add > Windows app (Win32)"
+Write-Host "2. Upload the .intunewin file from Output folder"
+Write-Host "3. Use the settings above for install/uninstall/detection"
+Write-Host "4. Assign to your target group"
+`;
+  $('pkgOutput').classList.remove('hidden');
+  $('pkgResult').textContent=script;
+}
+
+function pkgCopy(fmt){
+  const txt=$('pkgResult').textContent;
+  navigator.clipboard?.writeText(txt);
+  const btns=document.querySelectorAll('#pkgOutput .btn-secondary');
+  btns.forEach(b=>{if(b.textContent.includes(fmt==='json'?'JSON':'PowerShell')){b.textContent='Copied!';setTimeout(()=>b.textContent=fmt==='json'?'📋 Copy JSON':'📋 Copy PowerShell',1500)}});
+}
+
+async function pkgDeploy(){
+  if(!A.ok())return alert('Sign in first to deploy to Intune.');
+  if(!PKG_CONFIG)return alert('Generate package config first.');
+  alert('To deploy Win32 apps to Intune via Graph API, you need to:\n\n1. Use the IntuneWinAppUtil.exe to create the .intunewin package\n2. Upload via POST /deviceAppManagement/mobileApps with @odata.type #microsoft.graph.win32LobApp\n3. Create a content version and upload encrypted file blocks\n\nThe package config has been generated — use the PowerShell script or upload manually via Intune portal.\n\nThis is a limitation of browser-based tools: the Win32 content prep tool must run locally on Windows.');
+}
+
+/* ── Logo Converter ── */
+function toolLogoCvt(){
+  const c=$('toolContent');
+  c.innerHTML=`
+<div class="card" style="margin-bottom:16px">
+<div class="card-header"><span class="dot" style="background:var(--accent-cyan)"></span> M365 Logo & Branding Converter</div>
+<p style="font-size:.84rem;color:var(--text-secondary);line-height:1.7;font-family:var(--font-display);margin-bottom:18px">Upload a company logo and this tool will automatically generate all required sizes for Microsoft 365 branding. Supports PNG, JPG, SVG — outputs correct dimensions for Entra sign-in page, Teams, SharePoint, and Outlook.</p>
+
+<div style="margin-bottom:18px">
+<label class="form-label">Company Logo (high resolution recommended)</label>
+<div id="logoDropZone" style="border:2px dashed var(--border-default);border-radius:var(--radius-lg);padding:40px 20px;text-align:center;cursor:pointer;transition:all .2s" onclick="$('logoFileInput').click()">
+<div style="font-size:2rem;margin-bottom:8px">🎨</div>
+<div style="font-family:var(--font-display);font-weight:600;color:var(--text-secondary);margin-bottom:4px">Drop logo here or click to browse</div>
+<div style="font-size:.78rem;color:var(--text-muted)">PNG, JPG, SVG — minimum 500x500px recommended</div>
+</div>
+<input id="logoFileInput" type="file" accept="image/*" style="display:none" onchange="logoFileSelected(this)">
+</div>
+
+<div id="logoPreview" class="hidden" style="text-align:center;margin-bottom:18px">
+<img id="logoOriginal" style="max-height:120px;border-radius:var(--radius-md);border:1px solid var(--border-subtle);padding:8px;background:var(--bg-elevated)">
+<div style="font-size:.78rem;color:var(--text-muted);margin-top:6px">Original: <span id="logoOrigSize"></span></div>
+</div>
+
+<div style="margin-bottom:18px">
+<label class="form-label">Background Colour</label>
+<div style="display:flex;gap:8px;align-items:center">
+<input id="logoBgColor" type="color" value="#ffffff" style="width:40px;height:34px;border:1px solid var(--border-subtle);border-radius:var(--radius-sm);cursor:pointer;padding:2px">
+<label style="display:flex;align-items:center;gap:6px;font-size:.82rem;color:var(--text-secondary);cursor:pointer"><input id="logoBgTransparent" type="checkbox"> Transparent (PNG only)</label>
+</div>
+</div>
+
+<button id="logoGenBtn" class="btn btn-primary hidden" onclick="logoGenerate()">🎨 Generate All Sizes</button>
+
+<div id="logoResults" class="hidden" style="margin-top:20px">
+<div class="card-header"><span class="dot" style="background:var(--accent-green)"></span> Generated Branding Assets</div>
+<div id="logoGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px"></div>
+<div style="margin-top:14px;display:flex;gap:8px">
+<button class="btn btn-primary" onclick="logoDownloadAll()">📥 Download All as ZIP</button>
+<button class="btn btn-success" onclick="logoUploadBranding()">🚀 Upload to Entra Branding</button>
+</div>
+</div>
+
+</div>`;
+
+  const dz=$('logoDropZone');
+  dz.ondragover=e=>{e.preventDefault();dz.style.borderColor='var(--accent-cyan)';dz.style.background='rgba(6,182,212,.04)'};
+  dz.ondragleave=()=>{dz.style.borderColor='var(--border-default)';dz.style.background=''};
+  dz.ondrop=e=>{e.preventDefault();dz.style.borderColor='var(--border-default)';dz.style.background='';if(e.dataTransfer.files.length)logoHandleFile(e.dataTransfer.files[0])};
+}
+
+const LOGO_SIZES=[
+  {name:'Banner Logo (Entra Sign-in)',w:280,h:36,key:'bannerLogo',desc:'Top-left of sign-in page'},
+  {name:'Square Logo (Entra Sign-in)',w:240,h:240,key:'squareLogo',desc:'Sign-in page main logo'},
+  {name:'Square Logo Dark',w:240,h:240,key:'squareLogoDark',desc:'Dark theme sign-in page'},
+  {name:'Favicon',w:48,h:48,key:'favicon',desc:'Browser tab icon'},
+  {name:'Teams Logo',w:210,h:210,key:'teams',desc:'Teams org logo'},
+  {name:'SharePoint Logo',w:200,h:60,key:'sharepoint',desc:'SharePoint header'},
+  {name:'Outlook Logo',w:170,h:50,key:'outlook',desc:'Outlook header'},
+  {name:'M365 Header Theme',w:200,h:48,key:'m365header',desc:'M365 app header bar'},
+  {name:'Apple Touch Icon',w:180,h:180,key:'apple',desc:'iOS home screen'},
+  {name:'Email Signature (Small)',w:150,h:50,key:'emailSig',desc:'HTML email signature logo'},
+  {name:'Email Signature (Banner)',w:600,h:100,key:'emailBanner',desc:'Email signature banner'}
+];
+let LOGO_SRC=null,LOGO_CANVASES={};
+
+function logoFileSelected(input){if(input.files.length)logoHandleFile(input.files[0])}
+function logoHandleFile(file){
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const img=new Image();
+    img.onload=()=>{
+      LOGO_SRC=img;
+      $('logoOriginal').src=e.target.result;
+      $('logoOrigSize').textContent=img.width+'x'+img.height+'px';
+      $('logoPreview').classList.remove('hidden');
+      $('logoGenBtn').classList.remove('hidden');
+    };
+    img.src=e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function logoGenerate(){
+  if(!LOGO_SRC)return;
+  LOGO_CANVASES={};
+  const bg=$('logoBgTransparent').checked?null:$('logoBgColor').value;
+  const grid=$('logoGrid');grid.innerHTML='';
+
+  LOGO_SIZES.forEach(s=>{
+    const canvas=document.createElement('canvas');
+    canvas.width=s.w;canvas.height=s.h;
+    const ctx=canvas.getContext('2d');
+    if(bg){ctx.fillStyle=bg;ctx.fillRect(0,0,s.w,s.h)}
+    // Fit image maintaining aspect ratio
+    const imgAspect=LOGO_SRC.width/LOGO_SRC.height;
+    const canAspect=s.w/s.h;
+    let dw,dh,dx,dy;
+    if(s.w/s.h>2){
+      // Wide banner: fit height, pad width
+      dh=s.h*0.8;dw=dh*imgAspect;
+      if(dw>s.w*0.9){dw=s.w*0.9;dh=dw/imgAspect}
+    } else {
+      // Square-ish: fit within 80% of canvas
+      dh=s.h*0.8;dw=dh*imgAspect;
+      if(dw>s.w*0.8){dw=s.w*0.8;dh=dw/imgAspect}
+    }
+    dx=(s.w-dw)/2;dy=(s.h-dh)/2;
+    ctx.drawImage(LOGO_SRC,dx,dy,dw,dh);
+    LOGO_CANVASES[s.key]=canvas;
+
+    const card=document.createElement('div');
+    card.style.cssText='padding:14px;background:var(--bg-elevated);border-radius:var(--radius-md);border:1px solid var(--border-subtle);text-align:center';
+    card.innerHTML=`<div style="font-family:var(--font-display);font-weight:600;font-size:.82rem;margin-bottom:4px">${s.name}</div>
+    <div style="font-size:.72rem;color:var(--text-muted);margin-bottom:10px">${s.w}x${s.h}px — ${s.desc}</div>
+    <div style="display:flex;justify-content:center;margin-bottom:10px;background:${bg||'repeating-conic-gradient(#808080 0% 25%, transparent 0% 50%) 50% / 10px 10px'};border-radius:4px;padding:4px"></div>
+    <button class="btn btn-sm btn-secondary" data-key="${s.key}">📥 Download</button>`;
+    card.querySelector('div:nth-child(3)').appendChild(canvas);
+    canvas.style.cssText='max-width:100%;height:auto;border-radius:4px';
+    card.querySelector('button').onclick=()=>logoDownload(s.key,s.name);
+    grid.appendChild(card);
+  });
+
+  $('logoResults').classList.remove('hidden');
+}
+
+function logoDownload(key,name){
+  const canvas=LOGO_CANVASES[key];if(!canvas)return;
+  canvas.toBlob(blob=>{
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;a.download=name.replace(/[^a-zA-Z0-9]/g,'_')+'.png';a.click();
+    URL.revokeObjectURL(url);
+  },'image/png');
+}
+
+function logoDownloadAll(){
+  // Download each individually (ZIP requires a library)
+  Object.entries(LOGO_CANVASES).forEach(([key],i)=>{
+    const size=LOGO_SIZES.find(s=>s.key===key);
+    setTimeout(()=>logoDownload(key,size?.name||key),i*300);
+  });
+}
+
+async function logoUploadBranding(){
+  if(!A.ok())return alert('Sign in first.');
+  try{
+    const org=await G.call('/organization');const orgId=org.value[0].id;
+    // Upload banner logo
+    if(LOGO_CANVASES.bannerLogo){
+      const blob=await new Promise(r=>LOGO_CANVASES.bannerLogo.toBlob(r,'image/png'));
+      const token=await A.token(Auth.DISCOVERY_SCOPES);
+      await fetch(`https://graph.microsoft.com/v1.0/organization/${orgId}/branding/localizations/default/bannerLogo`,{
+        method:'PUT',headers:{Authorization:'Bearer '+A.tok,'Content-Type':'image/png'},body:blob});
+    }
+    if(LOGO_CANVASES.squareLogo){
+      const blob=await new Promise(r=>LOGO_CANVASES.squareLogo.toBlob(r,'image/png'));
+      await fetch(`https://graph.microsoft.com/v1.0/organization/${orgId}/branding/localizations/default/squareLogo`,{
+        method:'PUT',headers:{Authorization:'Bearer '+A.tok,'Content-Type':'image/png'},body:blob});
+    }
+    alert('Branding logos uploaded successfully! Check the Entra ID sign-in page to verify.');
+  }catch(e){alert('Upload failed: '+e.message+'\n\nYou may need OrganizationalBranding.ReadWrite.All permission.')}
+}
+
+/* ── Exchange Online Tools ── */
+function toolExo(){
+  const c=$('toolContent');
+  c.innerHTML=`
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+
+<div class="card">
+<div class="card-header"><span class="dot" style="background:var(--accent-blue)"></span> Shared Mailboxes</div>
+<div style="margin-bottom:12px">
+<label class="form-label">Display Name</label>
+<input id="exoSharedName" class="form-input" placeholder="e.g. Support">
+</div>
+<div style="margin-bottom:12px">
+<label class="form-label">Email Address</label>
+<input id="exoSharedEmail" class="form-input" placeholder="e.g. support@domain.com">
+</div>
+<button class="btn btn-primary btn-sm" onclick="exoCreateShared()">📧 Create Shared Mailbox</button>
+<div id="exoSharedResult" style="margin-top:10px;font-size:.82rem"></div>
+</div>
+
+<div class="card">
+<div class="card-header"><span class="dot" style="background:var(--accent-blue)"></span> Out of Office</div>
+<div style="margin-bottom:12px">
+<label class="form-label">User UPN</label>
+<input id="exoOooUser" class="form-input" placeholder="user@domain.com">
+</div>
+<div style="margin-bottom:12px">
+<label class="form-label">Internal Message</label>
+<textarea id="exoOooInternal" class="form-input" rows="3" placeholder="I am currently out of office..."></textarea>
+</div>
+<div style="margin-bottom:12px">
+<label class="form-label">External Message</label>
+<textarea id="exoOooExternal" class="form-input" rows="3" placeholder="Thank you for your email..."></textarea>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+<div><label class="form-label">Start</label><input id="exoOooStart" class="form-input" type="datetime-local"></div>
+<div><label class="form-label">End</label><input id="exoOooEnd" class="form-input" type="datetime-local"></div>
+</div>
+<div style="display:flex;gap:8px">
+<button class="btn btn-primary btn-sm" onclick="exoSetOoo()">⏰ Set OOO</button>
+<button class="btn btn-secondary btn-sm" onclick="exoDisableOoo()">✗ Disable OOO</button>
+</div>
+<div id="exoOooResult" style="margin-top:10px;font-size:.82rem"></div>
+</div>
+
+<div class="card">
+<div class="card-header"><span class="dot" style="background:var(--accent-blue)"></span> Mail Forwarding</div>
+<div style="margin-bottom:12px">
+<label class="form-label">Source User</label>
+<input id="exoFwdFrom" class="form-input" placeholder="user@domain.com">
+</div>
+<div style="margin-bottom:12px">
+<label class="form-label">Forward To</label>
+<input id="exoFwdTo" class="form-input" placeholder="forward-to@domain.com">
+</div>
+<label style="display:flex;align-items:center;gap:6px;font-size:.82rem;color:var(--text-secondary);margin-bottom:12px"><input id="exoFwdKeep" type="checkbox" checked> Deliver to original mailbox too</label>
+<div style="display:flex;gap:8px">
+<button class="btn btn-primary btn-sm" onclick="exoSetForward()">↗️ Set Forward</button>
+<button class="btn btn-secondary btn-sm" onclick="exoRemoveForward()">✗ Remove</button>
+</div>
+<div id="exoFwdResult" style="margin-top:10px;font-size:.82rem"></div>
+</div>
+
+<div class="card">
+<div class="card-header"><span class="dot" style="background:var(--accent-blue)"></span> Mail Contacts</div>
+<div style="margin-bottom:12px">
+<label class="form-label">Display Name</label>
+<input id="exoContactName" class="form-input" placeholder="External Partner">
+</div>
+<div style="margin-bottom:12px">
+<label class="form-label">External Email</label>
+<input id="exoContactEmail" class="form-input" placeholder="partner@external.com">
+</div>
+<button class="btn btn-primary btn-sm" onclick="exoCreateContact()">👤 Create Contact</button>
+<div id="exoContactResult" style="margin-top:10px;font-size:.82rem"></div>
+</div>
+
+<div class="card">
+<div class="card-header"><span class="dot" style="background:var(--accent-blue)"></span> Mailbox Permissions</div>
+<div style="margin-bottom:12px">
+<label class="form-label">Mailbox</label>
+<input id="exoPermMailbox" class="form-input" placeholder="shared@domain.com">
+</div>
+<div style="margin-bottom:12px">
+<label class="form-label">Grant Access To</label>
+<input id="exoPermUser" class="form-input" placeholder="user@domain.com">
+</div>
+<div style="margin-bottom:12px">
+<label class="form-label">Permission</label>
+<select id="exoPermType" class="form-input">
+<option value="SendAs">Send As</option>
+<option value="SendOnBehalf">Send on Behalf</option>
+<option value="FullAccess">Full Access (Automapping)</option>
+</select>
+</div>
+<button class="btn btn-primary btn-sm" onclick="exoGrantPerm()">🔑 Grant Permission</button>
+<div id="exoPermResult" style="margin-top:10px;font-size:.82rem"></div>
+</div>
+
+<div class="card">
+<div class="card-header"><span class="dot" style="background:var(--accent-blue)"></span> Quick Lookup</div>
+<div style="margin-bottom:12px">
+<label class="form-label">User UPN</label>
+<input id="exoLookup" class="form-input" placeholder="user@domain.com">
+</div>
+<button class="btn btn-primary btn-sm" onclick="exoLookupUser()">🔍 Get Mailbox Info</button>
+<div id="exoLookupResult" style="margin-top:10px;font-size:.82rem"></div>
+</div>
+
+</div>`;
+}
+
+async function exoCreateShared(){
+  const r=$('exoSharedResult');r.innerHTML='<span style="color:var(--text-muted)">Creating...</span>';
+  if(!A.ok())return r.innerHTML='<span style="color:var(--accent-red)">Sign in first</span>';
+  const name=$('exoSharedName').value.trim(),email=$('exoSharedEmail').value.trim();
+  if(!name||!email)return r.innerHTML='<span style="color:var(--accent-red)">Fill in all fields</span>';
+  try{
+    await G.call('/users','POST',{accountEnabled:false,displayName:name,userPrincipalName:email,mailNickname:email.split('@')[0],passwordProfile:{password:'Sh@red'+uid().slice(0,12)+'!',forceChangePasswordNextSignIn:false}});
+    r.innerHTML=`<span style="color:var(--accent-green)">✓ Created ${esc(email)}</span><br><span style="color:var(--accent-amber);font-size:.76rem">Convert to shared: Exchange Admin → Mailboxes → Select → Convert to shared</span>`;
+  }catch(e){r.innerHTML=`<span style="color:var(--accent-red)">✗ ${esc(e.message)}</span>`}
+}
+
+async function exoSetOoo(){
+  const r=$('exoOooResult');r.innerHTML='<span style="color:var(--text-muted)">Setting...</span>';
+  if(!A.ok())return r.innerHTML='<span style="color:var(--accent-red)">Sign in first</span>';
+  const user=$('exoOooUser').value.trim();if(!user)return r.innerHTML='<span style="color:var(--accent-red)">Enter user UPN</span>';
+  try{
+    const pay={automaticRepliesSetting:{status:'scheduled',
+      scheduledStartDateTime:{dateTime:$('exoOooStart').value||new Date().toISOString(),timeZone:'UTC'},
+      scheduledEndDateTime:{dateTime:$('exoOooEnd').value||new Date(Date.now()+7*86400000).toISOString(),timeZone:'UTC'},
+      internalReplyMessage:$('exoOooInternal').value||'I am out of office.',
+      externalReplyMessage:$('exoOooExternal').value||'Thank you for your email. I am currently out of office.',
+      externalAudience:'all'}};
+    await G.call(`/users/${user}/mailboxSettings`,'PATCH',pay);
+    r.innerHTML=`<span style="color:var(--accent-green)">✓ Out of office set for ${esc(user)}</span>`;
+  }catch(e){r.innerHTML=`<span style="color:var(--accent-red)">✗ ${esc(e.message)}</span>`}
+}
+
+async function exoDisableOoo(){
+  const r=$('exoOooResult');r.innerHTML='<span style="color:var(--text-muted)">Disabling...</span>';
+  if(!A.ok())return r.innerHTML='<span style="color:var(--accent-red)">Sign in first</span>';
+  const user=$('exoOooUser').value.trim();if(!user)return r.innerHTML='<span style="color:var(--accent-red)">Enter user UPN</span>';
+  try{
+    await G.call(`/users/${user}/mailboxSettings`,'PATCH',{automaticRepliesSetting:{status:'disabled'}});
+    r.innerHTML=`<span style="color:var(--accent-green)">✓ OOO disabled for ${esc(user)}</span>`;
+  }catch(e){r.innerHTML=`<span style="color:var(--accent-red)">✗ ${esc(e.message)}</span>`}
+}
+
+async function exoSetForward(){
+  const r=$('exoFwdResult');r.innerHTML='<span style="color:var(--text-muted)">Setting...</span>';
+  if(!A.ok())return r.innerHTML='<span style="color:var(--accent-red)">Sign in first</span>';
+  const from=$('exoFwdFrom').value.trim(),to=$('exoFwdTo').value.trim();
+  if(!from||!to)return r.innerHTML='<span style="color:var(--accent-red)">Fill in all fields</span>';
+  try{
+    // Create inbox rule for forwarding
+    await G.call(`/users/${from}/mailFolders/inbox/messageRules`,'POST',{displayName:'Auto-Forward (MSP Tool)',isEnabled:true,sequence:1,
+      actions:{forwardTo:[{emailAddress:{address:to}}],stopProcessingRules:!$('exoFwdKeep').checked}});
+    r.innerHTML=`<span style="color:var(--accent-green)">✓ Forward rule created: ${esc(from)} → ${esc(to)}</span>`;
+  }catch(e){r.innerHTML=`<span style="color:var(--accent-red)">✗ ${esc(e.message)}</span>`}
+}
+
+async function exoRemoveForward(){
+  const r=$('exoFwdResult');r.innerHTML='<span style="color:var(--text-muted)">Removing...</span>';
+  if(!A.ok())return r.innerHTML='<span style="color:var(--accent-red)">Sign in first</span>';
+  const from=$('exoFwdFrom').value.trim();if(!from)return r.innerHTML='<span style="color:var(--accent-red)">Enter source user</span>';
+  try{
+    const rules=await G.call(`/users/${from}/mailFolders/inbox/messageRules`);
+    const fwd=(rules.value||[]).filter(r=>r.displayName?.includes('Auto-Forward'));
+    for(const rule of fwd)await G.call(`/users/${from}/mailFolders/inbox/messageRules/${rule.id}`,'DELETE');
+    r.innerHTML=`<span style="color:var(--accent-green)">✓ Removed ${fwd.length} forward rule(s)</span>`;
+  }catch(e){r.innerHTML=`<span style="color:var(--accent-red)">✗ ${esc(e.message)}</span>`}
+}
+
+async function exoCreateContact(){
+  const r=$('exoContactResult');r.innerHTML='<span style="color:var(--text-muted)">Creating...</span>';
+  if(!A.ok())return r.innerHTML='<span style="color:var(--accent-red)">Sign in first</span>';
+  const name=$('exoContactName').value.trim(),email=$('exoContactEmail').value.trim();
+  if(!name||!email)return r.innerHTML='<span style="color:var(--accent-red)">Fill in all fields</span>';
+  try{
+    await G.call('/contacts','POST',{displayName:name,mail:email,mailNickname:name.toLowerCase().replace(/\s/g,'-')});
+    r.innerHTML=`<span style="color:var(--accent-green)">✓ Contact created: ${esc(name)}</span>`;
+  }catch(e){r.innerHTML=`<span style="color:var(--accent-red)">✗ ${esc(e.message)}</span>`}
+}
+
+async function exoGrantPerm(){
+  const r=$('exoPermResult');r.innerHTML='<span style="color:var(--text-muted)">Granting...</span>';
+  if(!A.ok())return r.innerHTML='<span style="color:var(--accent-red)">Sign in first</span>';
+  const mailbox=$('exoPermMailbox').value.trim(),user=$('exoPermUser').value.trim(),perm=$('exoPermType').value;
+  if(!mailbox||!user)return r.innerHTML='<span style="color:var(--accent-red)">Fill in all fields</span>';
+  r.innerHTML=`<span style="color:var(--accent-amber)">⚠ Mailbox permissions (${esc(perm)}) require Exchange Online PowerShell.<br><code style="font-size:.76rem">Add-MailboxPermission -Identity "${mailbox}" -User "${user}" -AccessRights ${perm}</code><br>Or use Exchange Admin Center → Mailboxes → ${esc(mailbox)} → Delegation</span>`;
+}
+
+async function exoLookupUser(){
+  const r=$('exoLookupResult');r.innerHTML='<span style="color:var(--text-muted)">Looking up...</span>';
+  if(!A.ok())return r.innerHTML='<span style="color:var(--accent-red)">Sign in first</span>';
+  const upn=$('exoLookup').value.trim();if(!upn)return r.innerHTML='<span style="color:var(--accent-red)">Enter a UPN</span>';
+  try{
+    const[user,settings]=await Promise.all([
+      G.call(`/users/${upn}?$select=displayName,userPrincipalName,mail,proxyAddresses,assignedLicenses,accountEnabled,createdDateTime,lastSignInDateTime`),
+      G.call(`/users/${upn}/mailboxSettings`).catch(()=>null)
+    ]);
+    let h=`<div style="padding:10px;background:var(--bg-elevated);border-radius:var(--radius-md);margin-top:8px">
+    <div style="font-weight:600">${esc(user.displayName)}</div>
+    <div style="font-size:.78rem;color:var(--text-muted);margin-top:4px">UPN: ${esc(user.userPrincipalName)}</div>
+    <div style="font-size:.78rem;color:var(--text-muted)">Mail: ${esc(user.mail||'—')}</div>
+    <div style="font-size:.78rem;color:var(--text-muted)">Enabled: ${user.accountEnabled?'<span style="color:var(--accent-green)">Yes</span>':'<span style="color:var(--accent-red)">No</span>'}</div>
+    <div style="font-size:.78rem;color:var(--text-muted)">Licenses: ${(user.assignedLicenses||[]).length}</div>
+    <div style="font-size:.78rem;color:var(--text-muted)">Aliases: ${(user.proxyAddresses||[]).join(', ')||'None'}</div>`;
+    if(settings){
+      h+=`<div style="font-size:.78rem;color:var(--text-muted)">Timezone: ${settings.timeZone||'—'}</div>`;
+      h+=`<div style="font-size:.78rem;color:var(--text-muted)">OOO: ${settings.automaticRepliesSetting?.status||'disabled'}</div>`;
+    }
+    h+=`</div>`;
+    r.innerHTML=h;
+  }catch(e){r.innerHTML=`<span style="color:var(--accent-red)">✗ ${esc(e.message)}</span>`}
+}
+
+/* ── SharePoint Online Tools ── */
+function toolSpo(){
+  const c=$('toolContent');
+  c.innerHTML=`
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+
+<div class="card">
+<div class="card-header"><span class="dot" style="background:var(--accent-green)"></span> Tenant Sharing Settings</div>
+<div style="margin-bottom:12px">
+<label class="form-label">External Sharing Level</label>
+<select id="spoSharing" class="form-input">
+<option value="disabled">Disabled — No external sharing</option>
+<option value="existingExternalUserSharingOnly">Existing Guests Only</option>
+<option value="externalUserSharingOnly">New & Existing Guests (auth required)</option>
+<option value="externalUserAndGuestSharing">Anyone (including anonymous links)</option>
+</select>
+</div>
+<div style="margin-bottom:12px">
+<label style="display:flex;align-items:center;gap:6px;font-size:.82rem;color:var(--text-secondary);cursor:pointer"><input id="spoSiteCreation" type="checkbox" checked> Allow users to create sites</label>
+</div>
+<div style="margin-bottom:12px">
+<label style="display:flex;align-items:center;gap:6px;font-size:.82rem;color:var(--text-secondary);cursor:pointer"><input id="spoLegacyAuth" type="checkbox"> Allow legacy auth protocols</label>
+</div>
+<div style="margin-bottom:12px">
+<label style="display:flex;align-items:center;gap:6px;font-size:.82rem;color:var(--text-secondary);cursor:pointer"><input id="spoSyncRestrict" type="checkbox" checked> Restrict sync to managed devices</label>
+</div>
+<div style="margin-bottom:12px">
+<label class="form-label">Default OneDrive Storage (MB)</label>
+<input id="spoStorage" class="form-input" type="number" value="1048576" placeholder="1048576 (1TB)">
+</div>
+<button class="btn btn-primary btn-sm" onclick="spoApplySettings()">💾 Apply Settings</button>
+<div id="spoSettingsResult" style="margin-top:10px;font-size:.82rem"></div>
+</div>
+
+<div class="card">
+<div class="card-header"><span class="dot" style="background:var(--accent-green)"></span> Current Settings</div>
+<button class="btn btn-primary btn-sm" onclick="spoGetSettings()" style="margin-bottom:12px">🔍 Load Current Settings</button>
+<div id="spoCurrentSettings" style="font-size:.82rem"></div>
+</div>
+
+<div class="card">
+<div class="card-header"><span class="dot" style="background:var(--accent-green)"></span> Site Permissions Audit</div>
+<div style="margin-bottom:12px">
+<label class="form-label">Site URL or ID</label>
+<input id="spoSiteUrl" class="form-input" placeholder="e.g. contoso.sharepoint.com,site-id">
+</div>
+<button class="btn btn-primary btn-sm" onclick="spoAuditSite()">🔍 Audit Permissions</button>
+<div id="spoAuditResult" style="margin-top:10px;font-size:.82rem;max-height:300px;overflow:auto"></div>
+</div>
+
+<div class="card">
+<div class="card-header"><span class="dot" style="background:var(--accent-green)"></span> List All Sites</div>
+<button class="btn btn-primary btn-sm" onclick="spoListSites()">🌍 Load Sites</button>
+<div id="spoSitesList" style="margin-top:10px;font-size:.82rem;max-height:400px;overflow:auto"></div>
+</div>
+
+</div>`;
+}
+
+async function spoApplySettings(){
+  const r=$('spoSettingsResult');r.innerHTML='<span style="color:var(--text-muted)">Applying...</span>';
+  if(!A.ok())return r.innerHTML='<span style="color:var(--accent-red)">Sign in first</span>';
+  try{
+    G.scopes=Auth.DISCOVERY_SCOPES;
+    await G.call('/admin/sharepoint/settings','PATCH',{
+      sharingCapability:$('spoSharing').value,
+      isSiteCreationEnabled:$('spoSiteCreation').checked,
+      isLegacyAuthProtocolsEnabled:$('spoLegacyAuth').checked,
+      isUnmanagedSyncAppForTenantRestricted:$('spoSyncRestrict').checked,
+      personalSiteDefaultStorageLimitInMB:parseInt($('spoStorage').value)||1048576
+    });
+    G.scopes=null;
+    r.innerHTML='<span style="color:var(--accent-green)">✓ SharePoint settings updated</span>';
+  }catch(e){G.scopes=null;r.innerHTML=`<span style="color:var(--accent-red)">✗ ${esc(e.message)}</span>`}
+}
+
+async function spoGetSettings(){
+  const r=$('spoCurrentSettings');r.innerHTML='<span style="color:var(--text-muted)">Loading...</span>';
+  if(!A.ok())return r.innerHTML='<span style="color:var(--accent-red)">Sign in first</span>';
+  try{
+    G.scopes=Auth.DISCOVERY_SCOPES;
+    const s=await G.call('/admin/sharepoint/settings');
+    G.scopes=null;
+    r.innerHTML=`<div style="padding:10px;background:var(--bg-input);border-radius:var(--radius-md)">
+    <div><strong>Sharing:</strong> ${esc(s.sharingCapability||'—')}</div>
+    <div><strong>Site Creation:</strong> ${s.isSiteCreationEnabled?'✓':'✗'}</div>
+    <div><strong>Legacy Auth:</strong> ${s.isLegacyAuthProtocolsEnabled?'<span style="color:var(--accent-red)">Enabled</span>':'<span style="color:var(--accent-green)">Disabled</span>'}</div>
+    <div><strong>Sync Restricted:</strong> ${s.isUnmanagedSyncAppForTenantRestricted?'<span style="color:var(--accent-green)">Yes</span>':'<span style="color:var(--accent-red)">No</span>'}</div>
+    <div><strong>OneDrive Storage:</strong> ${s.personalSiteDefaultStorageLimitInMB||'—'} MB</div>
+    <div><strong>Auto Storage:</strong> ${s.isSitesStorageLimitAutomatic?'Yes':'No'}</div>
+    <div><strong>Comments:</strong> ${s.isCommentingOnSitePagesEnabled?'Enabled':'Disabled'}</div>
+    <div><strong>Image Tagging:</strong> ${esc(s.imageTaggingOption||'—')}</div>
+    </div>`;
+    // Pre-fill form
+    $('spoSharing').value=s.sharingCapability||'disabled';
+    $('spoSiteCreation').checked=!!s.isSiteCreationEnabled;
+    $('spoLegacyAuth').checked=!!s.isLegacyAuthProtocolsEnabled;
+    $('spoSyncRestrict').checked=!!s.isUnmanagedSyncAppForTenantRestricted;
+    if(s.personalSiteDefaultStorageLimitInMB)$('spoStorage').value=s.personalSiteDefaultStorageLimitInMB;
+  }catch(e){G.scopes=null;r.innerHTML=`<span style="color:var(--accent-red)">✗ ${esc(e.message)}</span>`}
+}
+
+async function spoAuditSite(){
+  const r=$('spoAuditResult');r.innerHTML='<span style="color:var(--text-muted)">Auditing...</span>';
+  if(!A.ok())return r.innerHTML='<span style="color:var(--accent-red)">Sign in first</span>';
+  try{
+    const siteRef=$('spoSiteUrl').value.trim();if(!siteRef)return r.innerHTML='Enter a site URL';
+    G.scopes=Auth.DISCOVERY_SCOPES;
+    const perms=await G.call(`/sites/${siteRef}/permissions`);
+    G.scopes=null;
+    if(!perms.value?.length)return r.innerHTML='<span style="color:var(--text-muted)">No custom permissions found</span>';
+    let h='<table class="disc-table" style="font-size:.76rem"><thead><tr><th>Identity</th><th>Roles</th></tr></thead><tbody>';
+    perms.value.forEach(p=>{
+      const id=p.grantedToIdentitiesV2?.map(i=>i.user?.displayName||i.application?.displayName||'Unknown').join(', ')||'—';
+      h+=`<tr><td>${esc(id)}</td><td>${(p.roles||[]).join(', ')}</td></tr>`;
+    });
+    h+='</tbody></table>';
+    r.innerHTML=h;
+  }catch(e){G.scopes=null;r.innerHTML=`<span style="color:var(--accent-red)">✗ ${esc(e.message)}</span>`}
+}
+
+async function spoListSites(){
+  const r=$('spoSitesList');r.innerHTML='<span style="color:var(--text-muted)">Loading sites...</span>';
+  if(!A.ok())return r.innerHTML='<span style="color:var(--accent-red)">Sign in first</span>';
+  try{
+    G.scopes=Auth.DISCOVERY_SCOPES;
+    const sites=await G.call('/sites?$top=100&$select=displayName,webUrl,lastModifiedDateTime');
+    G.scopes=null;
+    if(!sites.value?.length)return r.innerHTML='<span style="color:var(--text-muted)">No sites found</span>';
+    let h='<table class="disc-table" style="font-size:.76rem"><thead><tr><th>Site</th><th>URL</th><th>Modified</th></tr></thead><tbody>';
+    sites.value.forEach(s=>{
+      h+=`<tr><td style="font-weight:500">${esc(s.displayName||'')}</td><td style="color:var(--accent-cyan)">${esc(s.webUrl||'')}</td><td>${s.lastModifiedDateTime?new Date(s.lastModifiedDateTime).toLocaleDateString('en-GB'):'—'}</td></tr>`;
+    });
+    h+='</tbody></table>';
+    r.innerHTML=h;
+  }catch(e){G.scopes=null;r.innerHTML=`<span style="color:var(--accent-red)">✗ ${esc(e.message)}</span>`}
+}
+
+/* ── Entra ID Tools ── */
+function toolEntra(){
+  const c=$('toolContent');
+  c.innerHTML=`
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+
+<div class="card">
+<div class="card-header"><span class="dot" style="background:var(--accent-violet)"></span> Guest User Management</div>
+<div style="margin-bottom:12px">
+<label class="form-label">Guest Email</label>
+<input id="entraGuestEmail" class="form-input" placeholder="guest@external.com">
+</div>
+<div style="margin-bottom:12px">
+<label class="form-label">Display Name</label>
+<input id="entraGuestName" class="form-input" placeholder="External Partner">
+</div>
+<div style="margin-bottom:12px">
+<label class="form-label">Welcome Message (optional)</label>
+<input id="entraGuestMsg" class="form-input" placeholder="Welcome to our tenant!">
+</div>
+<button class="btn btn-primary btn-sm" onclick="entraInviteGuest()">📨 Send Invitation</button>
+<div id="entraGuestResult" style="margin-top:10px;font-size:.82rem"></div>
+</div>
+
+<div class="card">
+<div class="card-header"><span class="dot" style="background:var(--accent-violet)"></span> Stale Account Finder</div>
+<div style="margin-bottom:12px">
+<label class="form-label">Inactive Days Threshold</label>
+<input id="entraStaleThreshold" class="form-input" type="number" value="90" placeholder="90">
+</div>
+<button class="btn btn-primary btn-sm" onclick="entraFindStale()">🔍 Find Stale Accounts</button>
+<div id="entraStaleResult" style="margin-top:10px;font-size:.82rem;max-height:400px;overflow:auto"></div>
+</div>
+
+<div class="card">
+<div class="card-header"><span class="dot" style="background:var(--accent-violet)"></span> Named Locations</div>
+<div style="margin-bottom:12px">
+<label class="form-label">Location Name</label>
+<input id="entraLocName" class="form-input" placeholder="Head Office">
+</div>
+<div style="margin-bottom:12px">
+<label class="form-label">IP Range (CIDR)</label>
+<input id="entraLocIp" class="form-input" placeholder="203.0.113.0/24">
+</div>
+<label style="display:flex;align-items:center;gap:6px;font-size:.82rem;color:var(--text-secondary);margin-bottom:12px"><input id="entraLocTrusted" type="checkbox" checked> Mark as Trusted</label>
+<button class="btn btn-primary btn-sm" onclick="entraCreateLocation()">📍 Create Location</button>
+<div id="entraLocResult" style="margin-top:10px;font-size:.82rem"></div>
+</div>
+
+<div class="card">
+<div class="card-header"><span class="dot" style="background:var(--accent-violet)"></span> Password Reset</div>
+<div style="margin-bottom:12px">
+<label class="form-label">User UPN</label>
+<input id="entraResetUser" class="form-input" placeholder="user@domain.com">
+</div>
+<div style="margin-bottom:12px">
+<label class="form-label">New Password (leave blank to auto-generate)</label>
+<input id="entraResetPass" class="form-input" type="text" placeholder="Auto-generate">
+</div>
+<label style="display:flex;align-items:center;gap:6px;font-size:.82rem;color:var(--text-secondary);margin-bottom:12px"><input id="entraResetForce" type="checkbox" checked> Force change on next sign-in</label>
+<button class="btn btn-primary btn-sm" onclick="entraResetPassword()">🔑 Reset Password</button>
+<div id="entraResetResult" style="margin-top:10px;font-size:.82rem"></div>
+</div>
+
+<div class="card">
+<div class="card-header"><span class="dot" style="background:var(--accent-violet)"></span> Role Assignments</div>
+<button class="btn btn-primary btn-sm" onclick="entraListAdmins()">🔍 List All Admins</button>
+<div id="entraAdminResult" style="margin-top:10px;font-size:.82rem;max-height:400px;overflow:auto"></div>
+</div>
+
+<div class="card">
+<div class="card-header"><span class="dot" style="background:var(--accent-violet)"></span> App Registration Audit</div>
+<button class="btn btn-primary btn-sm" onclick="entraAuditApps()">🔍 Audit Expiring Secrets</button>
+<div id="entraAppResult" style="margin-top:10px;font-size:.82rem;max-height:400px;overflow:auto"></div>
+</div>
+
+</div>`;
+}
+
+async function entraInviteGuest(){
+  const r=$('entraGuestResult');r.innerHTML='<span style="color:var(--text-muted)">Inviting...</span>';
+  if(!A.ok())return r.innerHTML='<span style="color:var(--accent-red)">Sign in first</span>';
+  try{
+    const inv=await G.call('/invitations','POST',{
+      invitedUserEmailAddress:$('entraGuestEmail').value.trim(),
+      invitedUserDisplayName:$('entraGuestName').value.trim()||undefined,
+      inviteRedirectUrl:'https://myapps.microsoft.com',
+      sendInvitationMessage:true,
+      invitedUserMessageInfo:{customizedMessageBody:$('entraGuestMsg').value.trim()||undefined}
+    });
+    r.innerHTML=`<span style="color:var(--accent-green)">✓ Invitation sent to ${esc(inv.invitedUserEmailAddress)}</span><br><span style="font-size:.76rem;color:var(--text-muted)">Status: ${inv.status||'PendingAcceptance'}</span>`;
+  }catch(e){r.innerHTML=`<span style="color:var(--accent-red)">✗ ${esc(e.message)}</span>`}
+}
+
+async function entraFindStale(){
+  const r=$('entraStaleResult');r.innerHTML='<span style="color:var(--text-muted)">Searching...</span>';
+  if(!A.ok())return r.innerHTML='<span style="color:var(--accent-red)">Sign in first</span>';
+  try{
+    const days=parseInt($('entraStaleThreshold').value)||90;
+    const cutoff=new Date(Date.now()-days*86400000).toISOString();
+    const users=await G.call(`/users?$select=displayName,userPrincipalName,signInActivity,accountEnabled,userType&$top=999`);
+    const stale=(users.value||[]).filter(u=>{
+      if(!u.signInActivity?.lastSignInDateTime)return true;
+      return new Date(u.signInActivity.lastSignInDateTime)<new Date(cutoff);
+    });
+    if(!stale.length)return r.innerHTML='<span style="color:var(--accent-green)">✓ No stale accounts found</span>';
+    let h=`<div style="margin-bottom:8px;color:var(--accent-amber)">Found ${stale.length} account(s) inactive for ${days}+ days:</div>`;
+    h+='<table class="disc-table" style="font-size:.76rem"><thead><tr><th>User</th><th>Type</th><th>Last Sign-in</th><th>Enabled</th></tr></thead><tbody>';
+    stale.slice(0,100).forEach(u=>{
+      const lastSign=u.signInActivity?.lastSignInDateTime?new Date(u.signInActivity.lastSignInDateTime).toLocaleDateString('en-GB'):'Never';
+      h+=`<tr><td>${esc(u.displayName||'')}<br><span style="font-size:.7rem;color:var(--text-muted)">${esc(u.userPrincipalName)}</span></td><td>${esc(u.userType||'Member')}</td><td>${lastSign}</td><td>${u.accountEnabled?'Yes':'<span style="color:var(--accent-red)">No</span>'}</td></tr>`;
+    });
+    h+='</tbody></table>';
+    r.innerHTML=h;
+  }catch(e){r.innerHTML=`<span style="color:var(--accent-red)">✗ ${esc(e.message)}<br><span style="font-size:.76rem">Note: signInActivity requires Azure AD Premium and AuditLog.Read.All permission.</span></span>`}
+}
+
+async function entraCreateLocation(){
+  const r=$('entraLocResult');r.innerHTML='<span style="color:var(--text-muted)">Creating...</span>';
+  if(!A.ok())return r.innerHTML='<span style="color:var(--accent-red)">Sign in first</span>';
+  try{
+    const name=$('entraLocName').value.trim(),ip=$('entraLocIp').value.trim();
+    if(!name||!ip)return r.innerHTML='<span style="color:var(--accent-red)">Fill in all fields</span>';
+    await G.call('/identity/conditionalAccess/namedLocations','POST',{
+      '@odata.type':'#microsoft.graph.ipNamedLocation',
+      displayName:name,isTrusted:$('entraLocTrusted').checked,
+      ipRanges:[{cidrAddress:ip,'@odata.type':ip.includes(':')?'#microsoft.graph.iPv6CidrRange':'#microsoft.graph.iPv4CidrRange'}]
+    });
+    r.innerHTML=`<span style="color:var(--accent-green)">✓ Named location "${esc(name)}" created</span>`;
+  }catch(e){r.innerHTML=`<span style="color:var(--accent-red)">✗ ${esc(e.message)}</span>`}
+}
+
+async function entraResetPassword(){
+  const r=$('entraResetResult');r.innerHTML='<span style="color:var(--text-muted)">Resetting...</span>';
+  if(!A.ok())return r.innerHTML='<span style="color:var(--accent-red)">Sign in first</span>';
+  const user=$('entraResetUser').value.trim();if(!user)return r.innerHTML='<span style="color:var(--accent-red)">Enter user UPN</span>';
+  try{
+    const pass=$('entraResetPass').value||('P@ss'+uid().slice(0,10)+'!');
+    await G.call(`/users/${user}`,'PATCH',{passwordProfile:{password:pass,forceChangePasswordNextSignIn:$('entraResetForce').checked}});
+    r.innerHTML=`<span style="color:var(--accent-green)">✓ Password reset for ${esc(user)}</span><br><code style="font-size:.82rem;user-select:all;color:var(--accent-cyan)">${esc(pass)}</code><br><span style="color:var(--accent-amber);font-size:.76rem">⚠ Share securely — do not send via email</span>`;
+  }catch(e){r.innerHTML=`<span style="color:var(--accent-red)">✗ ${esc(e.message)}</span>`}
+}
+
+async function entraListAdmins(){
+  const r=$('entraAdminResult');r.innerHTML='<span style="color:var(--text-muted)">Loading...</span>';
+  if(!A.ok())return r.innerHTML='<span style="color:var(--accent-red)">Sign in first</span>';
+  try{
+    const roles=await G.call('/directoryRoles?$select=id,displayName');
+    let h='';
+    for(const role of (roles.value||[]).slice(0,20)){
+      const members=await G.call(`/directoryRoles/${role.id}/members?$select=displayName,userPrincipalName`);
+      if(members.value?.length){
+        h+=`<div style="margin-bottom:8px"><strong style="color:var(--accent-violet)">${esc(role.displayName)}</strong> (${members.value.length})</div>`;
+        members.value.forEach(m=>{h+=`<div style="font-size:.78rem;padding:2px 0;color:var(--text-secondary);margin-left:12px">• ${esc(m.displayName)} — ${esc(m.userPrincipalName||'')}</div>`});
+      }
+    }
+    r.innerHTML=h||'<span style="color:var(--text-muted)">No admin roles found</span>';
+  }catch(e){r.innerHTML=`<span style="color:var(--accent-red)">✗ ${esc(e.message)}</span>`}
+}
+
+async function entraAuditApps(){
+  const r=$('entraAppResult');r.innerHTML='<span style="color:var(--text-muted)">Auditing...</span>';
+  if(!A.ok())return r.innerHTML='<span style="color:var(--accent-red)">Sign in first</span>';
+  try{
+    const apps=await G.call('/applications?$select=displayName,appId,passwordCredentials,keyCredentials&$top=100');
+    const now=Date.now(),soon=30*86400000;
+    const issues=[];
+    (apps.value||[]).forEach(a=>{
+      [...(a.passwordCredentials||[]),...(a.keyCredentials||[])].forEach(c=>{
+        if(c.endDateTime){
+          const exp=new Date(c.endDateTime);
+          if(exp<now)issues.push({app:a.displayName,type:'Expired',date:exp,sev:'red'});
+          else if(exp<now+soon)issues.push({app:a.displayName,type:'Expiring soon',date:exp,sev:'amber'});
+        }
+      });
+    });
+    if(!issues.length)return r.innerHTML='<span style="color:var(--accent-green)">✓ No expiring or expired credentials found</span>';
+    let h=`<div style="margin-bottom:8px;color:var(--accent-amber)">Found ${issues.length} credential issue(s):</div>`;
+    h+='<table class="disc-table" style="font-size:.76rem"><thead><tr><th>App</th><th>Status</th><th>Expiry</th></tr></thead><tbody>';
+    issues.forEach(i=>{
+      h+=`<tr><td>${esc(i.app)}</td><td><span class="badge badge-${i.sev}">${i.type}</span></td><td>${i.date.toLocaleDateString('en-GB')}</td></tr>`;
+    });
+    h+='</tbody></table>';
+    r.innerHTML=h;
+  }catch(e){r.innerHTML=`<span style="color:var(--accent-red)">✗ ${esc(e.message)}</span>`}
+}
+
+/* ── Purview & Compliance Tools ── */
+function toolPurview(){
+  const c=$('toolContent');
+  c.innerHTML=`
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+
+<div class="card">
+<div class="card-header"><span class="dot" style="background:var(--accent-amber)"></span> Sensitivity Labels</div>
+<button class="btn btn-primary btn-sm" onclick="purviewListLabels()">🏷️ List Labels</button>
+<div id="purLabelsResult" style="margin-top:10px;font-size:.82rem;max-height:400px;overflow:auto"></div>
+</div>
+
+<div class="card">
+<div class="card-header"><span class="dot" style="background:var(--accent-amber)"></span> Retention Labels</div>
+<button class="btn btn-primary btn-sm" onclick="purviewListRetention()">📦 List Retention Labels</button>
+<div id="purRetentionResult" style="margin-top:10px;font-size:.82rem;max-height:400px;overflow:auto"></div>
+</div>
+
+<div class="card">
+<div class="card-header"><span class="dot" style="background:var(--accent-amber)"></span> DLP Policy Overview</div>
+<p style="font-size:.82rem;color:var(--text-secondary);margin-bottom:12px;line-height:1.6;font-family:var(--font-display)">DLP policies protect sensitive data. Deploy these standard policies to cover common UK compliance requirements.</p>
+<div style="display:flex;flex-direction:column;gap:8px">
+<button class="btn btn-secondary btn-sm" onclick="purviewDlpGuide('uk-financial')">🏦 UK Financial Data Protection</button>
+<button class="btn btn-secondary btn-sm" onclick="purviewDlpGuide('pii')">👤 Personal Data (PII/GDPR)</button>
+<button class="btn btn-secondary btn-sm" onclick="purviewDlpGuide('health')">🏥 Health Records (NHS)</button>
+<button class="btn btn-secondary btn-sm" onclick="purviewDlpGuide('credit-card')">💳 Credit Card Numbers</button>
+</div>
+<div id="purDlpResult" style="margin-top:10px;font-size:.82rem"></div>
+</div>
+
+<div class="card">
+<div class="card-header"><span class="dot" style="background:var(--accent-amber)"></span> Audit Log Search</div>
+<div style="margin-bottom:12px">
+<label class="form-label">User UPN (optional)</label>
+<input id="purAuditUser" class="form-input" placeholder="Leave blank for all users">
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+<div><label class="form-label">Start</label><input id="purAuditStart" class="form-input" type="date"></div>
+<div><label class="form-label">End</label><input id="purAuditEnd" class="form-input" type="date"></div>
+</div>
+<button class="btn btn-primary btn-sm" onclick="purviewAuditSearch()">🔍 Search Audit Log</button>
+<div id="purAuditResult" style="margin-top:10px;font-size:.82rem;max-height:400px;overflow:auto"></div>
+</div>
+
+<div class="card">
+<div class="card-header"><span class="dot" style="background:var(--accent-amber)"></span> Compliance Score</div>
+<button class="btn btn-primary btn-sm" onclick="purviewGetScore()">📊 Get Compliance Score</button>
+<div id="purScoreResult" style="margin-top:10px;font-size:.82rem"></div>
+</div>
+
+<div class="card">
+<div class="card-header"><span class="dot" style="background:var(--accent-amber)"></span> Quick Compliance Setup</div>
+<p style="font-size:.82rem;color:var(--text-secondary);margin-bottom:12px;line-height:1.6;font-family:var(--font-display)">Enable essential compliance features in one click. Requires appropriate licensing.</p>
+<div style="display:flex;flex-direction:column;gap:8px">
+<button class="btn btn-secondary btn-sm" onclick="purviewEnableAudit()">📋 Enable Unified Audit Log</button>
+<button class="btn btn-secondary btn-sm" onclick="purviewEnableMailboxAudit()">📧 Enable Mailbox Auditing</button>
+</div>
+<div id="purQuickResult" style="margin-top:10px;font-size:.82rem"></div>
+</div>
+
+</div>`;
+  // Default dates
+  const now=new Date();const week=new Date(now-7*86400000);
+  $('purAuditStart').value=week.toISOString().split('T')[0];
+  $('purAuditEnd').value=now.toISOString().split('T')[0];
+}
+
+async function purviewListLabels(){
+  const r=$('purLabelsResult');r.innerHTML='<span style="color:var(--text-muted)">Loading...</span>';
+  if(!A.ok())return r.innerHTML='<span style="color:var(--accent-red)">Sign in first</span>';
+  try{
+    const resp=await G.call('/security/informationProtection/sensitivityLabels','GET',null,true);
+    const labels=resp.value||[];
+    if(!labels.length)return r.innerHTML='<span style="color:var(--text-muted)">No sensitivity labels configured. Create in Purview → Information Protection → Labels.</span>';
+    let h='<table class="disc-table" style="font-size:.76rem"><thead><tr><th>Label</th><th>Priority</th><th>Scope</th></tr></thead><tbody>';
+    labels.forEach(l=>{h+=`<tr><td style="font-weight:500">${esc(l.name||l.displayName||'')}</td><td>${l.priority||'—'}</td><td>${esc((l.contentFormats||[]).join(', ')||'—')}</td></tr>`});
+    h+='</tbody></table>';
+    r.innerHTML=h;
+  }catch(e){r.innerHTML=`<span style="color:var(--accent-red)">✗ ${esc(e.message)}<br><span style="font-size:.76rem">Requires InformationProtectionPolicy.Read.All permission</span></span>`}
+}
+
+async function purviewListRetention(){
+  const r=$('purRetentionResult');r.innerHTML='<span style="color:var(--text-muted)">Loading...</span>';
+  if(!A.ok())return r.innerHTML='<span style="color:var(--accent-red)">Sign in first</span>';
+  try{
+    const resp=await G.call('/security/labels/retentionLabels','GET',null,true);
+    const labels=resp.value||[];
+    if(!labels.length)return r.innerHTML='<span style="color:var(--text-muted)">No retention labels configured. Create in Purview → Data Lifecycle → Retention Labels.</span>';
+    let h='<table class="disc-table" style="font-size:.76rem"><thead><tr><th>Label</th><th>Retention Days</th><th>Action</th></tr></thead><tbody>';
+    labels.forEach(l=>{h+=`<tr><td style="font-weight:500">${esc(l.displayName||'')}</td><td>${l.retentionDuration?.numberOfDays||'—'}</td><td>${esc(l.actionAfterRetentionPeriod||'—')}</td></tr>`});
+    h+='</tbody></table>';
+    r.innerHTML=h;
+  }catch(e){r.innerHTML=`<span style="color:var(--accent-red)">✗ ${esc(e.message)}<br><span style="font-size:.76rem">Requires RecordsManagement.Read.All permission</span></span>`}
+}
+
+function purviewDlpGuide(type){
+  const guides={
+    'uk-financial':{title:'UK Financial Data Protection',desc:'Protects National Insurance numbers, sort codes, account numbers, and financial identifiers.',
+      steps:'1. Go to Purview → Data Loss Prevention → Policies\n2. Create Policy → Use template: "U.K. Financial Data"\n3. Apply to: Exchange, SharePoint, OneDrive, Teams\n4. Action: Block sharing with external users\n5. Notify: User and compliance admin\n6. Set to Test mode first, then Enable after 7 days'},
+    'pii':{title:'Personal Data (PII/GDPR)',desc:'Protects names, addresses, dates of birth, passport numbers, and other personal identifiers under GDPR.',
+      steps:'1. Go to Purview → Data Loss Prevention → Policies\n2. Create Policy → Use template: "U.K. Personally Identifiable Information (PII) Data"\n3. Apply to: All locations (Exchange, SP, OD, Teams, Devices)\n4. Action: Restrict access to external users, require override justification\n5. Tips: Enable policy tips so users see warnings before sharing\n6. GDPR requires: data subject access requests, breach notification within 72hrs'},
+    'health':{title:'Health Records (NHS)',desc:'Protects NHS numbers, medical record numbers, and health-related personal data.',
+      steps:'1. Go to Purview → Data Loss Prevention → Policies\n2. Create Policy → Use template: "U.K. Access to Medical Reports Act"\n3. Apply to: Exchange, SharePoint, OneDrive\n4. Action: Block sharing with external users entirely\n5. Additional: Consider sensitivity labels for "Confidential - Health"\n6. NHS DSPT requires annual compliance assessment'},
+    'credit-card':{title:'Credit Card Numbers',desc:'Detects and protects Visa, Mastercard, Amex, and other card numbers (PCI DSS compliance).',
+      steps:'1. Go to Purview → Data Loss Prevention → Policies\n2. Create Policy → Use template: "U.K. Financial Data" or custom with Credit Card Number sensitive info type\n3. Apply to: All locations\n4. Action: Block and notify immediately\n5. PCI DSS: Card data must never be stored in email/SharePoint\n6. Override: Do not allow user override for this policy'}
+  };
+  const g=guides[type];if(!g)return;
+  $('purDlpResult').innerHTML=`<div style="padding:14px;background:var(--bg-elevated);border-radius:var(--radius-md);border:1px solid var(--border-subtle)">
+    <div style="font-weight:600;margin-bottom:6px;font-family:var(--font-display)">${g.title}</div>
+    <div style="font-size:.82rem;color:var(--text-secondary);margin-bottom:10px">${g.desc}</div>
+    <pre style="font-size:.78rem;color:var(--text-secondary);white-space:pre-wrap;line-height:1.7;margin:0">${g.steps}</pre>
+    <div style="margin-top:10px;padding:8px 12px;background:rgba(245,158,11,.06);border-radius:var(--radius-sm);font-size:.78rem;color:var(--accent-amber)">⚠ DLP policies require Microsoft 365 E3/E5 or Purview Compliance add-on licensing</div>
+  </div>`;
+}
+
+async function purviewAuditSearch(){
+  const r=$('purAuditResult');r.innerHTML='<span style="color:var(--text-muted)">Searching...</span>';
+  if(!A.ok())return r.innerHTML='<span style="color:var(--accent-red)">Sign in first</span>';
+  try{
+    const resp=await G.call(`/auditLogs/signIns?$top=50&$orderby=createdDateTime desc&$filter=createdDateTime ge ${$('purAuditStart').value}T00:00:00Z and createdDateTime le ${$('purAuditEnd').value}T23:59:59Z${$('purAuditUser').value.trim()?` and userPrincipalName eq '${$('purAuditUser').value.trim()}'`:''}`);
+    const logs=resp.value||[];
+    if(!logs.length)return r.innerHTML='<span style="color:var(--text-muted)">No sign-in events found for this period</span>';
+    let h='<table class="disc-table" style="font-size:.72rem"><thead><tr><th>Time</th><th>User</th><th>App</th><th>Status</th><th>Location</th></tr></thead><tbody>';
+    logs.forEach(l=>{
+      const ok=l.status?.errorCode===0;
+      h+=`<tr><td>${new Date(l.createdDateTime).toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}</td><td>${esc(l.userPrincipalName||'')}</td><td style="max-width:120px;overflow:hidden;text-overflow:ellipsis">${esc(l.appDisplayName||'—')}</td><td><span class="badge ${ok?'badge-green':'badge-red'}">${ok?'OK':l.status?.failureReason?.slice(0,20)||'Failed'}</span></td><td>${esc(l.location?.city||'')} ${esc(l.location?.countryOrRegion||'')}</td></tr>`;
+    });
+    h+='</tbody></table>';
+    r.innerHTML=h;
+  }catch(e){r.innerHTML=`<span style="color:var(--accent-red)">✗ ${esc(e.message)}<br><span style="font-size:.76rem">Requires AuditLog.Read.All permission and Azure AD Premium</span></span>`}
+}
+
+async function purviewGetScore(){
+  const r=$('purScoreResult');r.innerHTML='<span style="color:var(--text-muted)">Loading...</span>';
+  if(!A.ok())return r.innerHTML='<span style="color:var(--accent-red)">Sign in first</span>';
+  try{
+    const resp=await G.call('/security/secureScores?$top=1');
+    const s=(resp.value||[])[0];
+    if(!s)return r.innerHTML='<span style="color:var(--text-muted)">No Secure Score data available</span>';
+    const pct=Math.round(s.currentScore/s.maxScore*100);
+    const col=pct>=70?'var(--accent-green)':pct>=40?'var(--accent-amber)':'var(--accent-red)';
+    r.innerHTML=`<div style="text-align:center;padding:20px">
+    <div style="font-size:2.5rem;font-weight:800;color:${col};font-family:var(--font-display)">${pct}%</div>
+    <div style="font-size:.88rem;color:var(--text-secondary)">${s.currentScore} / ${s.maxScore}</div>
+    <div style="font-size:.78rem;color:var(--text-muted);margin-top:4px">Microsoft Secure Score</div>
+    </div>`;
+  }catch(e){r.innerHTML=`<span style="color:var(--accent-red)">✗ ${esc(e.message)}</span>`}
+}
+
+async function purviewEnableAudit(){
+  $('purQuickResult').innerHTML='<span style="color:var(--accent-amber)">⚠ Unified Audit Log requires enablement via PowerShell or the Compliance Portal:<br><code style="font-size:.76rem">Set-AdminAuditLogConfig -UnifiedAuditLogIngestionEnabled $true</code><br>Or go to: Purview → Audit → Start recording user and admin activity</span>';
+}
+async function purviewEnableMailboxAudit(){
+  $('purQuickResult').innerHTML='<span style="color:var(--accent-amber)">⚠ Mailbox auditing is enabled by default since January 2019, but to verify:<br><code style="font-size:.76rem">Get-OrganizationConfig | Select AuditDisabled</code><br>If AuditDisabled is True, run:<br><code style="font-size:.76rem">Set-OrganizationConfig -AuditDisabled $false</code></span>';
+}
+
+/* ── Intune Quick Deploy ── */
+function toolIntDeploy(){
+  const c=$('toolContent');
+  const apps=[
+    {name:'Google Chrome Enterprise',pub:'Google',type:'winGet',id:'Google.Chrome',icon:'🌐',desc:'Enterprise browser with group policy support'},
+    {name:'Mozilla Firefox ESR',pub:'Mozilla',type:'winGet',id:'Mozilla.Firefox.ESR',icon:'🦊',desc:'Extended Support Release browser'},
+    {name:'Microsoft Edge',pub:'Microsoft',type:'winGet',id:'Microsoft.Edge',icon:'🔷',desc:'Chromium-based browser (usually pre-installed)'},
+    {name:'Adobe Acrobat Reader',pub:'Adobe',type:'winGet',id:'Adobe.Acrobat.Reader.64-bit',icon:'📕',desc:'PDF reader'},
+    {name:'7-Zip',pub:'Igor Pavlov',type:'winGet',id:'7zip.7zip',icon:'📦',desc:'File archiver / compression'},
+    {name:'Zoom Workplace',pub:'Zoom',type:'winGet',id:'Zoom.Zoom',icon:'📹',desc:'Video conferencing'},
+    {name:'VLC Media Player',pub:'VideoLAN',type:'winGet',id:'VideoLAN.VLC',icon:'🎬',desc:'Media player'},
+    {name:'Notepad++',pub:'Don Ho',type:'winGet',id:'Notepad++.Notepad++',icon:'📝',desc:'Text/code editor'},
+    {name:'KeePassXC',pub:'KeePassXC',type:'winGet',id:'KeePassXCTeam.KeePassXC',icon:'🔐',desc:'Password manager'},
+    {name:'TreeSize Free',pub:'JAM Software',type:'winGet',id:'JAMSoftware.TreeSize.Free',icon:'🌳',desc:'Disk space analyser'},
+    {name:'PuTTY',pub:'Simon Tatham',type:'winGet',id:'PuTTY.PuTTY',icon:'🖥️',desc:'SSH/Telnet client'},
+    {name:'WinSCP',pub:'Martin Prikryl',type:'winGet',id:'WinSCP.WinSCP',icon:'📂',desc:'SFTP/SCP client'}
+  ];
+  
+  let h=`<div class="card" style="margin-bottom:16px">
+  <div class="card-header"><span class="dot" style="background:var(--accent-violet)"></span> One-Click App Deployment via WinGet</div>
+  <p style="font-size:.84rem;color:var(--text-secondary);line-height:1.7;font-family:var(--font-display);margin-bottom:14px">Deploy common MSP apps to all managed Windows devices using the Windows Package Manager (winget) via Intune. Select the apps you need, then deploy them as Win32 apps or PowerShell scripts.</p>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;margin-bottom:16px">`;
+  
+  apps.forEach((a,i)=>{
+    h+=`<label style="display:flex;align-items:center;gap:10px;padding:12px;background:var(--bg-elevated);border-radius:var(--radius-md);border:1px solid var(--border-subtle);cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='var(--accent-blue)'" onmouseout="this.style.borderColor='var(--border-subtle)'">
+    <input type="checkbox" id="intApp${i}" value="${a.id}" style="width:16px;height:16px">
+    <span style="font-size:1.2rem">${a.icon}</span>
+    <div style="flex:1"><div style="font-weight:600;font-size:.84rem">${a.name}</div><div style="font-size:.72rem;color:var(--text-muted)">${a.desc}</div></div>
+    </label>`;
+  });
+  
+  h+=`</div>
+  <div style="display:flex;gap:10px">
+  <button class="btn btn-primary" onclick="intDeployGenerate()">📜 Generate Deployment Script</button>
+  <button class="btn btn-secondary" onclick="intDeploySelectAll()">Select All</button>
+  </div>
+  </div>
+  
+  <div id="intDeployOutput" class="hidden">
+  <div class="card">
+  <div class="card-header"><span class="dot" style="background:var(--accent-green)"></span> Deployment Script</div>
+  <div style="display:flex;gap:8px;margin-bottom:12px">
+  <button class="btn btn-sm btn-secondary" onclick="navigator.clipboard.writeText($('intDeployScript').textContent);this.textContent='Copied!';setTimeout(()=>this.textContent='📋 Copy Script',1500)">📋 Copy Script</button>
+  <button class="btn btn-sm btn-secondary" onclick="intDeployDownload()">📥 Download .ps1</button>
+  <button class="btn btn-sm btn-success" onclick="intDeployToIntune()">🚀 Deploy via Intune</button>
+  </div>
+  <pre id="intDeployScript" style="background:var(--bg-input);border:1px solid var(--border-subtle);border-radius:var(--radius-md);padding:16px;font-size:.78rem;color:var(--text-secondary);overflow:auto;max-height:500px;line-height:1.6;margin:0"></pre>
+  </div>
+  </div>
+  
+  <div class="card" style="margin-top:16px">
+  <div class="card-header"><span class="dot" style="background:var(--accent-cyan)"></span> Custom PowerShell Script Deployment</div>
+  <p style="font-size:.84rem;color:var(--text-secondary);line-height:1.7;font-family:var(--font-display);margin-bottom:14px">Deploy a custom PowerShell script to all managed devices via Intune. The script will run once per device in SYSTEM context.</p>
+  <div style="margin-bottom:12px">
+  <label class="form-label">Script Name</label>
+  <input id="intScriptName" class="form-input" placeholder="e.g. Configure-Printers">
+  </div>
+  <div style="margin-bottom:12px">
+  <label class="form-label">PowerShell Script</label>
+  <textarea id="intScriptBody" class="form-input mono" rows="8" placeholder="# Your PowerShell script here..."></textarea>
+  </div>
+  <button class="btn btn-primary btn-sm" onclick="intDeployScript()">🚀 Deploy Script to Intune</button>
+  <div id="intScriptResult" style="margin-top:10px;font-size:.82rem"></div>
+  </div>`;
+  
+  c.innerHTML=h;
+}
+
+function intDeploySelectAll(){
+  document.querySelectorAll('[id^="intApp"]').forEach(cb=>cb.checked=true);
+}
+
+function intDeployGenerate(){
+  const selected=[];
+  document.querySelectorAll('[id^="intApp"]:checked').forEach(cb=>selected.push(cb.value));
+  if(!selected.length)return alert('Select at least one app.');
+  
+  const script=`# Intune App Deployment Script via WinGet
+# Generated by MSP Tenant Automation
+# Deploy as: Intune > Devices > Scripts > Add PowerShell script
+# Run as: System | Run in 64-bit host: Yes
+
+# Check if winget is available
+$WinGet = Get-Command winget -ErrorAction SilentlyContinue
+if (-not $WinGet) {
+    Write-Host "WinGet not found. Installing..." -ForegroundColor Yellow
+    # Install WinGet via App Installer
+    $ProgressPreference = 'SilentlyContinue'
+    Add-AppxPackage -RegisterByFamilyName -MainPackage Microsoft.DesktopAppInstaller_8wekyb3d8bbwe
+    Start-Sleep -Seconds 5
+    $WinGet = Get-Command winget -ErrorAction SilentlyContinue
+    if (-not $WinGet) {
+        Write-Error "Failed to install WinGet. Install Microsoft App Installer from the Store."
+        exit 1
+    }
+}
+
+Write-Host "=== MSP App Deployment ===" -ForegroundColor Cyan
+Write-Host "Installing ${selected.length} application(s)..." -ForegroundColor White
+Write-Host ""
+
+$Results = @()
+
+${selected.map(id=>`
+# Install ${id}
+Write-Host "Installing ${id}..." -ForegroundColor Yellow
+try {
+    winget install --id "${id}" --silent --accept-package-agreements --accept-source-agreements --scope machine 2>&1 | Out-Null
+    if ($LASTEXITCODE -eq 0 -or $LASTEXITCODE -eq -1978335189) {
+        Write-Host "  OK: ${id}" -ForegroundColor Green
+        $Results += [PSCustomObject]@{App="${id}";Status="Success"}
+    } else {
+        Write-Host "  WARN: ${id} (exit code $LASTEXITCODE)" -ForegroundColor Yellow
+        $Results += [PSCustomObject]@{App="${id}";Status="Warning ($LASTEXITCODE)"}
+    }
+} catch {
+    Write-Host "  FAIL: ${id} - $_" -ForegroundColor Red
+    $Results += [PSCustomObject]@{App="${id}";Status="Failed"}
+}`).join('\n')}
+
+Write-Host ""
+Write-Host "=== Deployment Summary ===" -ForegroundColor Cyan
+$Results | Format-Table -AutoSize
+Write-Host "Completed at $(Get-Date)" -ForegroundColor Green
+`;
+  
+  $('intDeployOutput').classList.remove('hidden');
+  $('intDeployScript').textContent=script;
+}
+
+function intDeployDownload(){
+  const script=$('intDeployScript').textContent;
+  dl(script,'MSP-App-Deployment.ps1','text/plain');
+}
+
+async function intDeployToIntune(){
+  if(!A.ok())return alert('Sign in first.');
+  const script=$('intDeployScript').textContent;
+  try{
+    const b64=btoa(unescape(encodeURIComponent(script)));
+    await G.call('/deviceManagement/deviceManagementScripts','POST',{
+      displayName:'[MSP] App Deployment — WinGet',
+      description:'Automated app deployment via WinGet. Generated by MSP Tenant Automation.',
+      scriptContent:b64,
+      runAsAccount:'system',
+      enforceSignatureCheck:false,
+      fileName:'MSP-App-Deployment.ps1',
+      runAs32Bit:false
+    },true);
+    alert('Script deployed to Intune! Go to Intune > Devices > Scripts to assign it to a device group.');
+  }catch(e){alert('Failed: '+e.message+'\n\nRequires DeviceManagementConfiguration.ReadWrite.All permission.')}
+}
+
+async function intDeployScript(){
+  const r=$('intScriptResult');r.innerHTML='<span style="color:var(--text-muted)">Deploying...</span>';
+  if(!A.ok())return r.innerHTML='<span style="color:var(--accent-red)">Sign in first</span>';
+  const name=$('intScriptName').value.trim(),body=$('intScriptBody').value;
+  if(!name||!body)return r.innerHTML='<span style="color:var(--accent-red)">Enter script name and content</span>';
+  try{
+    const b64=btoa(unescape(encodeURIComponent(body)));
+    await G.call('/deviceManagement/deviceManagementScripts','POST',{
+      displayName:'[MSP] '+name,description:'Custom script deployed by MSP Tenant Automation',
+      scriptContent:b64,runAsAccount:'system',enforceSignatureCheck:false,
+      fileName:name.replace(/\s/g,'-')+'.ps1',runAs32Bit:false
+    },true);
+    r.innerHTML='<span style="color:var(--accent-green)">✓ Script deployed! Assign to a device group in Intune > Devices > Scripts.</span>';
+  }catch(e){r.innerHTML=`<span style="color:var(--accent-red)">✗ ${esc(e.message)}</span>`}
+}
+
+/* ── Tenant Health Dashboard ── */
+function toolHealth(){
+  const c=$('toolContent');
+  c.innerHTML=`
+<div class="card" style="margin-bottom:16px">
+<div class="card-header"><span class="dot" style="background:var(--accent-green)"></span> Tenant Health Dashboard</div>
+<p style="font-size:.84rem;color:var(--text-secondary);line-height:1.6;font-family:var(--font-display);margin-bottom:14px">Real-time overview of your tenant's health, security posture, and resource utilisation.</p>
+<button class="btn btn-primary" onclick="healthScan()">💊 Run Health Check</button>
+</div>
+<div id="healthResults"></div>`;
+}
+
+async function healthScan(){
+  const r=$('healthResults');r.innerHTML='<div style="text-align:center;padding:30px;color:var(--text-muted)"><span class="animate-spin" style="display:inline-block;font-size:1.5rem">◌</span><br>Scanning tenant health...</div>';
+  if(!A.ok())return r.innerHTML='<div class="card"><span style="color:var(--accent-red)">Sign in first</span></div>';
+  
+  G.scopes=Auth.DISCOVERY_SCOPES;
+  const data={};
+  const checks=[
+    {k:'org',ep:'/organization?$select=displayName,verifiedDomains,assignedPlans'},
+    {k:'users',ep:'/users/$count',headers:true},
+    {k:'guests',ep:"/users/$count?$filter=userType eq 'Guest'",headers:true},
+    {k:'groups',ep:'/groups/$count',headers:true},
+    {k:'skus',ep:'/subscribedSkus?$select=skuPartNumber,consumedUnits,prepaidUnits'},
+    {k:'secScore',ep:'/security/secureScores?$top=1'},
+    {k:'ca',ep:'/identity/conditionalAccess/policies/$count',headers:true},
+    {k:'secDef',ep:'/policies/identitySecurityDefaultsEnforcementPolicy'},
+    {k:'riskyUsers',ep:'/identityProtection/riskyUsers?$filter=riskLevel eq \'high\'&$top=10'},
+    {k:'devices',ep:'/deviceManagement/managedDevices/$count',headers:true},
+    {k:'apps',ep:'/applications/$count',headers:true}
+  ];
+  
+  for(const c of checks){
+    try{
+      if(c.headers){
+        const token=await A.token(Auth.DISCOVERY_SCOPES);
+        const resp=await fetch('https://graph.microsoft.com/v1.0'+c.ep,{headers:{Authorization:'Bearer '+A.tok,ConsistencyLevel:'eventual'}});
+        data[c.k]=await resp.text();
+      } else {
+        data[c.k]=await G.call(c.ep);
+      }
+    }catch(e){data[c.k]=null}
+  }
+  G.scopes=null;
+  
+  const org=data.org?.value?.[0];
+  const skus=data.skus?.value||[];
+  const ss=data.secScore?.value?.[0];
+  const ssPct=ss?Math.round(ss.currentScore/ss.maxScore*100):null;
+  const ssCol=ssPct?(ssPct>=70?'var(--accent-green)':ssPct>=40?'var(--accent-amber)':'var(--accent-red)'):'var(--text-muted)';
+  const secDefOn=data.secDef?.isEnabled;
+  const riskyCount=(data.riskyUsers?.value||[]).length;
+  
+  let totalLic=0,usedLic=0;
+  skus.forEach(s=>{totalLic+=(s.prepaidUnits?.enabled||0);usedLic+=(s.consumedUnits||0)});
+  const licPct=totalLic?Math.round(usedLic/totalLic*100):0;
+  
+  let h=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-bottom:16px">
+  <div class="card" style="text-align:center;padding:18px"><div style="font-size:2rem;font-weight:800;color:var(--accent-blue);font-family:var(--font-display)">${data.users||'?'}</div><div style="font-size:.78rem;color:var(--text-muted)">Total Users</div></div>
+  <div class="card" style="text-align:center;padding:18px"><div style="font-size:2rem;font-weight:800;color:var(--accent-violet);font-family:var(--font-display)">${data.guests||'?'}</div><div style="font-size:.78rem;color:var(--text-muted)">Guest Users</div></div>
+  <div class="card" style="text-align:center;padding:18px"><div style="font-size:2rem;font-weight:800;color:var(--accent-cyan);font-family:var(--font-display)">${data.groups||'?'}</div><div style="font-size:.78rem;color:var(--text-muted)">Groups</div></div>
+  <div class="card" style="text-align:center;padding:18px"><div style="font-size:2rem;font-weight:800;color:${ssCol};font-family:var(--font-display)">${ssPct!==null?ssPct+'%':'—'}</div><div style="font-size:.78rem;color:var(--text-muted)">Secure Score</div></div>
+  <div class="card" style="text-align:center;padding:18px"><div style="font-size:2rem;font-weight:800;color:var(--accent-green);font-family:var(--font-display)">${data.ca||'?'}</div><div style="font-size:.78rem;color:var(--text-muted)">CA Policies</div></div>
+  <div class="card" style="text-align:center;padding:18px"><div style="font-size:2rem;font-weight:800;color:${riskyCount?'var(--accent-red)':'var(--accent-green)'};font-family:var(--font-display)">${riskyCount}</div><div style="font-size:.78rem;color:var(--text-muted)">High Risk Users</div></div>
+  <div class="card" style="text-align:center;padding:18px"><div style="font-size:2rem;font-weight:800;color:var(--accent-blue);font-family:var(--font-display)">${data.devices||'?'}</div><div style="font-size:.78rem;color:var(--text-muted)">Managed Devices</div></div>
+  <div class="card" style="text-align:center;padding:18px"><div style="font-size:2rem;font-weight:800;color:var(--accent-orange);font-family:var(--font-display)">${data.apps||'?'}</div><div style="font-size:.78rem;color:var(--text-muted)">App Registrations</div></div>
+  </div>`;
+  
+  // License utilisation
+  h+=`<div class="card" style="margin-bottom:16px">
+  <div class="card-header"><span class="dot" style="background:var(--accent-blue)"></span> License Utilisation (${licPct}%)</div>
+  <div class="progress-track" style="margin-bottom:12px"><div class="progress-fill" style="width:${licPct}%;background:${licPct>90?'var(--accent-red)':licPct>75?'var(--accent-amber)':'var(--accent-blue)'}"></div></div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px">`;
+  skus.forEach(s=>{
+    const t=s.prepaidUnits?.enabled||0;const u=s.consumedUnits||0;const p=t?Math.round(u/t*100):0;
+    h+=`<div style="padding:10px;background:var(--bg-elevated);border-radius:var(--radius-md);font-size:.8rem">
+    <div style="font-weight:600">${esc(skuName(s.skuPartNumber))}</div>
+    <div style="color:var(--text-muted);font-size:.76rem">${u} / ${t} used (${p}%)</div>
+    <div class="progress-track" style="height:4px;margin-top:6px"><div class="progress-fill" style="width:${p}%;height:4px;background:${p>90?'var(--accent-red)':'var(--accent-blue)'}"></div></div>
+    </div>`;
+  });
+  h+=`</div></div>`;
+  
+  // Security posture
+  h+=`<div class="card" style="margin-bottom:16px">
+  <div class="card-header"><span class="dot" style="background:${secDefOn?'var(--accent-green)':'var(--accent-amber)'}"></span> Security Posture</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+  <div style="padding:12px;background:var(--bg-elevated);border-radius:var(--radius-md)">
+    <div style="font-weight:600;font-size:.84rem;margin-bottom:4px">Security Defaults</div>
+    <div style="font-size:.82rem;color:${secDefOn?'var(--accent-green)':'var(--accent-amber)'}">${secDefOn?'Enabled':'Disabled (use CA policies)'}</div>
+  </div>
+  <div style="padding:12px;background:var(--bg-elevated);border-radius:var(--radius-md)">
+    <div style="font-weight:600;font-size:.84rem;margin-bottom:4px">Conditional Access</div>
+    <div style="font-size:.82rem;color:${parseInt(data.ca)>0?'var(--accent-green)':'var(--accent-red)'}">${data.ca||0} policies configured</div>
+  </div>
+  <div style="padding:12px;background:var(--bg-elevated);border-radius:var(--radius-md)">
+    <div style="font-weight:600;font-size:.84rem;margin-bottom:4px">High Risk Users</div>
+    <div style="font-size:.82rem;color:${riskyCount?'var(--accent-red)':'var(--accent-green)'}">${riskyCount?riskyCount+' users at risk':'No high-risk users'}</div>
+  </div>
+  </div></div>`;
+  
+  // Risky users
+  if(riskyCount){
+    h+=`<div class="card" style="margin-bottom:16px;border-color:rgba(239,68,68,.3)">
+    <div class="card-header" style="color:var(--accent-red)"><span class="dot" style="background:var(--accent-red)"></span> High Risk Users — Immediate Action Required</div>
+    <table class="disc-table" style="font-size:.78rem"><thead><tr><th>User</th><th>Risk Level</th><th>Risk Detail</th></tr></thead><tbody>`;
+    (data.riskyUsers?.value||[]).forEach(u=>{
+      h+=`<tr><td>${esc(u.userDisplayName||'')} <span style="color:var(--text-muted)">${esc(u.userPrincipalName||'')}</span></td><td><span class="badge badge-red">${esc(u.riskLevel||'')}</span></td><td style="font-size:.76rem">${esc(u.riskDetail||'—')}</td></tr>`;
+    });
+    h+=`</tbody></table></div>`;
+  }
+  
+  r.innerHTML=h;
+}
+
+/* ── Bulk Operations ── */
+function toolBulk(){
+  const c=$('toolContent');
+  c.innerHTML=`
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+
+<div class="card">
+<div class="card-header"><span class="dot" style="background:var(--accent-cyan)"></span> CSV User Import</div>
+<p style="font-size:.82rem;color:var(--text-secondary);line-height:1.6;font-family:var(--font-display);margin-bottom:12px">Upload a CSV to create multiple users at once. The CSV must have columns: DisplayName, UserPrincipalName, Password, UsageLocation</p>
+<div style="margin-bottom:12px">
+<button class="btn btn-sm btn-secondary" onclick="bulkDownloadTemplate()">📥 Download CSV Template</button>
+</div>
+<input id="bulkCsvFile" type="file" accept=".csv" class="form-input" style="margin-bottom:12px">
+<button class="btn btn-primary btn-sm" onclick="bulkImportUsers()">👤 Import Users</button>
+<div id="bulkImportResult" style="margin-top:10px;font-size:.82rem;max-height:400px;overflow:auto"></div>
+</div>
+
+<div class="card">
+<div class="card-header"><span class="dot" style="background:var(--accent-cyan)"></span> Export Users to CSV</div>
+<p style="font-size:.82rem;color:var(--text-secondary);line-height:1.6;font-family:var(--font-display);margin-bottom:12px">Export all users with their properties, licenses, and sign-in status to a CSV file for audit or migration.</p>
+<button class="btn btn-primary btn-sm" onclick="bulkExportUsers()">📤 Export All Users</button>
+<div id="bulkExportResult" style="margin-top:10px;font-size:.82rem"></div>
+</div>
+
+<div class="card">
+<div class="card-header"><span class="dot" style="background:var(--accent-cyan)"></span> Bulk Password Reset</div>
+<p style="font-size:.82rem;color:var(--text-secondary);line-height:1.6;font-family:var(--font-display);margin-bottom:12px">Reset passwords for multiple users at once. Paste UPNs (one per line).</p>
+<textarea id="bulkResetUsers" class="form-input mono" rows="5" placeholder="user1@domain.com&#10;user2@domain.com&#10;user3@domain.com"></textarea>
+<label style="display:flex;align-items:center;gap:6px;font-size:.82rem;color:var(--text-secondary);margin:8px 0"><input id="bulkResetForce" type="checkbox" checked> Force change on next sign-in</label>
+<button class="btn btn-primary btn-sm" onclick="bulkResetPasswords()">🔑 Reset All</button>
+<div id="bulkResetResult" style="margin-top:10px;font-size:.82rem;max-height:300px;overflow:auto"></div>
+</div>
+
+<div class="card">
+<div class="card-header"><span class="dot" style="background:var(--accent-cyan)"></span> Bulk License Assignment</div>
+<p style="font-size:.82rem;color:var(--text-secondary);line-height:1.6;font-family:var(--font-display);margin-bottom:12px">Assign a license to multiple users. Select a SKU and paste UPNs.</p>
+<div style="margin-bottom:12px">
+<label class="form-label">License SKU</label>
+<select id="bulkLicSku" class="form-input"><option value="">— Load SKUs first —</option></select>
+<button class="btn btn-sm btn-secondary" style="margin-top:6px" onclick="bulkLoadSkus()">🔄 Load Available SKUs</button>
+</div>
+<textarea id="bulkLicUsers" class="form-input mono" rows="4" placeholder="user1@domain.com&#10;user2@domain.com"></textarea>
+<button class="btn btn-primary btn-sm" style="margin-top:8px" onclick="bulkAssignLicenses()">🏷️ Assign License</button>
+<div id="bulkLicResult" style="margin-top:10px;font-size:.82rem;max-height:300px;overflow:auto"></div>
+</div>
+
+<div class="card">
+<div class="card-header"><span class="dot" style="background:var(--accent-cyan)"></span> Bulk Group Membership</div>
+<div style="margin-bottom:12px">
+<label class="form-label">Group Name or ID</label>
+<input id="bulkGroupId" class="form-input" placeholder="Group display name or GUID">
+</div>
+<textarea id="bulkGroupUsers" class="form-input mono" rows="4" placeholder="user1@domain.com&#10;user2@domain.com"></textarea>
+<button class="btn btn-primary btn-sm" style="margin-top:8px" onclick="bulkAddToGroup()">➕ Add All to Group</button>
+<div id="bulkGroupResult" style="margin-top:10px;font-size:.82rem;max-height:300px;overflow:auto"></div>
+</div>
+
+<div class="card">
+<div class="card-header"><span class="dot" style="background:var(--accent-cyan)"></span> Export Groups to CSV</div>
+<p style="font-size:.82rem;color:var(--text-secondary);line-height:1.6;font-family:var(--font-display);margin-bottom:12px">Export all groups with type, membership count, and owners.</p>
+<button class="btn btn-primary btn-sm" onclick="bulkExportGroups()">📤 Export All Groups</button>
+<div id="bulkGroupExResult" style="margin-top:10px;font-size:.82rem"></div>
+</div>
+
+</div>`;
+}
+
+function bulkDownloadTemplate(){
+  dl('DisplayName,UserPrincipalName,Password,UsageLocation,Department,JobTitle\nJohn Smith,john.smith@domain.com,P@ssw0rd123!,GB,IT,Engineer\nJane Doe,jane.doe@domain.com,P@ssw0rd456!,GB,Finance,Accountant\n','user-import-template.csv','text/csv');
+}
+
+async function bulkImportUsers(){
+  const r=$('bulkImportResult');
+  const file=$('bulkCsvFile').files[0];
+  if(!file)return r.innerHTML='<span style="color:var(--accent-red)">Select a CSV file</span>';
+  if(!A.ok())return r.innerHTML='<span style="color:var(--accent-red)">Sign in first</span>';
+  
+  const text=await file.text();
+  const lines=text.trim().split('\n');
+  const headers=lines[0].split(',').map(h=>h.trim().replace(/"/g,''));
+  
+  r.innerHTML='<span style="color:var(--text-muted)">Importing...</span>';
+  let results=[];
+  
+  for(let i=1;i<lines.length;i++){
+    const vals=lines[i].split(',').map(v=>v.trim().replace(/"/g,''));
+    const row={};headers.forEach((h,j)=>row[h]=vals[j]||'');
+    
+    try{
+      await G.call('/users','POST',{
+        accountEnabled:true,
+        displayName:row.DisplayName||row.displayName,
+        userPrincipalName:row.UserPrincipalName||row.userPrincipalName||row.UPN,
+        mailNickname:(row.UserPrincipalName||row.userPrincipalName||'').split('@')[0],
+        usageLocation:row.UsageLocation||row.usageLocation||'GB',
+        department:row.Department||row.department||undefined,
+        jobTitle:row.JobTitle||row.jobTitle||undefined,
+        passwordProfile:{password:row.Password||row.password||'P@ss'+uid().slice(0,8)+'!',forceChangePasswordNextSignIn:true}
+      });
+      results.push(`<span style="color:var(--accent-green)">✓ ${esc(row.DisplayName||vals[0])}</span>`);
+    }catch(e){
+      results.push(`<span style="color:var(--accent-red)">✗ ${esc(row.DisplayName||vals[0])}: ${esc(e.message.slice(0,60))}</span>`);
+    }
+  }
+  r.innerHTML=results.join('<br>');
+}
+
+async function bulkExportUsers(){
+  const r=$('bulkExportResult');r.innerHTML='<span style="color:var(--text-muted)">Exporting...</span>';
+  if(!A.ok())return r.innerHTML='<span style="color:var(--accent-red)">Sign in first</span>';
+  try{
+    const resp=await G.call('/users?$select=displayName,userPrincipalName,mail,department,jobTitle,accountEnabled,assignedLicenses,userType,createdDateTime&$top=999');
+    const users=resp.value||[];
+    let csv='DisplayName,UserPrincipalName,Mail,Department,JobTitle,Enabled,LicenseCount,UserType,Created\n';
+    users.forEach(u=>{
+      csv+=`"${u.displayName||''}","${u.userPrincipalName||''}","${u.mail||''}","${u.department||''}","${u.jobTitle||''}","${u.accountEnabled}","${(u.assignedLicenses||[]).length}","${u.userType||''}","${u.createdDateTime||''}"\n`;
+    });
+    dl(csv,`users-export-${new Date().toISOString().split('T')[0]}.csv`,'text/csv');
+    r.innerHTML=`<span style="color:var(--accent-green)">✓ Exported ${users.length} users</span>`;
+  }catch(e){r.innerHTML=`<span style="color:var(--accent-red)">✗ ${esc(e.message)}</span>`}
+}
+
+async function bulkResetPasswords(){
+  const r=$('bulkResetResult');
+  const upns=$('bulkResetUsers').value.trim().split('\n').map(u=>u.trim()).filter(Boolean);
+  if(!upns.length)return r.innerHTML='<span style="color:var(--accent-red)">Enter at least one UPN</span>';
+  if(!A.ok())return r.innerHTML='<span style="color:var(--accent-red)">Sign in first</span>';
+  r.innerHTML='<span style="color:var(--text-muted)">Resetting...</span>';
+  let results=[];
+  for(const upn of upns){
+    const pass='P@ss'+uid().slice(0,10)+'!';
+    try{
+      await G.call(`/users/${upn}`,'PATCH',{passwordProfile:{password:pass,forceChangePasswordNextSignIn:$('bulkResetForce').checked}});
+      results.push(`<span style="color:var(--accent-green)">✓ ${esc(upn)} → <code style="user-select:all;font-size:.76rem">${esc(pass)}</code></span>`);
+    }catch(e){results.push(`<span style="color:var(--accent-red)">✗ ${esc(upn)}: ${esc(e.message.slice(0,50))}</span>`)}
+  }
+  r.innerHTML=results.join('<br>')+'<br><span style="color:var(--accent-amber);font-size:.76rem">⚠ Share passwords securely — never via email</span>';
+}
+
+async function bulkLoadSkus(){
+  if(!A.ok())return;
+  try{
+    const resp=await G.call('/subscribedSkus?$select=skuId,skuPartNumber,consumedUnits,prepaidUnits');
+    const sel=$('bulkLicSku');sel.innerHTML='';
+    (resp.value||[]).forEach(s=>{
+      const avail=(s.prepaidUnits?.enabled||0)-(s.consumedUnits||0);
+      sel.innerHTML+=`<option value="${s.skuId}">${skuName(s.skuPartNumber)} (${avail} available)</option>`;
+    });
+  }catch(e){alert('Failed: '+e.message)}
+}
+
+async function bulkAssignLicenses(){
+  const r=$('bulkLicResult');
+  const skuId=$('bulkLicSku').value;
+  const upns=$('bulkLicUsers').value.trim().split('\n').map(u=>u.trim()).filter(Boolean);
+  if(!skuId)return r.innerHTML='<span style="color:var(--accent-red)">Select a license SKU</span>';
+  if(!upns.length)return r.innerHTML='<span style="color:var(--accent-red)">Enter at least one UPN</span>';
+  if(!A.ok())return r.innerHTML='<span style="color:var(--accent-red)">Sign in first</span>';
+  r.innerHTML='<span style="color:var(--text-muted)">Assigning...</span>';
+  let results=[];
+  for(const upn of upns){
+    try{
+      await G.call(`/users/${upn}/assignLicense`,'POST',{addLicenses:[{skuId,disabledPlans:[]}],removeLicenses:[]});
+      results.push(`<span style="color:var(--accent-green)">✓ ${esc(upn)}</span>`);
+    }catch(e){results.push(`<span style="color:var(--accent-red)">✗ ${esc(upn)}: ${esc(e.message.slice(0,50))}</span>`)}
+  }
+  r.innerHTML=results.join('<br>');
+}
+
+async function bulkAddToGroup(){
+  const r=$('bulkGroupResult');
+  const groupRef=$('bulkGroupId').value.trim();
+  const upns=$('bulkGroupUsers').value.trim().split('\n').map(u=>u.trim()).filter(Boolean);
+  if(!groupRef||!upns.length)return r.innerHTML='<span style="color:var(--accent-red)">Fill in all fields</span>';
+  if(!A.ok())return r.innerHTML='<span style="color:var(--accent-red)">Sign in first</span>';
+  r.innerHTML='<span style="color:var(--text-muted)">Adding members...</span>';
+  
+  // Resolve group ID if name given
+  let gid=groupRef;
+  if(!groupRef.match(/^[0-9a-f-]{36}$/i)){
+    try{
+      const resp=await G.call(`/groups?$filter=displayName eq '${groupRef}'&$select=id`);
+      if(resp.value?.length)gid=resp.value[0].id;
+      else return r.innerHTML=`<span style="color:var(--accent-red)">Group "${esc(groupRef)}" not found</span>`;
+    }catch(e){return r.innerHTML=`<span style="color:var(--accent-red)">✗ ${esc(e.message)}</span>`}
+  }
+  
+  let results=[];
+  for(const upn of upns){
+    try{
+      const user=await G.call(`/users/${upn}?$select=id`);
+      await G.call(`/groups/${gid}/members/$ref`,'POST',{'@odata.id':`https://graph.microsoft.com/v1.0/directoryObjects/${user.id}`});
+      results.push(`<span style="color:var(--accent-green)">✓ ${esc(upn)}</span>`);
+    }catch(e){results.push(`<span style="color:var(--accent-red)">✗ ${esc(upn)}: ${esc(e.message.slice(0,50))}</span>`)}
+  }
+  r.innerHTML=results.join('<br>');
+}
+
+async function bulkExportGroups(){
+  const r=$('bulkGroupExResult');r.innerHTML='<span style="color:var(--text-muted)">Exporting...</span>';
+  if(!A.ok())return r.innerHTML='<span style="color:var(--accent-red)">Sign in first</span>';
+  try{
+    const resp=await G.call('/groups?$select=displayName,mail,groupTypes,securityEnabled,mailEnabled,membershipRule&$top=999');
+    const groups=resp.value||[];
+    let csv='DisplayName,Mail,Type,SecurityEnabled,MailEnabled,Dynamic\n';
+    groups.forEach(g=>{
+      const type=(g.groupTypes||[]).includes('Unified')?'M365':(g.groupTypes||[]).includes('DynamicMembership')?'Dynamic':g.securityEnabled?'Security':'Distribution';
+      csv+=`"${g.displayName||''}","${g.mail||''}","${type}","${g.securityEnabled}","${g.mailEnabled}","${(g.groupTypes||[]).includes('DynamicMembership')}"\n`;
+    });
+    dl(csv,`groups-export-${new Date().toISOString().split('T')[0]}.csv`,'text/csv');
+    r.innerHTML=`<span style="color:var(--accent-green)">✓ Exported ${groups.length} groups</span>`;
+  }catch(e){r.innerHTML=`<span style="color:var(--accent-red)">✗ ${esc(e.message)}</span>`}
+}
+
+/* ── Policy Templates ── */
+function toolTemplates(){
+  const c=$('toolContent');
+  c.innerHTML=`
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+
+<div class="card">
+<div class="card-header"><span class="dot" style="background:var(--accent-amber)"></span> Export CA Policies</div>
+<p style="font-size:.82rem;color:var(--text-secondary);line-height:1.6;font-family:var(--font-display);margin-bottom:12px">Export all Conditional Access policies as JSON. Use this to replicate your baseline across tenants.</p>
+<button class="btn btn-primary btn-sm" onclick="tmplExportCA()">📤 Export All CA Policies</button>
+<div id="tmplExportResult" style="margin-top:10px;font-size:.82rem"></div>
+</div>
+
+<div class="card">
+<div class="card-header"><span class="dot" style="background:var(--accent-amber)"></span> Import CA Policies</div>
+<p style="font-size:.82rem;color:var(--text-secondary);line-height:1.6;font-family:var(--font-display);margin-bottom:12px">Import CA policies from a JSON export. Policies are created in Report-Only mode for safety.</p>
+<input id="tmplImportFile" type="file" accept=".json" class="form-input" style="margin-bottom:12px">
+<button class="btn btn-primary btn-sm" onclick="tmplImportCA()">📥 Import Policies</button>
+<div id="tmplImportResult" style="margin-top:10px;font-size:.82rem;max-height:300px;overflow:auto"></div>
+</div>
+
+<div class="card">
+<div class="card-header"><span class="dot" style="background:var(--accent-amber)"></span> Export Compliance Policies</div>
+<p style="font-size:.82rem;color:var(--text-secondary);line-height:1.6;font-family:var(--font-display);margin-bottom:12px">Export all Intune compliance policies for backup or replication.</p>
+<button class="btn btn-primary btn-sm" onclick="tmplExportCompliance()">📤 Export Compliance Policies</button>
+<div id="tmplCompResult" style="margin-top:10px;font-size:.82rem"></div>
+</div>
+
+<div class="card">
+<div class="card-header"><span class="dot" style="background:var(--accent-amber)"></span> Export Config Profiles</div>
+<p style="font-size:.82rem;color:var(--text-secondary);line-height:1.6;font-family:var(--font-display);margin-bottom:12px">Export all Intune configuration profiles for backup or replication.</p>
+<button class="btn btn-primary btn-sm" onclick="tmplExportConfig()">📤 Export Config Profiles</button>
+<div id="tmplConfigResult" style="margin-top:10px;font-size:.82rem"></div>
+</div>
+
+<div class="card" style="grid-column:span 2">
+<div class="card-header"><span class="dot" style="background:var(--accent-green)"></span> MSP Baseline Templates</div>
+<p style="font-size:.82rem;color:var(--text-secondary);line-height:1.6;font-family:var(--font-display);margin-bottom:12px">Pre-built policy templates that reflect MSP best practices for CE+, NCSC, and CIS compliance.</p>
+<div style="display:flex;gap:8px;flex-wrap:wrap">
+<button class="btn btn-secondary btn-sm" onclick="tmplApplyBaseline('ce-basic')">🇬🇧 CE+ Basic Baseline</button>
+<button class="btn btn-secondary btn-sm" onclick="tmplApplyBaseline('ce-full')">🛡️ CE+ Full Baseline</button>
+<button class="btn btn-secondary btn-sm" onclick="tmplApplyBaseline('ncsc')">📋 NCSC Cloud Security</button>
+<button class="btn btn-secondary btn-sm" onclick="tmplApplyBaseline('zero-trust')">🔒 Zero Trust Starter</button>
+</div>
+<div id="tmplBaselineResult" style="margin-top:10px;font-size:.82rem"></div>
+</div>
+
+</div>`;
+}
+
+async function tmplExportCA(){
+  const r=$('tmplExportResult');r.innerHTML='<span style="color:var(--text-muted)">Exporting...</span>';
+  if(!A.ok())return r.innerHTML='<span style="color:var(--accent-red)">Sign in first</span>';
+  try{
+    const resp=await G.call('/identity/conditionalAccess/policies');
+    const policies=resp.value||[];
+    // Strip IDs and read-only properties for portability
+    const clean=policies.map(p=>{const c={...p};delete c.id;delete c.createdDateTime;delete c.modifiedDateTime;return c});
+    dl(JSON.stringify(clean,null,2),`ca-policies-export-${new Date().toISOString().split('T')[0]}.json`,'application/json');
+    r.innerHTML=`<span style="color:var(--accent-green)">✓ Exported ${policies.length} CA policies</span>`;
+  }catch(e){r.innerHTML=`<span style="color:var(--accent-red)">✗ ${esc(e.message)}</span>`}
+}
+
+async function tmplImportCA(){
+  const r=$('tmplImportResult');
+  const file=$('tmplImportFile').files[0];
+  if(!file)return r.innerHTML='<span style="color:var(--accent-red)">Select a JSON file</span>';
+  if(!A.ok())return r.innerHTML='<span style="color:var(--accent-red)">Sign in first</span>';
+  r.innerHTML='<span style="color:var(--text-muted)">Importing...</span>';
+  try{
+    const text=await file.text();
+    const policies=JSON.parse(text);
+    if(!Array.isArray(policies))throw new Error('Expected an array of policies');
+    let results=[];
+    for(const p of policies){
+      try{
+        // Force report-only for safety
+        p.state='enabledForReportingButNotEnforced';
+        delete p.id;delete p.createdDateTime;delete p.modifiedDateTime;
+        await G.call('/identity/conditionalAccess/policies','POST',p);
+        results.push(`<span style="color:var(--accent-green)">✓ ${esc(p.displayName)} (Report-Only)</span>`);
+      }catch(e){results.push(`<span style="color:var(--accent-red)">✗ ${esc(p.displayName||'Unknown')}: ${esc(e.message.slice(0,60))}</span>`)}
+    }
+    r.innerHTML=results.join('<br>');
+  }catch(e){r.innerHTML=`<span style="color:var(--accent-red)">✗ ${esc(e.message)}</span>`}
+}
+
+async function tmplExportCompliance(){
+  const r=$('tmplCompResult');r.innerHTML='<span style="color:var(--text-muted)">Exporting...</span>';
+  if(!A.ok())return r.innerHTML='<span style="color:var(--accent-red)">Sign in first</span>';
+  try{
+    const resp=await G.call('/deviceManagement/deviceCompliancePolicies');
+    dl(JSON.stringify(resp.value||[],null,2),`compliance-policies-export-${new Date().toISOString().split('T')[0]}.json`,'application/json');
+    r.innerHTML=`<span style="color:var(--accent-green)">✓ Exported ${(resp.value||[]).length} compliance policies</span>`;
+  }catch(e){r.innerHTML=`<span style="color:var(--accent-red)">✗ ${esc(e.message)}</span>`}
+}
+
+async function tmplExportConfig(){
+  const r=$('tmplConfigResult');r.innerHTML='<span style="color:var(--text-muted)">Exporting...</span>';
+  if(!A.ok())return r.innerHTML='<span style="color:var(--accent-red)">Sign in first</span>';
+  try{
+    const resp=await G.call('/deviceManagement/deviceConfigurations');
+    dl(JSON.stringify(resp.value||[],null,2),`config-profiles-export-${new Date().toISOString().split('T')[0]}.json`,'application/json');
+    r.innerHTML=`<span style="color:var(--accent-green)">✓ Exported ${(resp.value||[]).length} config profiles</span>`;
+  }catch(e){r.innerHTML=`<span style="color:var(--accent-red)">✗ ${esc(e.message)}</span>`}
+}
+
+function tmplApplyBaseline(type){
+  const r=$('tmplBaselineResult');
+  const guides={
+    'ce-basic':'CE+ Basic applies: MFA for all users, block legacy auth, session timeout, block high-risk sign-ins. Use the "New Tenant Setup" tab to deploy the full onboarding flow which includes all CE+ baseline policies.',
+    'ce-full':'CE+ Full adds: compliant device requirement, admin portal restrictions, Windows/iOS/Android compliance policies, app protection policies, update rings, and endpoint security. Run the full onboarding from the Setup tab.',
+    'ncsc':'NCSC Cloud Security Principles baseline adds: named locations for trusted IPs, device encryption requirements, Windows Autopilot, LAPS, attack surface reduction rules, and security baselines. These are included in the full onboarding flow.',
+    'zero-trust':'Zero Trust Starter: Verify explicitly (MFA everywhere), use least privilege (PIM for admins, role-assignable groups), assume breach (block legacy auth, require compliant devices, enable Defender for Endpoint). Start with the Setup tab to deploy all policies in report-only mode.'
+  };
+  r.innerHTML=`<div style="padding:14px;background:var(--bg-elevated);border-radius:var(--radius-md);border:1px solid var(--border-subtle);font-size:.84rem;color:var(--text-secondary);line-height:1.7;font-family:var(--font-display)">
+  <strong style="color:var(--text-primary)">Baseline: ${type.toUpperCase()}</strong><br>${guides[type]||'Unknown baseline.'}<br><br>
+  <span style="color:var(--accent-cyan)">Tip:</span> Go to the <strong>New Tenant Setup</strong> tab and run the full onboarding — it deploys all these policies automatically with break-glass exclusions and report-only safety mode.
+  </div>`;
+}
+
 </script>
 </body>
 </html>
