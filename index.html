@@ -5146,32 +5146,77 @@ function _sizeBar(usedGB,quotaGB,label){
   </div>`;
 }
 
+// Cache for mailbox usage report (shared across lookups, refreshed every 10 min)
+let _mbxReportCache=null,_mbxReportTs=0;
+async function _fetchMbxReport(){
+  if(_mbxReportCache&&Date.now()-_mbxReportTs<600000)return _mbxReportCache;
+  try{
+    const r=await G.call("/reports/getMailboxUsageDetail(period='D7')?$format=application/json",null,null,true);
+    _mbxReportCache=(r.value||[]);_mbxReportTs=Date.now();return _mbxReportCache;
+  }catch{return null}
+}
+
 async function exoLookupUser(){
-  const r=$('exoLookupResult');r.innerHTML='<span style="color:var(--text-muted)">Looking up...</span>';
+  const r=$('exoLookupResult');r.innerHTML='<span style="color:var(--text-muted)">Looking up…</span>';
   if(!A.ok())return r.innerHTML='<span style="color:var(--accent-red)">Sign in first</span>';
   const upn=$('exoLookup').value.trim();if(!upn)return r.innerHTML='<span style="color:var(--accent-red)">Enter a UPN</span>';
   try{
-    // Fetch user, mailbox settings, mailbox statistics, and tenant SKUs in parallel
-    const[user,settings,stats,skus]=await Promise.all([
+    // Use .default scopes for Mail.Read, MailboxSettings.Read, Reports.Read.All, Organization.Read.All
+    G.scopes=Auth.DISCOVERY_SCOPES;
+    // Fetch user info, mailbox settings, tenant SKUs, and mailbox usage report in parallel
+    const[user,settings,skus,mbxReport]=await Promise.all([
       G.call(`/users/${upn}?$select=displayName,userPrincipalName,mail,proxyAddresses,assignedLicenses,accountEnabled,createdDateTime,jobTitle,department,officeLocation,mobilePhone,companyName`),
       G.call(`/users/${upn}/mailboxSettings`).catch(()=>null),
-      G.call(`/users/${upn}/mailFolders/msgfolderroot?$select=totalItemCount,sizeInBytes,childFolderCount`).catch(()=>null),
-      G.call('/subscribedSkus?$select=skuId,skuPartNumber').catch(()=>({value:[]}))
+      G.call('/subscribedSkus?$select=skuId,skuPartNumber').catch(()=>({value:[]})),
+      _fetchMbxReport()
     ]);
-    // Fetch archive folder stats (if archive exists)
-    const archiveStats=await G.call(`/users/${upn}/mailFolders('ArchiveMsgFolderRoot')?$select=totalItemCount,sizeInBytes,childFolderCount`).catch(()=>null);
+    // Also try folder-level stats as fallback for mailbox size
+    const[folderStats,archiveFolderStats]=await Promise.all([
+      G.call(`/users/${upn}/mailFolders?$top=500&$select=displayName,totalItemCount,sizeInBytes,childFolderCount`).catch(()=>null),
+      G.call(`/users/${upn}/mailFolders('ArchiveMsgFolderRoot')?$select=totalItemCount,sizeInBytes,childFolderCount`).catch(()=>null)
+    ]);
+    G.scopes=null;
+
+    // Find this user in the mailbox usage report
+    const mbxEntry=mbxReport?mbxReport.find(e=>(e.userPrincipalName||'').toLowerCase()===upn.toLowerCase()):null;
 
     // Build SKU ID → partNumber map
     const skuIdMap={};(skus.value||[]).forEach(s=>{skuIdMap[s.skuId]=s.skuPartNumber});
     const userSkuParts=(user.assignedLicenses||[]).map(l=>skuIdMap[l.skuId]||'').filter(Boolean);
-    const quota=_getMailboxQuota(userSkuParts);
+    const licQuota=_getMailboxQuota(userSkuParts);
 
-    // Mailbox sizes
-    const primaryGB=stats?.sizeInBytes?(stats.sizeInBytes/1073741824):0;
-    const archiveGB=archiveStats?.sizeInBytes?(archiveStats.sizeInBytes/1073741824):0;
-    const itemCount=stats?.totalItemCount||0;
-    const archiveItemCount=archiveStats?.totalItemCount||0;
-    const archiveEnabled=!!archiveStats;
+    // Determine mailbox sizes — prefer report data, fallback to folder enumeration
+    let primaryGB=0,itemCount=0,archiveGB=0,archiveItemCount=0,archiveEnabled=false;
+    let quotaPrimaryGB=0,quotaWarnGB=0,quotaSendGB=0;
+    let lastActivity=null,mailboxType=null;
+
+    if(mbxEntry){
+      // Report API gives us real usage data
+      primaryGB=(mbxEntry.storageUsedInBytes||0)/1073741824;
+      itemCount=mbxEntry.itemCount||0;
+      archiveEnabled=!!mbxEntry.hasArchive;
+      lastActivity=mbxEntry.lastActivityDate||null;
+      mailboxType=mbxEntry.recipientType||null;
+      // Report provides actual quota thresholds set on the mailbox
+      quotaPrimaryGB=mbxEntry.prohibitSendReceiveQuotaInBytes?(mbxEntry.prohibitSendReceiveQuotaInBytes/1073741824):0;
+      quotaWarnGB=mbxEntry.issueWarningQuotaInBytes?(mbxEntry.issueWarningQuotaInBytes/1073741824):0;
+      quotaSendGB=mbxEntry.prohibitSendQuotaInBytes?(mbxEntry.prohibitSendQuotaInBytes/1073741824):0;
+    }else if(folderStats&&folderStats.value){
+      // Fallback: sum all top-level folder sizes
+      const folders=folderStats.value||[];
+      folders.forEach(f=>{primaryGB+=(f.sizeInBytes||0)/1073741824;itemCount+=(f.totalItemCount||0)});
+      archiveEnabled=!!archiveFolderStats;
+    }
+
+    if(archiveFolderStats){
+      archiveGB=(archiveFolderStats.sizeInBytes||0)/1073741824;
+      archiveItemCount=archiveFolderStats.totalItemCount||0;
+      archiveEnabled=true;
+    }
+
+    // Use report quota if available, otherwise use license-based estimate
+    const effectiveQuota=quotaPrimaryGB>0?quotaPrimaryGB:(licQuota.primary||50);
+    const effectiveArchiveQuota=licQuota.hasArchiveAddon?'Unlimited':(licQuota.archive||50);
 
     // Aliases — separate SMTP (email) from other proxy types
     const proxies=user.proxyAddresses||[];
@@ -5184,6 +5229,7 @@ async function exoLookupUser(){
 
     const lbl='font-size:.76rem;color:var(--text-muted)';
     const val='font-size:.76rem;color:var(--text-secondary)';
+    const hasMbxData=!!mbxEntry||!!(folderStats&&folderStats.value);
 
     let h=`<div style="padding:14px;background:var(--bg-elevated);border-radius:var(--radius-md);margin-top:8px">`;
 
@@ -5220,22 +5266,38 @@ async function exoLookupUser(){
     // Mailbox Statistics
     h+=`<div style="font-weight:600;font-size:.82rem;margin-bottom:6px;color:var(--accent-blue)">Mailbox Statistics</div>`;
     h+=`<div style="padding:10px;background:var(--bg-input);border-radius:var(--radius-md);margin-bottom:12px">`;
-    if(stats){
-      h+=_sizeBar(primaryGB,quota.primary||50,'Primary Mailbox');
-      h+=`<div style="font-size:.74rem;color:var(--text-muted);margin-bottom:6px">Items: ${itemCount.toLocaleString()}</div>`;
-      h+=`<div style="display:flex;align-items:center;gap:6px;margin:6px 0"><span style="font-size:.76rem;color:var(--text-muted)">Archive Mailbox:</span>`;
+    if(hasMbxData){
+      h+=_sizeBar(primaryGB,effectiveQuota,'Primary Mailbox');
+      h+=`<div style="font-size:.74rem;color:var(--text-muted);margin-bottom:4px">Items: ${itemCount.toLocaleString()}</div>`;
+      if(quotaWarnGB>0||quotaSendGB>0){
+        h+=`<div style="font-size:.72rem;color:var(--text-muted);margin-bottom:6px">`;
+        if(quotaWarnGB>0)h+=`Warning at ${quotaWarnGB.toFixed(0)} GB · `;
+        if(quotaSendGB>0)h+=`Send blocked at ${quotaSendGB.toFixed(0)} GB · `;
+        h+=`Send/Receive blocked at ${effectiveQuota} GB</div>`;
+      }
+      if(lastActivity)h+=`<div style="font-size:.72rem;color:var(--text-muted);margin-bottom:6px">Last activity: ${new Date(lastActivity).toLocaleDateString('en-GB')}</div>`;
+      if(mailboxType)h+=`<div style="font-size:.72rem;color:var(--text-muted);margin-bottom:6px">Mailbox type: ${esc(mailboxType)}</div>`;
+      // Archive section
+      h+=`<div style="display:flex;align-items:center;gap:6px;margin:8px 0 4px"><span style="font-size:.76rem;color:var(--text-muted)">Archive Mailbox:</span>`;
       if(archiveEnabled){
         h+=`<span style="background:rgba(16,185,129,.15);color:var(--accent-green);padding:1px 7px;border-radius:10px;font-size:.72rem;font-weight:600">Enabled</span></div>`;
-        h+=_sizeBar(archiveGB,quota.archive||50,'Archive Mailbox');
-        h+=`<div style="font-size:.74rem;color:var(--text-muted)">Archive Items: ${archiveItemCount.toLocaleString()}</div>`;
+        if(archiveGB>0||archiveItemCount>0){
+          h+=_sizeBar(archiveGB,effectiveArchiveQuota,'Archive Mailbox');
+          h+=`<div style="font-size:.74rem;color:var(--text-muted)">Archive Items: ${archiveItemCount.toLocaleString()}</div>`;
+        }
       }else{
         h+=`<span style="background:rgba(239,68,68,.12);color:var(--accent-red);padding:1px 7px;border-radius:10px;font-size:.72rem;font-weight:600">Not Enabled</span></div>`;
       }
-      if(quota.name){
-        h+=`<div style="font-size:.72rem;color:var(--text-muted);margin-top:4px">Quota based on: <strong>${esc(quota.name)}</strong> — Primary ${quota.primary} GB / Archive ${quota.archive==='Unlimited'?'Unlimited':quota.archive+' GB'}</div>`;
+      // Show quota source
+      if(licQuota.name||quotaPrimaryGB>0){
+        h+=`<div style="font-size:.72rem;color:var(--text-muted);margin-top:6px;padding-top:6px;border-top:1px solid var(--border-subtle)">`;
+        if(quotaPrimaryGB>0)h+=`Quota from tenant policy: ${effectiveQuota} GB primary`;
+        else h+=`Quota estimate from license: <strong>${esc(licQuota.name||'Default')}</strong> — ${licQuota.primary||50} GB primary`;
+        h+=` / ${effectiveArchiveQuota==='Unlimited'?'Unlimited':effectiveArchiveQuota+' GB'} archive</div>`;
       }
+      if(!mbxEntry&&folderStats)h+=`<div style="font-size:.68rem;color:var(--text-muted);font-style:italic;margin-top:2px">Size calculated from folder enumeration (reports API unavailable)</div>`;
     }else{
-      h+=`<div style="font-size:.76rem;color:var(--text-muted)">Mailbox statistics unavailable (user may not have a mailbox provisioned)</div>`;
+      h+=`<div style="font-size:.76rem;color:var(--text-muted)">Mailbox statistics unavailable — user may not have a provisioned mailbox, or the Reports API may require additional permissions (Reports.Read.All)</div>`;
     }
     h+=`</div>`;
 
@@ -5279,7 +5341,7 @@ async function exoLookupUser(){
 
     h+=`</div>`;
     r.innerHTML=h;
-  }catch(e){r.innerHTML=`<span style="color:var(--accent-red)">✗ ${esc(e.message)}</span>`}
+  }catch(e){G.scopes=null;r.innerHTML=`<span style="color:var(--accent-red)">✗ ${esc(e.message)}</span>`}
 }
 
 /* ── SharePoint Online Tools ── */
