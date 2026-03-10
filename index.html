@@ -4896,7 +4896,10 @@ function toolExo(){
 <label class="form-label">Email Address</label>
 <input id="exoSharedEmail" class="form-input" placeholder="e.g. support@domain.com">
 </div>
+<div style="display:flex;gap:8px">
 <button class="btn btn-primary btn-sm" onclick="exoCreateShared()">📧 Create Shared Mailbox</button>
+<button class="btn btn-secondary btn-sm" onclick="exoListSharedMailboxes()">📋 Show All Shared Mailboxes</button>
+</div>
 <div id="exoSharedResult" style="margin-top:10px;font-size:.82rem"></div>
 </div>
 
@@ -5015,6 +5018,60 @@ async function exoCreateShared(){
     await G.call('/users','POST',{accountEnabled:false,displayName:name,userPrincipalName:email,mailNickname:email.split('@')[0],passwordProfile:{password:'Sh@red'+uid().slice(0,12)+'!',forceChangePasswordNextSignIn:false}});
     r.innerHTML=`<span style="color:var(--accent-green)">✓ Created ${esc(email)}</span><br><span style="color:var(--accent-amber);font-size:.76rem">Convert to shared: Exchange Admin → Mailboxes → Select → Convert to shared</span>`;
   }catch(e){r.innerHTML=`<span style="color:var(--accent-red)">✗ ${esc(e.message)}</span>`}
+}
+
+async function exoListSharedMailboxes(){
+  const r=$('exoSharedResult');r.innerHTML='<span style="color:var(--text-muted)">Loading shared mailboxes…</span>';
+  if(!A.ok())return r.innerHTML='<span style="color:var(--accent-red)">Sign in first</span>';
+  try{
+    G.scopes=Auth.DISCOVERY_SCOPES;
+    // Use beta endpoint to filter shared mailboxes by userPurpose
+    let sharedUsers=[];
+    try{
+      const resp=await G.call("/users?$filter=mailboxSettings/userPurpose eq 'shared'&$select=displayName,userPrincipalName,mail,proxyAddresses,assignedLicenses,accountEnabled,createdDateTime&$count=true&$top=999",null,null,true);
+      sharedUsers=resp.value||[];
+    }catch{
+      // Fallback: use reports API to identify shared mailboxes by recipientType
+      const report=await _fetchMbxReport();
+      if(report){
+        const sharedUpns=new Set(report.filter(e=>e.recipientType==='Shared').map(e=>(e.userPrincipalName||'').toLowerCase()));
+        if(sharedUpns.size){
+          const allUsers=await G.call('/users?$select=displayName,userPrincipalName,mail,proxyAddresses,assignedLicenses,accountEnabled,createdDateTime&$top=999');
+          sharedUsers=(allUsers.value||[]).filter(u=>sharedUpns.has((u.userPrincipalName||'').toLowerCase()));
+        }
+      }
+    }
+    // Also fetch subscribedSkus for license name resolution
+    const skus=await G.call('/subscribedSkus?$select=skuId,skuPartNumber').catch(()=>({value:[]}));
+    G.scopes=null;
+    const skuIdMap={};(skus.value||[]).forEach(s=>{skuIdMap[s.skuId]=s.skuPartNumber});
+
+    if(!sharedUsers.length)return r.innerHTML='<span style="color:var(--text-muted)">No shared mailboxes found — ensure the app has <code>MailboxSettings.Read</code> permission, or try the beta Graph endpoint</span>';
+
+    let h=`<div style="margin-bottom:8px;color:var(--accent-blue);font-weight:600">Found ${sharedUsers.length} shared mailbox${sharedUsers.length===1?'':'es'}</div>`;
+    h+=`<div style="max-height:400px;overflow-y:auto;border:1px solid var(--border-subtle);border-radius:var(--radius-md)">`;
+    h+='<table class="disc-table" style="font-size:.74rem;width:100%"><thead><tr><th>Name</th><th>Email / UPN</th><th>Aliases</th><th>Licenses</th><th>Status</th><th>Created</th></tr></thead><tbody>';
+    sharedUsers.forEach(u=>{
+      const proxies=u.proxyAddresses||[];
+      const primarySmtp=proxies.find(p=>p.startsWith('SMTP:'));
+      const aliases=proxies.filter(p=>p.startsWith('smtp:')).map(p=>p.substring(5));
+      const licNames=(u.assignedLicenses||[]).map(l=>skuName(skuIdMap[l.skuId]||''));
+      const licCount=licNames.length;
+      const statusColor=u.accountEnabled?'var(--accent-green)':'var(--accent-red)';
+      const statusText=u.accountEnabled?'Active':'Disabled';
+
+      h+=`<tr>
+        <td style="font-weight:500">${esc(u.displayName||'')}</td>
+        <td><div style="color:var(--accent-cyan)">${esc(primarySmtp?primarySmtp.substring(5):(u.mail||u.userPrincipalName||''))}</div>${u.mail&&u.mail!==u.userPrincipalName?`<div style="font-size:.68rem;color:var(--text-muted)">UPN: ${esc(u.userPrincipalName)}</div>`:''}</td>
+        <td>${aliases.length?aliases.map(a=>`<div>${esc(a)}</div>`).join(''):'<span style="color:var(--text-muted)">—</span>'}</td>
+        <td>${licCount?licNames.map(n=>`<span style="background:rgba(16,185,129,.12);color:var(--accent-green);padding:1px 6px;border-radius:8px;font-size:.68rem;display:inline-block;margin:1px 0">${esc(n)}</span>`).join(' '):'<span style="color:var(--text-muted)">None</span>'}</td>
+        <td><span style="color:${statusColor};font-weight:600">${statusText}</span></td>
+        <td>${u.createdDateTime?new Date(u.createdDateTime).toLocaleDateString('en-GB'):'—'}</td>
+      </tr>`;
+    });
+    h+='</tbody></table></div>';
+    r.innerHTML=h;
+  }catch(e){G.scopes=null;r.innerHTML=`<span style="color:var(--accent-red)">✗ ${esc(e.message)}</span>`}
 }
 
 function exoOooSameToggle(){
