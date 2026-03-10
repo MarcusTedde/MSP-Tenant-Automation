@@ -11,6 +11,9 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%232563eb'/%3E%3Cstop offset='100%25' stop-color='%2306b6d4'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='180' height='180' rx='40' fill='url(%23g)'/%3E%3Ctext x='90' y='128' text-anchor='middle' font-family='system-ui,Segoe UI,sans-serif' font-weight='900' font-size='108' fill='white'%3EM%3C/text%3E%3C/svg%3E">
 <script src="https://alcdn.msauth.net/browser/2.38.3/js/msal-browser.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script>
 // Fallback: if Microsoft CDN failed, try jsdelivr (mirrors npm directly)
 if(typeof msal==='undefined'){
@@ -156,6 +159,25 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .flex{display:flex}.flex-col{flex-direction:column}.items-center{align-items:center}.justify-between{justify-content:space-between}.gap-sm{gap:8px}.gap-md{gap:14px}.gap-lg{gap:22px}.w-full{width:100%}.hidden{display:none!important}
 @media(max-width:1024px){.setup-layout{flex-direction:column!important}.setup-sidebar{width:100%!important}.disc-grid-2,.disc-grid-3,.disc-grid-4{grid-template-columns:1fr 1fr}}
 @media(max-width:640px){.main-content{padding:16px}.header{padding:12px 16px}.tab-bar{padding-left:16px;overflow-x:auto}.tab-btn{padding:10px 14px;font-size:.82rem}.risk-grid{grid-template-columns:1fr}.disc-grid-2,.disc-grid-3,.disc-grid-4{grid-template-columns:1fr}}
+.flatpickr-calendar{background:var(--bg-card)!important;border:1px solid var(--border-subtle)!important;box-shadow:0 8px 32px rgba(0,0,0,.4)!important;border-radius:var(--radius-lg)!important;font-family:var(--font-display)!important}
+.flatpickr-calendar .flatpickr-months,.flatpickr-calendar .flatpickr-month{background:var(--bg-elevated)!important;border-radius:var(--radius-md) var(--radius-md) 0 0!important}
+.flatpickr-calendar .flatpickr-current-month .flatpickr-monthDropdown-months,.flatpickr-calendar .flatpickr-current-month input.cur-year{color:var(--text-primary)!important;background:transparent!important;font-weight:600!important}
+.flatpickr-calendar .flatpickr-prev-month,.flatpickr-calendar .flatpickr-next-month{color:var(--text-secondary)!important;fill:var(--text-secondary)!important}
+.flatpickr-calendar .flatpickr-prev-month:hover,.flatpickr-calendar .flatpickr-next-month:hover{color:var(--accent-blue)!important;fill:var(--accent-blue)!important}
+.flatpickr-calendar .flatpickr-weekdays{background:var(--bg-elevated)!important}
+.flatpickr-calendar span.flatpickr-weekday{color:var(--text-muted)!important;font-weight:600!important;font-size:.78rem!important}
+.flatpickr-calendar .flatpickr-day{color:var(--text-primary)!important;border-radius:var(--radius-sm)!important}
+.flatpickr-calendar .flatpickr-day:hover{background:var(--bg-elevated)!important;border-color:var(--accent-blue)!important}
+.flatpickr-calendar .flatpickr-day.selected{background:var(--accent-blue)!important;border-color:var(--accent-blue)!important;color:#fff!important}
+.flatpickr-calendar .flatpickr-day.today{border-color:var(--accent-amber)!important}
+.flatpickr-calendar .flatpickr-day.flatpickr-disabled,.flatpickr-calendar .flatpickr-day.prevMonthDay,.flatpickr-calendar .flatpickr-day.nextMonthDay{color:var(--text-muted)!important;opacity:.4!important}
+.flatpickr-calendar .flatpickr-time{border-top:1px solid var(--border-subtle)!important}
+.flatpickr-calendar .flatpickr-time input,.flatpickr-calendar .flatpickr-time .flatpickr-am-pm{color:var(--text-primary)!important;background:var(--bg-input)!important;border-radius:var(--radius-sm)!important}
+.flatpickr-calendar .flatpickr-time input:hover,.flatpickr-calendar .flatpickr-time input:focus{background:var(--bg-elevated)!important}
+.flatpickr-calendar .flatpickr-time .flatpickr-time-separator{color:var(--text-muted)!important}
+.flatpickr-calendar .numInputWrapper span{border-color:var(--border-subtle)!important}
+.flatpickr-calendar .numInputWrapper span:hover{background:var(--bg-elevated)!important}
+.flatpickr-calendar .numInputWrapper span svg path{fill:var(--text-secondary)!important}
 </style>
 </head>
 <body>
@@ -4888,13 +4910,14 @@ function toolExo(){
 <label class="form-label">Internal Message</label>
 <textarea id="exoOooInternal" class="form-input" rows="3" placeholder="I am currently out of office..."></textarea>
 </div>
-<div style="margin-bottom:12px">
+<label style="display:flex;align-items:center;gap:6px;font-size:.82rem;color:var(--text-secondary);margin-bottom:12px;cursor:pointer"><input id="exoOooSameMsg" type="checkbox" onchange="exoOooSameToggle()"> Use same message for external recipients</label>
+<div id="exoOooExternalWrap" style="margin-bottom:12px">
 <label class="form-label">External Message</label>
 <textarea id="exoOooExternal" class="form-input" rows="3" placeholder="Thank you for your email..."></textarea>
 </div>
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
-<div><label class="form-label">Start</label><input id="exoOooStart" class="form-input" type="datetime-local"></div>
-<div><label class="form-label">End</label><input id="exoOooEnd" class="form-input" type="datetime-local"></div>
+<div><label class="form-label">Start</label><input id="exoOooStart" class="form-input" placeholder="Click to pick date &amp; time" readonly></div>
+<div><label class="form-label">End</label><input id="exoOooEnd" class="form-input" placeholder="Click to pick date &amp; time" readonly></div>
 </div>
 <div style="display:flex;gap:8px">
 <button class="btn btn-primary btn-sm" onclick="exoSetOoo()">⏰ Set OOO</button>
@@ -4974,8 +4997,13 @@ function toolExo(){
   _initUpnTypeahead('exoPermMailbox');
   _initUpnTypeahead('exoPermUser');
   _initUpnTypeahead('exoLookup');
-  // Pre-fetch users in background
   _fetchUpns();
+  // Initialize date/time pickers
+  const fpOpts={enableTime:true,dateFormat:'Y-m-d H:i',time_24hr:true,theme:'dark',allowInput:false,clickOpens:true,disableMobile:true};
+  if(typeof flatpickr!=='undefined'){
+    flatpickr('#exoOooStart',{...fpOpts,defaultDate:new Date(),minDate:'today'});
+    flatpickr('#exoOooEnd',{...fpOpts,defaultDate:new Date(Date.now()+7*86400000),minDate:'today'});
+  }
 }
 
 async function exoCreateShared(){
@@ -4989,16 +5017,22 @@ async function exoCreateShared(){
   }catch(e){r.innerHTML=`<span style="color:var(--accent-red)">✗ ${esc(e.message)}</span>`}
 }
 
+function exoOooSameToggle(){
+  const on=$('exoOooSameMsg').checked;
+  $('exoOooExternalWrap').style.display=on?'none':'block';
+}
 async function exoSetOoo(){
   const r=$('exoOooResult');r.innerHTML='<span style="color:var(--text-muted)">Setting...</span>';
   if(!A.ok())return r.innerHTML='<span style="color:var(--accent-red)">Sign in first</span>';
   const user=$('exoOooUser').value.trim();if(!user)return r.innerHTML='<span style="color:var(--accent-red)">Enter user UPN</span>';
+  const internalMsg=$('exoOooInternal').value||'I am out of office.';
+  const externalMsg=$('exoOooSameMsg').checked?internalMsg:($('exoOooExternal').value||'Thank you for your email. I am currently out of office.');
   try{
     const pay={automaticRepliesSetting:{status:'scheduled',
       scheduledStartDateTime:{dateTime:$('exoOooStart').value||new Date().toISOString(),timeZone:'UTC'},
       scheduledEndDateTime:{dateTime:$('exoOooEnd').value||new Date(Date.now()+7*86400000).toISOString(),timeZone:'UTC'},
-      internalReplyMessage:$('exoOooInternal').value||'I am out of office.',
-      externalReplyMessage:$('exoOooExternal').value||'Thank you for your email. I am currently out of office.',
+      internalReplyMessage:internalMsg,
+      externalReplyMessage:externalMsg,
       externalAudience:'all'}};
     await G.call(`/users/${user}/mailboxSettings`,'PATCH',pay);
     r.innerHTML=`<span style="color:var(--accent-green)">✓ Out of office set for ${esc(user)}</span>`;
@@ -5150,15 +5184,27 @@ async function spoApplySettings(){
   if(!A.ok())return r.innerHTML='<span style="color:var(--accent-red)">Sign in first</span>';
   try{
     G.scopes=Auth.DISCOVERY_SCOPES;
-    await G.call('/admin/sharepoint/settings','PATCH',{
-      sharingCapability:$('spoSharing').value,
-      isSiteCreationEnabled:$('spoSiteCreation').checked,
-      isLegacyAuthProtocolsEnabled:$('spoLegacyAuth').checked,
-      isUnmanagedSyncAppForTenantRestricted:$('spoSyncRestrict').checked,
-      personalSiteDefaultStorageLimitInMB:parseInt($('spoStorage').value)||1048576
-    });
-    G.scopes=null;
-    r.innerHTML='<span style="color:var(--accent-green)">✓ SharePoint settings updated</span>';
+    // SharePointTenantSettings.ReadWrite.All is application-only — try beta endpoint first
+    try{
+      await G.call('/admin/sharepoint/settings','PATCH',{
+        sharingCapability:$('spoSharing').value,
+        isSiteCreationEnabled:$('spoSiteCreation').checked,
+        isLegacyAuthProtocolsEnabled:$('spoLegacyAuth').checked,
+        isUnmanagedSyncAppForTenantRestricted:$('spoSyncRestrict').checked,
+        personalSiteDefaultStorageLimitInMB:parseInt($('spoStorage').value)||1048576
+      });
+      G.scopes=null;
+      r.innerHTML='<span style="color:var(--accent-green)">✓ SharePoint settings updated</span>';
+    }catch(e1){
+      G.scopes=null;
+      if(e1.message?.includes('403')||e1.message?.includes('accessDenied')){
+        r.innerHTML=`<span style="color:var(--accent-amber)">⚠ SharePoint tenant settings require <strong>application-level</strong> permissions (not delegated).<br><br>
+        <span style="font-size:.78rem">To apply these settings, use one of:<br>
+        • <strong>SharePoint Admin Center</strong> → Settings → Sharing<br>
+        • <strong>PowerShell:</strong> <code>Set-SPOTenant -SharingCapability ${esc($('spoSharing').value)}</code><br>
+        • <strong>App-only auth:</strong> Grant <code>SharePointTenantSettings.ReadWrite.All</code> as an application permission and use client credentials flow</span></span>`;
+      }else{r.innerHTML=`<span style="color:var(--accent-red)">✗ ${esc(e1.message)}</span>`}
+    }
   }catch(e){G.scopes=null;r.innerHTML=`<span style="color:var(--accent-red)">✗ ${esc(e.message)}</span>`}
 }
 
@@ -5179,30 +5225,80 @@ async function spoGetSettings(){
     <div><strong>Comments:</strong> ${s.isCommentingOnSitePagesEnabled?'Enabled':'Disabled'}</div>
     <div><strong>Image Tagging:</strong> ${esc(s.imageTaggingOption||'—')}</div>
     </div>`;
-    // Pre-fill form
     $('spoSharing').value=s.sharingCapability||'disabled';
     $('spoSiteCreation').checked=!!s.isSiteCreationEnabled;
     $('spoLegacyAuth').checked=!!s.isLegacyAuthProtocolsEnabled;
     $('spoSyncRestrict').checked=!!s.isUnmanagedSyncAppForTenantRestricted;
     if(s.personalSiteDefaultStorageLimitInMB)$('spoStorage').value=s.personalSiteDefaultStorageLimitInMB;
-  }catch(e){G.scopes=null;r.innerHTML=`<span style="color:var(--accent-red)">✗ ${esc(e.message)}</span>`}
+  }catch(e){
+    G.scopes=null;
+    if(e.message?.includes('403')||e.message?.includes('accessDenied')){
+      r.innerHTML=`<span style="color:var(--accent-amber)">⚠ SharePoint admin settings require application-level permissions.<br>
+      <span style="font-size:.78rem">This API (<code>/admin/sharepoint/settings</code>) only supports the <code>SharePointTenantSettings.ReadWrite.All</code> application permission — it cannot be used with delegated (user sign-in) auth.<br><br>
+      View settings via: <strong>SharePoint Admin Center</strong> → Settings, or PowerShell: <code>Get-SPOTenant</code></span></span>`;
+    }else{r.innerHTML=`<span style="color:var(--accent-red)">✗ ${esc(e.message)}</span>`}
+  }
 }
 
 async function spoAuditSite(){
   const r=$('spoAuditResult');r.innerHTML='<span style="color:var(--text-muted)">Auditing...</span>';
   if(!A.ok())return r.innerHTML='<span style="color:var(--accent-red)">Sign in first</span>';
+  const siteRef=$('spoSiteUrl').value.trim();if(!siteRef)return r.innerHTML='Enter a site name above';
   try{
-    const siteRef=$('spoSiteUrl').value.trim();if(!siteRef)return r.innerHTML='Enter a site URL';
     G.scopes=Auth.DISCOVERY_SCOPES;
-    const perms=await G.call(`/sites/${siteRef}/permissions`);
+    // Fetch site details, drives, and associated group/owners
+    const [site,drives,lists]=await Promise.all([
+      G.call(`/sites/${siteRef}?$select=displayName,webUrl,createdDateTime,lastModifiedDateTime,createdBy`),
+      G.call(`/sites/${siteRef}/drives?$select=name,driveType,createdBy,lastModifiedBy,quota`).catch(()=>({value:[]})),
+      G.call(`/sites/${siteRef}/lists?$select=displayName,list,createdDateTime&$top=20`).catch(()=>({value:[]}))
+    ]);
+    // Try to get site group/owners if it has an associated M365 group
+    let owners=[],members=[];
+    if(site.createdBy?.user){
+      try{
+        // Sites with groups expose /sites/{id}/owners (beta)
+        const ownResp=await G.call(`/sites/${siteRef}/permissions`).catch(()=>null);
+        if(ownResp?.value){
+          owners=ownResp.value;
+        }
+      }catch{}
+    }
     G.scopes=null;
-    if(!perms.value?.length)return r.innerHTML='<span style="color:var(--text-muted)">No custom permissions found</span>';
-    let h='<table class="disc-table" style="font-size:.76rem"><thead><tr><th>Identity</th><th>Roles</th></tr></thead><tbody>';
-    perms.value.forEach(p=>{
-      const id=p.grantedToIdentitiesV2?.map(i=>i.user?.displayName||i.application?.displayName||'Unknown').join(', ')||'—';
-      h+=`<tr><td>${esc(id)}</td><td>${(p.roles||[]).join(', ')}</td></tr>`;
-    });
-    h+='</tbody></table>';
+    let h=`<div style="padding:12px;background:var(--bg-elevated);border-radius:var(--radius-md);margin-bottom:10px">
+      <div style="font-weight:600;font-size:.9rem">${esc(site.displayName||'')}</div>
+      <div style="font-size:.78rem;color:var(--accent-cyan);margin-top:2px">${esc(site.webUrl||'')}</div>
+      <div style="font-size:.76rem;color:var(--text-muted);margin-top:4px">Created: ${site.createdDateTime?new Date(site.createdDateTime).toLocaleDateString('en-GB'):'—'} | Modified: ${site.lastModifiedDateTime?new Date(site.lastModifiedDateTime).toLocaleDateString('en-GB'):'—'}</div>
+    </div>`;
+    // Document libraries
+    if(drives.value?.length){
+      h+=`<div style="font-weight:600;font-size:.82rem;margin:10px 0 6px;color:var(--accent-blue)">Document Libraries (${drives.value.length})</div>`;
+      h+='<table class="disc-table" style="font-size:.76rem"><thead><tr><th>Name</th><th>Type</th><th>Used</th><th>Total</th></tr></thead><tbody>';
+      drives.value.forEach(d=>{
+        const used=d.quota?.used?Math.round(d.quota.used/1048576)+'MB':'—';
+        const total=d.quota?.total?Math.round(d.quota.total/1073741824)+'GB':'—';
+        h+=`<tr><td style="font-weight:500">${esc(d.name||'')}</td><td>${esc(d.driveType||'')}</td><td>${used}</td><td>${total}</td></tr>`;
+      });
+      h+='</tbody></table>';
+    }
+    // Lists
+    if(lists.value?.length){
+      h+=`<div style="font-weight:600;font-size:.82rem;margin:10px 0 6px;color:var(--accent-green)">Lists (${lists.value.length})</div>`;
+      h+='<table class="disc-table" style="font-size:.76rem"><thead><tr><th>Name</th><th>Template</th><th>Hidden</th></tr></thead><tbody>';
+      lists.value.forEach(l=>{
+        h+=`<tr><td style="font-weight:500">${esc(l.displayName||'')}</td><td>${esc(l.list?.template||'—')}</td><td>${l.list?.hidden?'Yes':'No'}</td></tr>`;
+      });
+      h+='</tbody></table>';
+    }
+    // Permissions (if available)
+    if(owners.length){
+      h+=`<div style="font-weight:600;font-size:.82rem;margin:10px 0 6px;color:var(--accent-violet)">Permissions (${owners.length})</div>`;
+      h+='<table class="disc-table" style="font-size:.76rem"><thead><tr><th>Identity</th><th>Roles</th></tr></thead><tbody>';
+      owners.forEach(p=>{
+        const id=p.grantedToIdentitiesV2?.map(i=>i.user?.displayName||i.application?.displayName||'Unknown').join(', ')||p.grantedToIdentities?.map(i=>i.user?.displayName||'Unknown').join(', ')||'—';
+        h+=`<tr><td>${esc(id)}</td><td>${(p.roles||[]).join(', ')}</td></tr>`;
+      });
+      h+='</tbody></table>';
+    }
     r.innerHTML=h;
   }catch(e){G.scopes=null;r.innerHTML=`<span style="color:var(--accent-red)">✗ ${esc(e.message)}</span>`}
 }
@@ -5212,9 +5308,10 @@ async function spoListSites(){
   if(!A.ok())return r.innerHTML='<span style="color:var(--accent-red)">Sign in first</span>';
   try{
     G.scopes=Auth.DISCOVERY_SCOPES;
-    const sites=await G.call('/sites?$top=100&$select=displayName,webUrl,lastModifiedDateTime');
+    // Must use search=* to enumerate all sites via Graph
+    const sites=await G.call('/sites?search=*&$top=200&$select=displayName,webUrl,id,lastModifiedDateTime,createdDateTime');
     G.scopes=null;
-    if(!sites.value?.length)return r.innerHTML='<span style="color:var(--text-muted)">No sites found</span>';
+    if(!sites.value?.length)return r.innerHTML='<span style="color:var(--text-muted)">No sites found — ensure <code>Sites.Read.All</code> permission is granted</span>';
     let h='<table class="disc-table" style="font-size:.76rem"><thead><tr><th>Site</th><th>URL</th><th>Modified</th></tr></thead><tbody>';
     sites.value.forEach(s=>{
       h+=`<tr><td style="font-weight:500">${esc(s.displayName||'')}</td><td style="color:var(--accent-cyan)">${esc(s.webUrl||'')}</td><td>${s.lastModifiedDateTime?new Date(s.lastModifiedDateTime).toLocaleDateString('en-GB'):'—'}</td></tr>`;
