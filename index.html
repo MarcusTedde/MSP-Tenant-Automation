@@ -160,7 +160,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 </head>
 <body>
 <div id="app">
-<header class="header"><div class="header-brand"><div class="header-logo">M</div><div><div class="header-title">M365 Tenant Automation</div><div class="header-subtitle">MSP Onboarding, Provisioning &amp; CE+ Compliance</div></div></div><div class="header-meta"><button id="themeBtn" class="btn btn-ghost btn-sm" onclick="toggleTheme()" title="Toggle light/dark theme" style="font-size:1.1rem;padding:4px 8px;line-height:1">🌙</button><span class="badge badge-cyan">Graph API v1.0</span><span class="badge badge-green" style="margin-left:4px">v3.4</span><div id="authStatus" class="auth-status disconnected"><span class="auth-dot"></span><span id="authStatusText">Not connected</span></div><button id="authBtn" class="btn btn-sm btn-secondary" onclick="handleAuth()">Sign In</button></div></header>
+<header class="header"><div class="header-brand"><div class="header-logo">M</div><div><div class="header-title">M365 Tenant Automation</div><div class="header-subtitle">MSP Onboarding, Provisioning &amp; CE+ Compliance</div></div></div><div class="header-meta"><button id="themeBtn" class="btn btn-ghost btn-sm" onclick="toggleTheme()" title="Toggle light/dark theme" style="font-size:1.1rem;padding:4px 8px;line-height:1">🌙</button><span class="badge badge-cyan">Graph API v1.0</span><span class="badge badge-green" style="margin-left:4px">v3.5</span><div id="authStatus" class="auth-status disconnected"><span class="auth-dot"></span><span id="authStatusText">Not connected</span></div><button id="authBtn" class="btn btn-sm btn-secondary" onclick="handleAuth()">Sign In</button></div></header>
 <nav class="tab-bar"><button class="tab-btn active" data-tab="setup" onclick="switchTab('setup',this)"><span>⚡</span> New Tenant Setup</button><button class="tab-btn" data-tab="discovery" onclick="switchTab('discovery',this)"><span>🔍</span> Tenant Discovery</button><button class="tab-btn" data-tab="users" onclick="switchTab('users',this)"><span>👤</span> Users</button><button class="tab-btn" data-tab="domains" onclick="switchTab('domains',this)"><span>🌐</span> Domains</button><button class="tab-btn" data-tab="tools" onclick="switchTab('tools',this)"><span>🧰</span> MSP Tools</button><button class="tab-btn" data-tab="intune" onclick="switchTab('intune',this)"><span>📱</span> Intune</button><button class="tab-btn" data-tab="compliance" onclick="switchTab('compliance',this)"><span>✅</span> CE+ Compliance</button><button class="tab-btn" data-tab="config" onclick="switchTab('config',this)"><span>⚙</span> App Config</button></nav>
 <main class="main-content">
 
@@ -179,7 +179,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 </div><div class="card"><div class="flex justify-between items-center" style="margin-bottom:12px"><div class="card-header" style="margin-bottom:0">Progress</div><span id="setupPercent" style="font-family:var(--font-display);font-size:1.5rem;font-weight:800;color:var(--accent-blue)">0%</span></div><div class="progress-track" style="margin-bottom:14px"><div id="setupProgressBar" class="progress-fill" style="width:0%"></div></div><div class="flex gap-lg"><div><div class="stat-label">Configured</div><div id="setupConfigured" style="font-family:var(--font-display);font-size:1.2rem;font-weight:800;color:var(--accent-green)">0</div></div><div><div class="stat-label">Total</div><div id="setupTotal" style="font-family:var(--font-display);font-size:1.2rem;font-weight:800">0</div></div><div><div class="stat-label">Errors</div><div id="setupErrors" style="font-family:var(--font-display);font-size:1.2rem;font-weight:800;color:var(--accent-green)">0</div></div></div></div><div class="card" style="flex:1;overflow:auto;max-height:600px"><div class="card-header">Phases</div><div id="phaseList" class="flex flex-col gap-sm"></div></div></div><div class="card flex flex-col" style="flex:1;min-height:620px"><div class="flex justify-between items-center" style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--border-subtle)"><div class="card-header" style="margin-bottom:0"><span id="logLive" class="hidden" style="width:7px;height:7px;border-radius:50%;background:var(--accent-green)"></span>Configuration Log</div><button class="btn btn-ghost btn-sm" onclick="copyLog()">Copy</button></div><div id="logContainer" class="log-container"><div class="empty-state" id="logEmpty"><div class="empty-icon">⚡</div><div class="empty-title">Ready to configure</div><div class="empty-desc">Enter tenant details and click Start</div></div></div></div></div></div>
 
 <!-- DISCOVERY -->
-<div id="panel-discovery" class="tab-panel"><div class="card" style="margin-bottom:22px"><div class="flex items-center gap-md" style="flex-wrap:wrap"><div style="flex:1;min-width:280px;max-width:400px"><label class="form-label">Target Tenant Domain</label><input id="discDomain" class="form-input" placeholder="contoso.onmicrosoft.com"></div><button id="discScanBtn" class="btn btn-primary" onclick="startDiscovery()" style="align-self:flex-end">🔍 Run Discovery</button><div id="discExBtns" class="flex gap-sm hidden" style="align-self:flex-end"><button class="btn btn-secondary btn-sm" onclick="exDiscJSON()">📄 JSON</button><button class="btn btn-secondary btn-sm" onclick="exDiscHTML()">📋 HTML Report</button><button class="btn btn-sm" style="background:rgba(236,91,44,.12);color:var(--accent-orange);border:1px solid rgba(236,91,44,.25)" onclick="exITGlue()">🔶 ITGlue HTML</button></div></div><div id="discProgress" class="hidden" style="margin-top:14px"><div class="flex justify-between" style="margin-bottom:5px"><span id="discStatus" style="font-size:.8rem;color:var(--text-secondary)"></span><span id="discPercent" style="font-size:.8rem;font-weight:600;color:var(--accent-blue)">0%</span></div><div class="progress-track"><div id="discBar" class="progress-fill" style="width:0%"></div></div></div></div><div id="discResults"></div><div id="discEmpty" class="empty-state"><div class="empty-icon">🔍</div><div class="empty-title">No scan results</div><div class="empty-desc">Enter a tenant domain and run a discovery scan</div></div></div>
+<div id="panel-discovery" class="tab-panel"><div class="card" style="margin-bottom:22px"><div class="flex items-center gap-md" style="flex-wrap:wrap"><div style="flex:1;min-width:280px;max-width:400px"><label class="form-label">Target Tenant Domain</label><input id="discDomain" class="form-input" placeholder="contoso.onmicrosoft.com"></div><button id="discScanBtn" class="btn btn-primary" onclick="startDiscovery()" style="align-self:flex-end">🔍 Run Discovery</button><button class="btn btn-secondary btn-sm" onclick="refreshDiscToken()" style="align-self:flex-end" title="Force a fresh token with all admin-consented permissions">🔄 Refresh Token</button><div id="discExBtns" class="flex gap-sm hidden" style="align-self:flex-end"><button class="btn btn-secondary btn-sm" onclick="exDiscJSON()">📄 JSON</button><button class="btn btn-secondary btn-sm" onclick="exDiscHTML()">📋 HTML Report</button><button class="btn btn-sm" style="background:rgba(236,91,44,.12);color:var(--accent-orange);border:1px solid rgba(236,91,44,.25)" onclick="exITGlue()">🔶 ITGlue HTML</button></div></div><div id="discProgress" class="hidden" style="margin-top:14px"><div class="flex justify-between" style="margin-bottom:5px"><span id="discStatus" style="font-size:.8rem;color:var(--text-secondary)"></span><span id="discPercent" style="font-size:.8rem;font-weight:600;color:var(--accent-blue)">0%</span></div><div class="progress-track"><div id="discBar" class="progress-fill" style="width:0%"></div></div></div></div><div id="discResults"></div><div id="discEmpty" class="empty-state"><div class="empty-icon">🔍</div><div class="empty-title">No scan results</div><div class="empty-desc">Enter a tenant domain and run a discovery scan</div></div></div>
 
 <!-- COMPLIANCE -->
 <!-- ═══════ USERS TAB ═══════ -->
@@ -607,7 +607,7 @@ Jane,Doe,jane.doe,CFO,Finance,LIC — Business Premium"></textarea>
   <span style="font-family:var(--font-display);font-weight:700;font-size:.92rem">Auto-Configure Permissions &amp; Consent</span>
   <span id="step3Badge" class="badge badge-muted" style="margin-left:auto">Pending</span>
 </div>
-<p style="font-size:.84rem;color:var(--text-secondary);line-height:1.6;font-family:var(--font-display);margin-bottom:14px">Once signed in, this step automatically adds all 15 required Graph API permissions, grants admin consent, and generates a client secret. No manual work.</p>
+<p style="font-size:.84rem;color:var(--text-secondary);line-height:1.6;font-family:var(--font-display);margin-bottom:14px">Once signed in, this step automatically adds all required Graph API permissions, grants admin consent, and generates a client secret. No manual work.</p>
 <div class="flex gap-sm items-center">
   <button id="bsBtn" class="btn btn-success" onclick="bootstrap()" style="padding:11px 24px;font-size:.9rem">⚡ Configure Permissions &amp; Consent</button>
   <span id="bsStatus" style="font-size:.82rem;color:var(--text-muted);font-family:var(--font-display)"></span>
@@ -695,7 +695,7 @@ Jane,Doe,jane.doe,CFO,Finance,LIC — Business Premium"></textarea>
     <div style="display:flex;align-items:center;gap:12px">
       <div class="guide-step-num">3</div>
       <div><div class="guide-step-title">Run the Permission Bootstrap</div>
-      <div class="guide-step-desc">One click — the tool automatically configures all 23 Graph API permissions and generates a client secret.</div></div>
+      <div class="guide-step-desc">One click — the tool automatically configures all required Graph API permissions and generates a client secret.</div></div>
     </div>
   </div>
   <div style="padding:12px 16px;background:rgba(6,182,212,.06);border:1px solid rgba(6,182,212,.15);border-radius:var(--radius-md);font-size:.82rem;color:var(--accent-cyan);font-family:var(--font-display);line-height:1.6;margin-top:4px">
@@ -791,7 +791,7 @@ Jane,Doe,jane.doe,CFO,Finance,LIC — Business Premium"></textarea>
   <div class="guide-title" style="font-size:1.25rem">Bootstrap Permissions</div>
 </div>
 <div class="guide-body">
-  <div class="guide-step-desc" style="margin-bottom:16px;text-align:center">One click — the tool will automatically add all 23 required Graph API permissions, grant admin consent, and generate a client secret.</div>
+  <div class="guide-step-desc" style="margin-bottom:16px;text-align:center">One click — the tool will automatically add all required Graph API permissions, grant admin consent, and generate a client secret.</div>
 
   <div class="guide-step-card" style="text-align:center">
     <button class="btn btn-success" id="guideBootstrapBtn" onclick="guideRunBootstrap()" style="padding:12px 32px;font-size:.95rem">⚡ Configure Permissions & Consent</button>
@@ -865,7 +865,7 @@ Jane,Doe,jane.doe,CFO,Finance,LIC — Business Premium"></textarea>
    CORE CONFIG & POLICY DEFINITIONS
    ============================================================ */
 const GE='https://graph.microsoft.com/v1.0',GB='https://graph.microsoft.com/beta';
-const PERMS=[{n:'Directory.ReadWrite.All',id:'_'},{n:'Domain.ReadWrite.All',id:'_'},{n:'Policy.Read.All',id:'_'},{n:'Policy.ReadWrite.ConditionalAccess',id:'_'},{n:'Policy.ReadWrite.AuthenticationMethod',id:'_'},{n:'Application.ReadWrite.All',id:'_'},{n:'AppRoleAssignment.ReadWrite.All',id:'_'},{n:'DeviceManagementConfiguration.ReadWrite.All',id:'_'},{n:'DeviceManagementManagedDevices.ReadWrite.All',id:'_'},{n:'DeviceManagementApps.ReadWrite.All',id:'_'},{n:'DeviceManagementServiceConfig.ReadWrite.All',id:'_'},{n:'SecurityEvents.ReadWrite.All',id:'_'},{n:'AuditLog.Read.All',id:'_'},{n:'SharePointTenantSettings.ReadWrite.All',id:'_'},{n:'Sites.Read.All',id:'_'},{n:'RoleManagement.ReadWrite.Directory',id:'_'},{n:'Organization.ReadWrite.All',id:'_'},{n:'User.ReadWrite.All',id:'_'},{n:'Group.ReadWrite.All',id:'_'},{n:'Mail.ReadWrite',id:'_'},{n:'InformationProtectionPolicy.Read.All',id:'_'},{n:'RecordsManagement.Read.All',id:'_'},{n:'DelegatedPermissionGrant.ReadWrite.All',id:'_'}];
+const PERMS=[{n:'Directory.ReadWrite.All',id:'_'},{n:'Domain.ReadWrite.All',id:'_'},{n:'Policy.Read.All',id:'_'},{n:'Policy.ReadWrite.ConditionalAccess',id:'_'},{n:'Policy.ReadWrite.AuthenticationMethod',id:'_'},{n:'Application.ReadWrite.All',id:'_'},{n:'AppRoleAssignment.ReadWrite.All',id:'_'},{n:'DeviceManagementConfiguration.ReadWrite.All',id:'_'},{n:'DeviceManagementManagedDevices.ReadWrite.All',id:'_'},{n:'DeviceManagementApps.ReadWrite.All',id:'_'},{n:'DeviceManagementServiceConfig.ReadWrite.All',id:'_'},{n:'SecurityEvents.ReadWrite.All',id:'_'},{n:'AuditLog.Read.All',id:'_'},{n:'SharePointTenantSettings.ReadWrite.All',id:'_'},{n:'Sites.Read.All',id:'_'},{n:'Sites.ReadWrite.All',id:'_'},{n:'RoleManagement.ReadWrite.Directory',id:'_'},{n:'Organization.ReadWrite.All',id:'_'},{n:'User.ReadWrite.All',id:'_'},{n:'Group.ReadWrite.All',id:'_'},{n:'Mail.ReadWrite',id:'_'},{n:'MailboxSettings.ReadWrite',id:'_'},{n:'InformationProtectionPolicy.Read.All',id:'_'},{n:'RecordsManagement.Read.All',id:'_'},{n:'DelegatedPermissionGrant.ReadWrite.All',id:'_'},{n:'IdentityRiskyUser.Read.All',id:'_'},{n:'IdentityRiskEvent.Read.All',id:'_'},{n:'Reports.Read.All',id:'_'}];
 
 const CEP={accessControl:{cat:'Access Control',icon:'🔐',p:[
 {id:'ac-001',n:'Enforce MFA for All Users',ce:'Multi-factor authentication must be enabled for all user accounts',sev:'critical',ep:'POST /identity/conditionalAccess/policies',pay:{displayName:'[CE+] Require MFA - All Users',state:'enabledForReportingButNotEnforced',conditions:{users:{includeUsers:['All'],excludeGroups:[]},applications:{includeApplications:['All']}},grantControls:{operator:'OR',builtInControls:['mfa']}},_caExclude:true},
@@ -1522,7 +1522,7 @@ class Auth{
   static BOOTSTRAP_SCOPES=['https://graph.microsoft.com/Application.ReadWrite.All','https://graph.microsoft.com/AppRoleAssignment.ReadWrite.All','https://graph.microsoft.com/Directory.ReadWrite.All','https://graph.microsoft.com/DelegatedPermissionGrant.ReadWrite.All'];
   static DISCOVERY_SCOPES=['https://graph.microsoft.com/.default'];
   async login(tid){const r=await this.inst.loginPopup({scopes:Auth.BOOTSTRAP_SCOPES,prompt:'select_account',...(tid?{authority:`https://login.microsoftonline.com/${tid}`}:{})});this.acc=r.account;this.tok=r.accessToken;authUI(1,r.account.username);return r}
-  async token(sc){if(!this.acc)throw new Error('Not authenticated');const scopes=sc||Auth.BOOTSTRAP_SCOPES;try{const r=await this.inst.acquireTokenSilent({scopes,account:this.acc});this.tok=r.accessToken;return r.accessToken}catch{const r=await this.inst.acquireTokenPopup({scopes});this.tok=r.accessToken;return r.accessToken}}
+  async token(sc){if(!this.acc)throw new Error('Not authenticated');const scopes=sc||Auth.BOOTSTRAP_SCOPES;const isDefault=scopes.length===1&&scopes[0].endsWith('/.default');try{const r=await this.inst.acquireTokenSilent({scopes,account:this.acc,forceRefresh:isDefault});this.tok=r.accessToken;return r.accessToken}catch{const r=await this.inst.acquireTokenPopup({scopes});this.tok=r.accessToken;return r.accessToken}}
   async logout(){if(this.inst){await this.inst.logoutPopup();this.acc=null;this.tok=null;authUI(0)}}
   ok(){return!!this.acc}
 }
@@ -1882,8 +1882,20 @@ function cleanup(){SS.run=0;$('setupStartBtn').classList.remove('hidden');$('set
 /* ============================================================
    DISCOVERY TAB — Professional presentation
    ============================================================ */
+async function refreshDiscToken(){
+  if(!A.ok()){alert('Sign in first.');return}
+  try{
+    const r=await A.inst.acquireTokenPopup({scopes:Auth.DISCOVERY_SCOPES,account:A.acc,prompt:'consent'});
+    A.tok=r.accessToken;A.acc=r.account;
+    try{
+      const pl=JSON.parse(atob(r.accessToken.split('.')[1]));
+      const sc=(pl.scp||'').split(' ').filter(Boolean);
+      alert('Token refreshed — '+sc.length+' delegated scopes active.\n\nScopes:\n'+sc.join('\n'));
+    }catch{alert('Token refreshed successfully.')}
+  }catch(e){alert('Token refresh failed: '+e.message)}
+}
 async function startDiscovery(){
-  console.log('🚀 startDiscovery v3.4 — scanning 33 sections');
+  console.log('🚀 startDiscovery v3.5 — scanning 33 sections');
   const dom=$('discDomain').value.trim();if(!dom)return;
   $('discScanBtn').disabled=true;$('discScanBtn').innerHTML='<span class="animate-spin" style="display:inline-block">◌</span> Scanning...';$('discProgress').classList.remove('hidden');$('discEmpty').classList.add('hidden');$('discResults').innerHTML='';$('discExBtns').classList.add('hidden');
   DD={domain:dom,ts:new Date().toISOString()};const live=A.ok();
@@ -1977,7 +1989,7 @@ async function startDiscovery(){
   renderDisc()}
 
 function renderDisc(){
-  console.log('🔍 renderDisc v3.4 — 33 section discovery');
+  console.log('🔍 renderDisc v3.5 — 33 section discovery');
   try{
   if(!DD)return;const d=DD,c=$('discResults');
   const arr=k=>Array.isArray(d[k])?d[k]:[];
@@ -2019,7 +2031,13 @@ function renderDisc(){
         <strong>Failed (403):</strong> <span style="color:var(--accent-amber)">${errKeys.join(', ')}</span>
         ${noteKeys.length?`<br><strong>Info:</strong> ${noteKeys.join(', ')}`:''}
       </div>
-      <div style="font-size:.76rem;color:var(--text-muted);margin-top:8px">Re-run <strong>App Config → Step 3 (Bootstrap)</strong> to grant missing permissions, then re-scan.</div>
+      <div style="font-size:.76rem;color:var(--text-muted);margin-top:8px;line-height:1.6">
+        <strong>Fix steps:</strong><br>
+        1. Click <strong>🔄 Refresh Token</strong> above — accept the consent prompt — then re-scan.<br>
+        2. If still failing: go to <strong>App Config → Step 3 (Bootstrap)</strong>, re-run it, accept consent, then re-scan.<br>
+        3. If still failing: sign out, sign back in, then re-scan. The new permissions require a fresh login session.<br>
+        4. Last resort: in Azure Portal → Enterprise Apps → your app → Permissions → <strong>Grant admin consent</strong>.
+      </div>
     </div>`;
   }
 
@@ -4194,6 +4212,35 @@ async function bootstrap(){
     // Restore original token method
     A.token=origToken;
 
+    // Force fresh token with all newly granted scopes — clears MSAL cache for .default
+    bsLog('Refreshing token with newly granted permissions...','info');
+    status.textContent='Refreshing token...';
+    try{
+      // Clear all cached tokens so next acquireTokenSilent fetches fresh from AAD
+      const allAccounts=A.inst.getAllAccounts();
+      for(const acct of allAccounts){
+        try{await A.inst.getTokenCache?.().removeAccount?.(acct)}catch{}
+      }
+      // Re-authenticate with consent to pick up all new scopes
+      const refreshResp=await A.inst.acquireTokenPopup({
+        scopes:Auth.DISCOVERY_SCOPES,
+        account:A.acc,
+        prompt:'consent'
+      });
+      A.tok=refreshResp.accessToken;
+      A.acc=refreshResp.account;
+      // Decode to verify scopes
+      try{
+        const pl=JSON.parse(atob(refreshResp.accessToken.split('.')[1]));
+        const sc=pl.scp||'';
+        const scopeCount=sc?sc.split(' ').length:0;
+        bsLog('✓ Token refreshed — '+scopeCount+' delegated scopes active','success');
+        if(scopeCount<10){bsLog('  ⚠ Fewer scopes than expected. If discovery still shows 403 errors, sign out and back in, then re-run bootstrap.','warning')}
+      }catch{bsLog('✓ Token refreshed','success')}
+    }catch(e){
+      bsLog('⚠ Token refresh failed: '+e.message+' — sign out and back in before running discovery.','warning');
+    }
+
     if(failed===0){
       bsLog('','success');
       bsLog('═══════════════════════════════════════════','success');
@@ -4265,6 +4312,105 @@ secureScore:[{currentScore:42,maxScore:78}]
 }[k]||{}}
 
 // ===== MSP TOOLS =====
+
+/* ============================================================
+   MSP TOOLS — UPN / Site Typeahead Autocomplete
+   ============================================================ */
+let _upnCache=null,_upnCacheTs=0,_siteCache=null,_siteCacheTs=0;
+async function _fetchUpns(force){
+  if(!force&&_upnCache&&Date.now()-_upnCacheTs<300000)return _upnCache;
+  if(!A.ok())return[];
+  try{
+    G.scopes=Auth.DISCOVERY_SCOPES;
+    const r=await G.call('/users?$select=displayName,userPrincipalName,mail,accountEnabled&$top=999&$orderby=displayName');
+    G.scopes=null;
+    _upnCache=(r.value||[]).map(u=>({upn:u.userPrincipalName,name:u.displayName,mail:u.mail,enabled:u.accountEnabled}));
+    _upnCacheTs=Date.now();
+    return _upnCache;
+  }catch(e){G.scopes=null;return _upnCache||[]}
+}
+async function _fetchSites(force){
+  if(!force&&_siteCache&&Date.now()-_siteCacheTs<300000)return _siteCache;
+  if(!A.ok())return[];
+  try{
+    G.scopes=Auth.DISCOVERY_SCOPES;
+    const r=await G.call('/sites?$select=displayName,webUrl,id&$top=500&search=*');
+    G.scopes=null;
+    _siteCache=(r.value||[]).map(s=>({name:s.displayName,url:s.webUrl,id:s.id}));
+    _siteCacheTs=Date.now();
+    return _siteCache;
+  }catch(e){G.scopes=null;return _siteCache||[]}
+}
+function _typeahead(inputId,fetchFn,renderItem,onSelect){
+  const inp=$(inputId);if(!inp)return;
+  const wrap=inp.parentElement;
+  wrap.style.position='relative';
+  let dd=document.createElement('div');
+  dd.className='ta-dropdown';
+  dd.style.cssText='position:absolute;left:0;right:0;top:100%;z-index:999;background:var(--bg-card);border:1px solid var(--border-subtle);border-radius:0 0 var(--radius-md) var(--radius-md);max-height:220px;overflow-y:auto;display:none;box-shadow:0 8px 24px rgba(0,0,0,.25)';
+  wrap.appendChild(dd);
+  let items=[],sel=-1,visible=false;
+  function show(filtered){
+    if(!filtered.length){dd.style.display='none';visible=false;return}
+    dd.innerHTML='';sel=-1;
+    filtered.slice(0,30).forEach((item,i)=>{
+      const d=document.createElement('div');
+      d.style.cssText='padding:8px 12px;font-size:.82rem;cursor:pointer;border-bottom:1px solid var(--border-subtle);transition:background .1s';
+      d.innerHTML=renderItem(item);
+      d.onmouseenter=()=>{d.style.background='var(--bg-elevated)'};
+      d.onmouseleave=()=>{d.style.background='transparent'};
+      d.onclick=()=>{onSelect(item,inp);dd.style.display='none';visible=false};
+      dd.appendChild(d);
+    });
+    dd.style.display='block';visible=true;
+  }
+  let debounce=null;
+  inp.addEventListener('input',()=>{
+    clearTimeout(debounce);
+    debounce=setTimeout(async()=>{
+      const q=inp.value.trim().toLowerCase();
+      if(q.length<1){dd.style.display='none';visible=false;return}
+      const all=await fetchFn();
+      const filtered=all.filter(item=>{
+        const searchable=Object.values(item).filter(v=>typeof v==='string').join(' ').toLowerCase();
+        return searchable.includes(q);
+      });
+      show(filtered);
+    },200);
+  });
+  inp.addEventListener('focus',async()=>{
+    const q=inp.value.trim().toLowerCase();
+    if(q.length>=1){
+      const all=await fetchFn();
+      const filtered=all.filter(item=>{
+        const searchable=Object.values(item).filter(v=>typeof v==='string').join(' ').toLowerCase();
+        return searchable.includes(q);
+      });
+      show(filtered);
+    }
+  });
+  inp.addEventListener('keydown',(e)=>{
+    if(!visible)return;
+    const kids=dd.children;
+    if(e.key==='ArrowDown'){e.preventDefault();sel=Math.min(sel+1,kids.length-1);[...kids].forEach((c,i)=>c.style.background=i===sel?'var(--bg-elevated)':'transparent');kids[sel]?.scrollIntoView({block:'nearest'})}
+    else if(e.key==='ArrowUp'){e.preventDefault();sel=Math.max(sel-1,0);[...kids].forEach((c,i)=>c.style.background=i===sel?'var(--bg-elevated)':'transparent');kids[sel]?.scrollIntoView({block:'nearest'})}
+    else if(e.key==='Enter'&&sel>=0){e.preventDefault();kids[sel]?.click()}
+    else if(e.key==='Escape'){dd.style.display='none';visible=false}
+  });
+  document.addEventListener('click',(e)=>{if(!wrap.contains(e.target)){dd.style.display='none';visible=false}});
+}
+function _initUpnTypeahead(inputId){
+  _typeahead(inputId,_fetchUpns,
+    item=>`<div style="font-weight:500">${esc(item.name)}</div><div style="font-size:.74rem;color:var(--text-muted)">${esc(item.upn)}</div>`,
+    (item,inp)=>{inp.value=item.upn}
+  );
+}
+function _initSiteTypeahead(inputId){
+  _typeahead(inputId,_fetchSites,
+    item=>`<div style="font-weight:500">${esc(item.name||'Unnamed')}</div><div style="font-size:.74rem;color:var(--accent-cyan)">${esc(item.url||'')}</div>`,
+    (item,inp)=>{inp.value=item.id}
+  );
+}
 
 /* ============================================================
    MSP TOOLS — Tool Framework
@@ -4734,9 +4880,9 @@ function toolExo(){
 
 <div class="card">
 <div class="card-header"><span class="dot" style="background:var(--accent-blue)"></span> Out of Office</div>
-<div style="margin-bottom:12px">
+<div style="margin-bottom:12px;position:relative">
 <label class="form-label">User UPN</label>
-<input id="exoOooUser" class="form-input" placeholder="user@domain.com">
+<input id="exoOooUser" class="form-input" placeholder="Start typing a name or UPN..." autocomplete="off">
 </div>
 <div style="margin-bottom:12px">
 <label class="form-label">Internal Message</label>
@@ -4759,9 +4905,9 @@ function toolExo(){
 
 <div class="card">
 <div class="card-header"><span class="dot" style="background:var(--accent-blue)"></span> Mail Forwarding</div>
-<div style="margin-bottom:12px">
+<div style="margin-bottom:12px;position:relative">
 <label class="form-label">Source User</label>
-<input id="exoFwdFrom" class="form-input" placeholder="user@domain.com">
+<input id="exoFwdFrom" class="form-input" placeholder="Start typing a name or UPN..." autocomplete="off">
 </div>
 <div style="margin-bottom:12px">
 <label class="form-label">Forward To</label>
@@ -4791,13 +4937,13 @@ function toolExo(){
 
 <div class="card">
 <div class="card-header"><span class="dot" style="background:var(--accent-blue)"></span> Mailbox Permissions</div>
-<div style="margin-bottom:12px">
+<div style="margin-bottom:12px;position:relative">
 <label class="form-label">Mailbox</label>
-<input id="exoPermMailbox" class="form-input" placeholder="shared@domain.com">
+<input id="exoPermMailbox" class="form-input" placeholder="Start typing a name or UPN..." autocomplete="off">
 </div>
-<div style="margin-bottom:12px">
+<div style="margin-bottom:12px;position:relative">
 <label class="form-label">Grant Access To</label>
-<input id="exoPermUser" class="form-input" placeholder="user@domain.com">
+<input id="exoPermUser" class="form-input" placeholder="Start typing a name or UPN..." autocomplete="off">
 </div>
 <div style="margin-bottom:12px">
 <label class="form-label">Permission</label>
@@ -4813,15 +4959,23 @@ function toolExo(){
 
 <div class="card">
 <div class="card-header"><span class="dot" style="background:var(--accent-blue)"></span> Quick Lookup</div>
-<div style="margin-bottom:12px">
+<div style="margin-bottom:12px;position:relative">
 <label class="form-label">User UPN</label>
-<input id="exoLookup" class="form-input" placeholder="user@domain.com">
+<input id="exoLookup" class="form-input" placeholder="Start typing a name or UPN..." autocomplete="off">
 </div>
 <button class="btn btn-primary btn-sm" onclick="exoLookupUser()">🔍 Get Mailbox Info</button>
 <div id="exoLookupResult" style="margin-top:10px;font-size:.82rem"></div>
 </div>
 
 </div>`;
+  // Initialize typeahead on all UPN fields
+  _initUpnTypeahead('exoOooUser');
+  _initUpnTypeahead('exoFwdFrom');
+  _initUpnTypeahead('exoPermMailbox');
+  _initUpnTypeahead('exoPermUser');
+  _initUpnTypeahead('exoLookup');
+  // Pre-fetch users in background
+  _fetchUpns();
 }
 
 async function exoCreateShared(){
@@ -4972,9 +5126,9 @@ function toolSpo(){
 
 <div class="card">
 <div class="card-header"><span class="dot" style="background:var(--accent-green)"></span> Site Permissions Audit</div>
-<div style="margin-bottom:12px">
-<label class="form-label">Site URL or ID</label>
-<input id="spoSiteUrl" class="form-input" placeholder="e.g. contoso.sharepoint.com,site-id">
+<div style="margin-bottom:12px;position:relative">
+<label class="form-label">Site Name or ID</label>
+<input id="spoSiteUrl" class="form-input" placeholder="Start typing a site name..." autocomplete="off">
 </div>
 <button class="btn btn-primary btn-sm" onclick="spoAuditSite()">🔍 Audit Permissions</button>
 <div id="spoAuditResult" style="margin-top:10px;font-size:.82rem;max-height:300px;overflow:auto"></div>
@@ -4987,6 +5141,8 @@ function toolSpo(){
 </div>
 
 </div>`;
+  _initSiteTypeahead('spoSiteUrl');
+  _fetchSites();
 }
 
 async function spoApplySettings(){
@@ -5119,9 +5275,9 @@ function toolEntra(){
 
 <div class="card">
 <div class="card-header"><span class="dot" style="background:var(--accent-violet)"></span> Password Reset</div>
-<div style="margin-bottom:12px">
+<div style="margin-bottom:12px;position:relative">
 <label class="form-label">User UPN</label>
-<input id="entraResetUser" class="form-input" placeholder="user@domain.com">
+<input id="entraResetUser" class="form-input" placeholder="Start typing a name or UPN..." autocomplete="off">
 </div>
 <div style="margin-bottom:12px">
 <label class="form-label">New Password (leave blank to auto-generate)</label>
@@ -5145,6 +5301,8 @@ function toolEntra(){
 </div>
 
 </div>`;
+  _initUpnTypeahead('entraResetUser');
+  _fetchUpns();
 }
 
 async function entraInviteGuest(){
@@ -5326,28 +5484,31 @@ async function purviewListLabels(){
   const r=$('purLabelsResult');r.innerHTML='<span style="color:var(--text-muted)">Loading...</span>';
   if(!A.ok())return r.innerHTML='<span style="color:var(--accent-red)">Sign in first</span>';
   try{
+    G.scopes=Auth.DISCOVERY_SCOPES;
     const resp=await G.call('/security/informationProtection/sensitivityLabels','GET',null,true);
     const labels=resp.value||[];
     if(!labels.length)return r.innerHTML='<span style="color:var(--text-muted)">No sensitivity labels configured. Create in Purview → Information Protection → Labels.</span>';
     let h='<table class="disc-table" style="font-size:.76rem"><thead><tr><th>Label</th><th>Priority</th><th>Scope</th></tr></thead><tbody>';
     labels.forEach(l=>{h+=`<tr><td style="font-weight:500">${esc(l.name||l.displayName||'')}</td><td>${l.priority||'—'}</td><td>${esc((l.contentFormats||[]).join(', ')||'—')}</td></tr>`});
     h+='</tbody></table>';
-    r.innerHTML=h;
-  }catch(e){r.innerHTML=`<span style="color:var(--accent-red)">✗ ${esc(e.message)}<br><span style="font-size:.76rem">Requires InformationProtectionPolicy.Read.All permission</span></span>`}
+    G.scopes=null;r.innerHTML=h;
+  }catch(e){G.scopes=null;r.innerHTML=`<span style="color:var(--accent-red)">✗ ${esc(e.message)}<br><span style="font-size:.76rem">Requires InformationProtectionPolicy.Read.All permission</span></span>`}
 }
 
 async function purviewListRetention(){
   const r=$('purRetentionResult');r.innerHTML='<span style="color:var(--text-muted)">Loading...</span>';
   if(!A.ok())return r.innerHTML='<span style="color:var(--accent-red)">Sign in first</span>';
   try{
+    G.scopes=Auth.DISCOVERY_SCOPES;
     const resp=await G.call('/security/labels/retentionLabels','GET',null,true);
+    G.scopes=null;
     const labels=resp.value||[];
     if(!labels.length)return r.innerHTML='<span style="color:var(--text-muted)">No retention labels configured. Create in Purview → Data Lifecycle → Retention Labels.</span>';
     let h='<table class="disc-table" style="font-size:.76rem"><thead><tr><th>Label</th><th>Retention Days</th><th>Action</th></tr></thead><tbody>';
     labels.forEach(l=>{h+=`<tr><td style="font-weight:500">${esc(l.displayName||'')}</td><td>${l.retentionDuration?.numberOfDays||'—'}</td><td>${esc(l.actionAfterRetentionPeriod||'—')}</td></tr>`});
     h+='</tbody></table>';
     r.innerHTML=h;
-  }catch(e){r.innerHTML=`<span style="color:var(--accent-red)">✗ ${esc(e.message)}<br><span style="font-size:.76rem">Requires RecordsManagement.Read.All permission</span></span>`}
+  }catch(e){G.scopes=null;r.innerHTML=`<span style="color:var(--accent-red)">✗ ${esc(e.message)}<br><span style="font-size:.76rem">Requires RecordsManagement.Read.All permission</span></span>`}
 }
 
 function purviewDlpGuide(type){
@@ -5598,54 +5759,69 @@ async function healthScan(){
   
   G.scopes=Auth.DISCOVERY_SCOPES;
   const data={};
-  const checks=[
-    {k:'org',ep:'/organization?$select=displayName,verifiedDomains,assignedPlans'},
-    {k:'users',ep:'/users/$count',headers:true},
-    {k:'guests',ep:"/users/$count?$filter=userType eq 'Guest'",headers:true},
-    {k:'groups',ep:'/groups/$count',headers:true},
-    {k:'skus',ep:'/subscribedSkus?$select=skuPartNumber,consumedUnits,prepaidUnits'},
-    {k:'secScore',ep:'/security/secureScores?$top=1'},
-    {k:'ca',ep:'/identity/conditionalAccess/policies/$count',headers:true},
-    {k:'secDef',ep:'/policies/identitySecurityDefaultsEnforcementPolicy'},
-    {k:'riskyUsers',ep:'/identityProtection/riskyUsers?$filter=riskLevel eq \'high\'&$top=10'},
-    {k:'devices',ep:'/deviceManagement/managedDevices/$count',headers:true},
-    {k:'apps',ep:'/applications/$count',headers:true}
-  ];
-  
-  for(const c of checks){
+  // Helper: fetch $count with ConsistencyLevel header, return number or '—'
+  async function hCount(ep){
     try{
-      if(c.headers){
-        const token=await A.token(Auth.DISCOVERY_SCOPES);
-        const resp=await fetch('https://graph.microsoft.com/v1.0'+c.ep,{headers:{Authorization:'Bearer '+A.tok,ConsistencyLevel:'eventual'}});
-        data[c.k]=await resp.text();
-      } else {
-        data[c.k]=await G.call(c.ep);
-      }
-    }catch(e){data[c.k]=null}
+      const token=await A.token(Auth.DISCOVERY_SCOPES);
+      const resp=await fetch('https://graph.microsoft.com/v1.0'+ep,{headers:{Authorization:'Bearer '+A.tok,ConsistencyLevel:'eventual'}});
+      if(!resp.ok)return '—';
+      const txt=await resp.text();
+      const n=parseInt(txt);
+      return isNaN(n)?'—':n;
+    }catch{return '—'}
   }
+  // Helper: fetch list and count items (fallback when $count endpoint fails)
+  async function hListCount(ep){
+    try{
+      const resp=await G.call(ep);
+      return (resp.value||[]).length;
+    }catch{return '—'}
+  }
+
+  // Run all checks in parallel
+  const [org,users,guests,groups,skus,secScore,ca,secDef,riskyUsers,devices,apps]=await Promise.allSettled([
+    G.call('/organization?$select=displayName,verifiedDomains,assignedPlans').catch(()=>null),
+    hCount('/users/$count'),
+    hCount("/users/$count?$filter=userType eq 'Guest'"),
+    hCount('/groups/$count'),
+    G.call('/subscribedSkus?$select=skuPartNumber,consumedUnits,prepaidUnits').catch(()=>({value:[]})),
+    G.call('/security/secureScores?$top=1').catch(()=>({value:[]})),
+    hListCount('/identity/conditionalAccess/policies?$select=id'),
+    G.call('/policies/identitySecurityDefaultsEnforcementPolicy').catch(()=>null),
+    G.call("/identityProtection/riskyUsers?$filter=riskLevel eq 'high'&$top=10").catch(()=>({value:[]})),
+    hCount('/deviceManagement/managedDevices/$count'),
+    hCount('/applications/$count')
+  ]);
   G.scopes=null;
-  
-  const org=data.org?.value?.[0];
-  const skus=data.skus?.value||[];
-  const ss=data.secScore?.value?.[0];
+
+  const v=i=>i.status==='fulfilled'?i.value:null;
+  const orgData=v(org)?.value?.[0]||null;
+  const skuData=(v(skus))?.value||[];
+  const ss=(v(secScore))?.value?.[0];
   const ssPct=ss?Math.round(ss.currentScore/ss.maxScore*100):null;
   const ssCol=ssPct?(ssPct>=70?'var(--accent-green)':ssPct>=40?'var(--accent-amber)':'var(--accent-red)'):'var(--text-muted)';
-  const secDefOn=data.secDef?.isEnabled;
-  const riskyCount=(data.riskyUsers?.value||[]).length;
-  
+  const secDefOn=v(secDef)?.isEnabled;
+  const riskyCount=(v(riskyUsers)?.value||[]).length;
+  const userCount=v(users)??'—';
+  const guestCount=v(guests)??'—';
+  const groupCount=v(groups)??'—';
+  const caCount=v(ca)??'—';
+  const deviceCount=v(devices)??'—';
+  const appCount=v(apps)??'—';
+
   let totalLic=0,usedLic=0;
-  skus.forEach(s=>{totalLic+=(s.prepaidUnits?.enabled||0);usedLic+=(s.consumedUnits||0)});
+  skuData.forEach(s=>{totalLic+=(s.prepaidUnits?.enabled||0);usedLic+=(s.consumedUnits||0)});
   const licPct=totalLic?Math.round(usedLic/totalLic*100):0;
-  
+
   let h=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-bottom:16px">
-  <div class="card" style="text-align:center;padding:18px"><div style="font-size:2rem;font-weight:800;color:var(--accent-blue);font-family:var(--font-display)">${data.users||'?'}</div><div style="font-size:.78rem;color:var(--text-muted)">Total Users</div></div>
-  <div class="card" style="text-align:center;padding:18px"><div style="font-size:2rem;font-weight:800;color:var(--accent-violet);font-family:var(--font-display)">${data.guests||'?'}</div><div style="font-size:.78rem;color:var(--text-muted)">Guest Users</div></div>
-  <div class="card" style="text-align:center;padding:18px"><div style="font-size:2rem;font-weight:800;color:var(--accent-cyan);font-family:var(--font-display)">${data.groups||'?'}</div><div style="font-size:.78rem;color:var(--text-muted)">Groups</div></div>
+  <div class="card" style="text-align:center;padding:18px"><div style="font-size:2rem;font-weight:800;color:var(--accent-blue);font-family:var(--font-display)">${userCount}</div><div style="font-size:.78rem;color:var(--text-muted)">Total Users</div></div>
+  <div class="card" style="text-align:center;padding:18px"><div style="font-size:2rem;font-weight:800;color:var(--accent-violet);font-family:var(--font-display)">${guestCount}</div><div style="font-size:.78rem;color:var(--text-muted)">Guest Users</div></div>
+  <div class="card" style="text-align:center;padding:18px"><div style="font-size:2rem;font-weight:800;color:var(--accent-cyan);font-family:var(--font-display)">${groupCount}</div><div style="font-size:.78rem;color:var(--text-muted)">Groups</div></div>
   <div class="card" style="text-align:center;padding:18px"><div style="font-size:2rem;font-weight:800;color:${ssCol};font-family:var(--font-display)">${ssPct!==null?ssPct+'%':'—'}</div><div style="font-size:.78rem;color:var(--text-muted)">Secure Score</div></div>
-  <div class="card" style="text-align:center;padding:18px"><div style="font-size:2rem;font-weight:800;color:var(--accent-green);font-family:var(--font-display)">${data.ca||'?'}</div><div style="font-size:.78rem;color:var(--text-muted)">CA Policies</div></div>
+  <div class="card" style="text-align:center;padding:18px"><div style="font-size:2rem;font-weight:800;color:var(--accent-green);font-family:var(--font-display)">${caCount}</div><div style="font-size:.78rem;color:var(--text-muted)">CA Policies</div></div>
   <div class="card" style="text-align:center;padding:18px"><div style="font-size:2rem;font-weight:800;color:${riskyCount?'var(--accent-red)':'var(--accent-green)'};font-family:var(--font-display)">${riskyCount}</div><div style="font-size:.78rem;color:var(--text-muted)">High Risk Users</div></div>
-  <div class="card" style="text-align:center;padding:18px"><div style="font-size:2rem;font-weight:800;color:var(--accent-blue);font-family:var(--font-display)">${data.devices||'?'}</div><div style="font-size:.78rem;color:var(--text-muted)">Managed Devices</div></div>
-  <div class="card" style="text-align:center;padding:18px"><div style="font-size:2rem;font-weight:800;color:var(--accent-orange);font-family:var(--font-display)">${data.apps||'?'}</div><div style="font-size:.78rem;color:var(--text-muted)">App Registrations</div></div>
+  <div class="card" style="text-align:center;padding:18px"><div style="font-size:2rem;font-weight:800;color:var(--accent-blue);font-family:var(--font-display)">${deviceCount}</div><div style="font-size:.78rem;color:var(--text-muted)">Managed Devices</div></div>
+  <div class="card" style="text-align:center;padding:18px"><div style="font-size:2rem;font-weight:800;color:var(--accent-orange);font-family:var(--font-display)">${appCount}</div><div style="font-size:.78rem;color:var(--text-muted)">App Registrations</div></div>
   </div>`;
   
   // License utilisation
@@ -5653,7 +5829,7 @@ async function healthScan(){
   <div class="card-header"><span class="dot" style="background:var(--accent-blue)"></span> License Utilisation (${licPct}%)</div>
   <div class="progress-track" style="margin-bottom:12px"><div class="progress-fill" style="width:${licPct}%;background:${licPct>90?'var(--accent-red)':licPct>75?'var(--accent-amber)':'var(--accent-blue)'}"></div></div>
   <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px">`;
-  skus.forEach(s=>{
+  skuData.forEach(s=>{
     const t=s.prepaidUnits?.enabled||0;const u=s.consumedUnits||0;const p=t?Math.round(u/t*100):0;
     h+=`<div style="padding:10px;background:var(--bg-elevated);border-radius:var(--radius-md);font-size:.8rem">
     <div style="font-weight:600">${esc(skuName(s.skuPartNumber))}</div>
@@ -5673,7 +5849,7 @@ async function healthScan(){
   </div>
   <div style="padding:12px;background:var(--bg-elevated);border-radius:var(--radius-md)">
     <div style="font-weight:600;font-size:.84rem;margin-bottom:4px">Conditional Access</div>
-    <div style="font-size:.82rem;color:${parseInt(data.ca)>0?'var(--accent-green)':'var(--accent-red)'}">${data.ca||0} policies configured</div>
+    <div style="font-size:.82rem;color:${typeof caCount==='number'&&caCount>0?'var(--accent-green)':'var(--accent-red)'}">${caCount} policies configured</div>
   </div>
   <div style="padding:12px;background:var(--bg-elevated);border-radius:var(--radius-md)">
     <div style="font-weight:600;font-size:.84rem;margin-bottom:4px">High Risk Users</div>
@@ -5686,7 +5862,7 @@ async function healthScan(){
     h+=`<div class="card" style="margin-bottom:16px;border-color:rgba(239,68,68,.3)">
     <div class="card-header" style="color:var(--accent-red)"><span class="dot" style="background:var(--accent-red)"></span> High Risk Users — Immediate Action Required</div>
     <table class="disc-table" style="font-size:.78rem"><thead><tr><th>User</th><th>Risk Level</th><th>Risk Detail</th></tr></thead><tbody>`;
-    (data.riskyUsers?.value||[]).forEach(u=>{
+    (v(riskyUsers)?.value||[]).forEach(u=>{
       h+=`<tr><td>${esc(u.userDisplayName||'')} <span style="color:var(--text-muted)">${esc(u.userPrincipalName||'')}</span></td><td><span class="badge badge-red">${esc(u.riskLevel||'')}</span></td><td style="font-size:.76rem">${esc(u.riskDetail||'—')}</td></tr>`;
     });
     h+=`</tbody></table></div>`;
@@ -5963,13 +6139,15 @@ async function tmplExportCA(){
   const r=$('tmplExportResult');r.innerHTML='<span style="color:var(--text-muted)">Exporting...</span>';
   if(!A.ok())return r.innerHTML='<span style="color:var(--accent-red)">Sign in first</span>';
   try{
+    G.scopes=Auth.DISCOVERY_SCOPES;
     const resp=await G.call('/identity/conditionalAccess/policies');
     const policies=resp.value||[];
     // Strip IDs and read-only properties for portability
     const clean=policies.map(p=>{const c={...p};delete c.id;delete c.createdDateTime;delete c.modifiedDateTime;return c});
     dl(JSON.stringify(clean,null,2),`ca-policies-export-${new Date().toISOString().split('T')[0]}.json`,'application/json');
+    G.scopes=null;
     r.innerHTML=`<span style="color:var(--accent-green)">✓ Exported ${policies.length} CA policies</span>`;
-  }catch(e){r.innerHTML=`<span style="color:var(--accent-red)">✗ ${esc(e.message)}</span>`}
+  }catch(e){G.scopes=null;r.innerHTML=`<span style="color:var(--accent-red)">✗ ${esc(e.message)}</span>`}
 }
 
 async function tmplImportCA(){
@@ -5979,6 +6157,7 @@ async function tmplImportCA(){
   if(!A.ok())return r.innerHTML='<span style="color:var(--accent-red)">Sign in first</span>';
   r.innerHTML='<span style="color:var(--text-muted)">Importing...</span>';
   try{
+    G.scopes=Auth.DISCOVERY_SCOPES;
     const text=await file.text();
     const policies=JSON.parse(text);
     if(!Array.isArray(policies))throw new Error('Expected an array of policies');
@@ -5992,28 +6171,33 @@ async function tmplImportCA(){
         results.push(`<span style="color:var(--accent-green)">✓ ${esc(p.displayName)} (Report-Only)</span>`);
       }catch(e){results.push(`<span style="color:var(--accent-red)">✗ ${esc(p.displayName||'Unknown')}: ${esc(e.message.slice(0,60))}</span>`)}
     }
+    G.scopes=null;
     r.innerHTML=results.join('<br>');
-  }catch(e){r.innerHTML=`<span style="color:var(--accent-red)">✗ ${esc(e.message)}</span>`}
+  }catch(e){G.scopes=null;r.innerHTML=`<span style="color:var(--accent-red)">✗ ${esc(e.message)}</span>`}
 }
 
 async function tmplExportCompliance(){
   const r=$('tmplCompResult');r.innerHTML='<span style="color:var(--text-muted)">Exporting...</span>';
   if(!A.ok())return r.innerHTML='<span style="color:var(--accent-red)">Sign in first</span>';
   try{
+    G.scopes=Auth.DISCOVERY_SCOPES;
     const resp=await G.call('/deviceManagement/deviceCompliancePolicies');
+    G.scopes=null;
     dl(JSON.stringify(resp.value||[],null,2),`compliance-policies-export-${new Date().toISOString().split('T')[0]}.json`,'application/json');
     r.innerHTML=`<span style="color:var(--accent-green)">✓ Exported ${(resp.value||[]).length} compliance policies</span>`;
-  }catch(e){r.innerHTML=`<span style="color:var(--accent-red)">✗ ${esc(e.message)}</span>`}
+  }catch(e){G.scopes=null;r.innerHTML=`<span style="color:var(--accent-red)">✗ ${esc(e.message)}</span>`}
 }
 
 async function tmplExportConfig(){
   const r=$('tmplConfigResult');r.innerHTML='<span style="color:var(--text-muted)">Exporting...</span>';
   if(!A.ok())return r.innerHTML='<span style="color:var(--accent-red)">Sign in first</span>';
   try{
+    G.scopes=Auth.DISCOVERY_SCOPES;
     const resp=await G.call('/deviceManagement/deviceConfigurations');
+    G.scopes=null;
     dl(JSON.stringify(resp.value||[],null,2),`config-profiles-export-${new Date().toISOString().split('T')[0]}.json`,'application/json');
     r.innerHTML=`<span style="color:var(--accent-green)">✓ Exported ${(resp.value||[]).length} config profiles</span>`;
-  }catch(e){r.innerHTML=`<span style="color:var(--accent-red)">✗ ${esc(e.message)}</span>`}
+  }catch(e){G.scopes=null;r.innerHTML=`<span style="color:var(--accent-red)">✗ ${esc(e.message)}</span>`}
 }
 
 function tmplApplyBaseline(type){
