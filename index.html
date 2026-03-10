@@ -5184,15 +5184,27 @@ async function spoApplySettings(){
   if(!A.ok())return r.innerHTML='<span style="color:var(--accent-red)">Sign in first</span>';
   try{
     G.scopes=Auth.DISCOVERY_SCOPES;
-    await G.call('/admin/sharepoint/settings','PATCH',{
-      sharingCapability:$('spoSharing').value,
-      isSiteCreationEnabled:$('spoSiteCreation').checked,
-      isLegacyAuthProtocolsEnabled:$('spoLegacyAuth').checked,
-      isUnmanagedSyncAppForTenantRestricted:$('spoSyncRestrict').checked,
-      personalSiteDefaultStorageLimitInMB:parseInt($('spoStorage').value)||1048576
-    });
-    G.scopes=null;
-    r.innerHTML='<span style="color:var(--accent-green)">✓ SharePoint settings updated</span>';
+    // SharePointTenantSettings.ReadWrite.All is application-only — try beta endpoint first
+    try{
+      await G.call('/admin/sharepoint/settings','PATCH',{
+        sharingCapability:$('spoSharing').value,
+        isSiteCreationEnabled:$('spoSiteCreation').checked,
+        isLegacyAuthProtocolsEnabled:$('spoLegacyAuth').checked,
+        isUnmanagedSyncAppForTenantRestricted:$('spoSyncRestrict').checked,
+        personalSiteDefaultStorageLimitInMB:parseInt($('spoStorage').value)||1048576
+      });
+      G.scopes=null;
+      r.innerHTML='<span style="color:var(--accent-green)">✓ SharePoint settings updated</span>';
+    }catch(e1){
+      G.scopes=null;
+      if(e1.message?.includes('403')||e1.message?.includes('accessDenied')){
+        r.innerHTML=`<span style="color:var(--accent-amber)">⚠ SharePoint tenant settings require <strong>application-level</strong> permissions (not delegated).<br><br>
+        <span style="font-size:.78rem">To apply these settings, use one of:<br>
+        • <strong>SharePoint Admin Center</strong> → Settings → Sharing<br>
+        • <strong>PowerShell:</strong> <code>Set-SPOTenant -SharingCapability ${esc($('spoSharing').value)}</code><br>
+        • <strong>App-only auth:</strong> Grant <code>SharePointTenantSettings.ReadWrite.All</code> as an application permission and use client credentials flow</span></span>`;
+      }else{r.innerHTML=`<span style="color:var(--accent-red)">✗ ${esc(e1.message)}</span>`}
+    }
   }catch(e){G.scopes=null;r.innerHTML=`<span style="color:var(--accent-red)">✗ ${esc(e.message)}</span>`}
 }
 
@@ -5213,30 +5225,80 @@ async function spoGetSettings(){
     <div><strong>Comments:</strong> ${s.isCommentingOnSitePagesEnabled?'Enabled':'Disabled'}</div>
     <div><strong>Image Tagging:</strong> ${esc(s.imageTaggingOption||'—')}</div>
     </div>`;
-    // Pre-fill form
     $('spoSharing').value=s.sharingCapability||'disabled';
     $('spoSiteCreation').checked=!!s.isSiteCreationEnabled;
     $('spoLegacyAuth').checked=!!s.isLegacyAuthProtocolsEnabled;
     $('spoSyncRestrict').checked=!!s.isUnmanagedSyncAppForTenantRestricted;
     if(s.personalSiteDefaultStorageLimitInMB)$('spoStorage').value=s.personalSiteDefaultStorageLimitInMB;
-  }catch(e){G.scopes=null;r.innerHTML=`<span style="color:var(--accent-red)">✗ ${esc(e.message)}</span>`}
+  }catch(e){
+    G.scopes=null;
+    if(e.message?.includes('403')||e.message?.includes('accessDenied')){
+      r.innerHTML=`<span style="color:var(--accent-amber)">⚠ SharePoint admin settings require application-level permissions.<br>
+      <span style="font-size:.78rem">This API (<code>/admin/sharepoint/settings</code>) only supports the <code>SharePointTenantSettings.ReadWrite.All</code> application permission — it cannot be used with delegated (user sign-in) auth.<br><br>
+      View settings via: <strong>SharePoint Admin Center</strong> → Settings, or PowerShell: <code>Get-SPOTenant</code></span></span>`;
+    }else{r.innerHTML=`<span style="color:var(--accent-red)">✗ ${esc(e.message)}</span>`}
+  }
 }
 
 async function spoAuditSite(){
   const r=$('spoAuditResult');r.innerHTML='<span style="color:var(--text-muted)">Auditing...</span>';
   if(!A.ok())return r.innerHTML='<span style="color:var(--accent-red)">Sign in first</span>';
+  const siteRef=$('spoSiteUrl').value.trim();if(!siteRef)return r.innerHTML='Enter a site name above';
   try{
-    const siteRef=$('spoSiteUrl').value.trim();if(!siteRef)return r.innerHTML='Enter a site URL';
     G.scopes=Auth.DISCOVERY_SCOPES;
-    const perms=await G.call(`/sites/${siteRef}/permissions`);
+    // Fetch site details, drives, and associated group/owners
+    const [site,drives,lists]=await Promise.all([
+      G.call(`/sites/${siteRef}?$select=displayName,webUrl,createdDateTime,lastModifiedDateTime,createdBy`),
+      G.call(`/sites/${siteRef}/drives?$select=name,driveType,createdBy,lastModifiedBy,quota`).catch(()=>({value:[]})),
+      G.call(`/sites/${siteRef}/lists?$select=displayName,list,createdDateTime&$top=20`).catch(()=>({value:[]}))
+    ]);
+    // Try to get site group/owners if it has an associated M365 group
+    let owners=[],members=[];
+    if(site.createdBy?.user){
+      try{
+        // Sites with groups expose /sites/{id}/owners (beta)
+        const ownResp=await G.call(`/sites/${siteRef}/permissions`).catch(()=>null);
+        if(ownResp?.value){
+          owners=ownResp.value;
+        }
+      }catch{}
+    }
     G.scopes=null;
-    if(!perms.value?.length)return r.innerHTML='<span style="color:var(--text-muted)">No custom permissions found</span>';
-    let h='<table class="disc-table" style="font-size:.76rem"><thead><tr><th>Identity</th><th>Roles</th></tr></thead><tbody>';
-    perms.value.forEach(p=>{
-      const id=p.grantedToIdentitiesV2?.map(i=>i.user?.displayName||i.application?.displayName||'Unknown').join(', ')||'—';
-      h+=`<tr><td>${esc(id)}</td><td>${(p.roles||[]).join(', ')}</td></tr>`;
-    });
-    h+='</tbody></table>';
+    let h=`<div style="padding:12px;background:var(--bg-elevated);border-radius:var(--radius-md);margin-bottom:10px">
+      <div style="font-weight:600;font-size:.9rem">${esc(site.displayName||'')}</div>
+      <div style="font-size:.78rem;color:var(--accent-cyan);margin-top:2px">${esc(site.webUrl||'')}</div>
+      <div style="font-size:.76rem;color:var(--text-muted);margin-top:4px">Created: ${site.createdDateTime?new Date(site.createdDateTime).toLocaleDateString('en-GB'):'—'} | Modified: ${site.lastModifiedDateTime?new Date(site.lastModifiedDateTime).toLocaleDateString('en-GB'):'—'}</div>
+    </div>`;
+    // Document libraries
+    if(drives.value?.length){
+      h+=`<div style="font-weight:600;font-size:.82rem;margin:10px 0 6px;color:var(--accent-blue)">Document Libraries (${drives.value.length})</div>`;
+      h+='<table class="disc-table" style="font-size:.76rem"><thead><tr><th>Name</th><th>Type</th><th>Used</th><th>Total</th></tr></thead><tbody>';
+      drives.value.forEach(d=>{
+        const used=d.quota?.used?Math.round(d.quota.used/1048576)+'MB':'—';
+        const total=d.quota?.total?Math.round(d.quota.total/1073741824)+'GB':'—';
+        h+=`<tr><td style="font-weight:500">${esc(d.name||'')}</td><td>${esc(d.driveType||'')}</td><td>${used}</td><td>${total}</td></tr>`;
+      });
+      h+='</tbody></table>';
+    }
+    // Lists
+    if(lists.value?.length){
+      h+=`<div style="font-weight:600;font-size:.82rem;margin:10px 0 6px;color:var(--accent-green)">Lists (${lists.value.length})</div>`;
+      h+='<table class="disc-table" style="font-size:.76rem"><thead><tr><th>Name</th><th>Template</th><th>Hidden</th></tr></thead><tbody>';
+      lists.value.forEach(l=>{
+        h+=`<tr><td style="font-weight:500">${esc(l.displayName||'')}</td><td>${esc(l.list?.template||'—')}</td><td>${l.list?.hidden?'Yes':'No'}</td></tr>`;
+      });
+      h+='</tbody></table>';
+    }
+    // Permissions (if available)
+    if(owners.length){
+      h+=`<div style="font-weight:600;font-size:.82rem;margin:10px 0 6px;color:var(--accent-violet)">Permissions (${owners.length})</div>`;
+      h+='<table class="disc-table" style="font-size:.76rem"><thead><tr><th>Identity</th><th>Roles</th></tr></thead><tbody>';
+      owners.forEach(p=>{
+        const id=p.grantedToIdentitiesV2?.map(i=>i.user?.displayName||i.application?.displayName||'Unknown').join(', ')||p.grantedToIdentities?.map(i=>i.user?.displayName||'Unknown').join(', ')||'—';
+        h+=`<tr><td>${esc(id)}</td><td>${(p.roles||[]).join(', ')}</td></tr>`;
+      });
+      h+='</tbody></table>';
+    }
     r.innerHTML=h;
   }catch(e){G.scopes=null;r.innerHTML=`<span style="color:var(--accent-red)">✗ ${esc(e.message)}</span>`}
 }
@@ -5246,9 +5308,10 @@ async function spoListSites(){
   if(!A.ok())return r.innerHTML='<span style="color:var(--accent-red)">Sign in first</span>';
   try{
     G.scopes=Auth.DISCOVERY_SCOPES;
-    const sites=await G.call('/sites?$top=100&$select=displayName,webUrl,lastModifiedDateTime');
+    // Must use search=* to enumerate all sites via Graph
+    const sites=await G.call('/sites?search=*&$top=200&$select=displayName,webUrl,id,lastModifiedDateTime,createdDateTime');
     G.scopes=null;
-    if(!sites.value?.length)return r.innerHTML='<span style="color:var(--text-muted)">No sites found</span>';
+    if(!sites.value?.length)return r.innerHTML='<span style="color:var(--text-muted)">No sites found — ensure <code>Sites.Read.All</code> permission is granted</span>';
     let h='<table class="disc-table" style="font-size:.76rem"><thead><tr><th>Site</th><th>URL</th><th>Modified</th></tr></thead><tbody>';
     sites.value.forEach(s=>{
       h+=`<tr><td style="font-weight:500">${esc(s.displayName||'')}</td><td style="color:var(--accent-cyan)">${esc(s.webUrl||'')}</td><td>${s.lastModifiedDateTime?new Date(s.lastModifiedDateTime).toLocaleDateString('en-GB'):'—'}</td></tr>`;
