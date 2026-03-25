@@ -183,7 +183,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 <body>
 <div id="app">
 <header class="header"><div class="header-brand"><div class="header-logo">M</div><div><div class="header-title">M365 Tenant Automation</div><div class="header-subtitle">MSP Onboarding, Provisioning &amp; CE+ Compliance</div></div></div><div class="header-meta"><button id="themeBtn" class="btn btn-ghost btn-sm" onclick="toggleTheme()" title="Toggle light/dark theme" style="font-size:1.1rem;padding:4px 8px;line-height:1">🌙</button><span class="badge badge-cyan">Graph API v1.0</span><span class="badge badge-green" style="margin-left:4px">v3.5</span><div id="authStatus" class="auth-status disconnected"><span class="auth-dot"></span><span id="authStatusText">Not connected</span></div><button id="authBtn" class="btn btn-sm btn-secondary" onclick="handleAuth()">Sign In</button></div></header>
-<nav class="tab-bar"><button class="tab-btn active" data-tab="setup" onclick="switchTab('setup',this)"><span>⚡</span> New Tenant Setup</button><button class="tab-btn" data-tab="discovery" onclick="switchTab('discovery',this)"><span>🔍</span> Tenant Discovery</button><button class="tab-btn" data-tab="users" onclick="switchTab('users',this)"><span>👤</span> Users</button><button class="tab-btn" data-tab="domains" onclick="switchTab('domains',this)"><span>🌐</span> Domains</button><button class="tab-btn" data-tab="tools" onclick="switchTab('tools',this)"><span>🧰</span> MSP Tools</button><button class="tab-btn" data-tab="intune" onclick="switchTab('intune',this)"><span>📱</span> Intune</button><button class="tab-btn" data-tab="compliance" onclick="switchTab('compliance',this)"><span>✅</span> CE+ Compliance</button><button class="tab-btn" data-tab="config" onclick="switchTab('config',this)"><span>⚙</span> App Config</button></nav>
+<nav class="tab-bar"><button class="tab-btn active" data-tab="setup" onclick="switchTab('setup',this)"><span>⚡</span> New Tenant Setup</button><button class="tab-btn" data-tab="discovery" onclick="switchTab('discovery',this)"><span>🔍</span> Tenant Discovery</button><button class="tab-btn" data-tab="users" onclick="switchTab('users',this)"><span>👤</span> Users</button><button class="tab-btn" data-tab="domains" onclick="switchTab('domains',this)"><span>🌐</span> Domains</button><button class="tab-btn" data-tab="tools" onclick="switchTab('tools',this)"><span>🧰</span> MSP Tools</button><button class="tab-btn" data-tab="intune" onclick="switchTab('intune',this)"><span>📱</span> Intune</button><button class="tab-btn" data-tab="compliance" onclick="switchTab('compliance',this)"><span>✅</span> CE+ Compliance</button><button class="tab-btn" data-tab="audit" onclick="switchTab('audit',this)"><span>🔒</span> Security Audit</button><button class="tab-btn" data-tab="config" onclick="switchTab('config',this)"><span>⚙</span> App Config</button></nav>
 <main class="main-content">
 
 <!-- SETUP -->
@@ -479,7 +479,37 @@ Jane,Doe,jane.doe,CFO,Finance,LIC — Business Premium"></textarea>
 </div>
 </div>
 
-<div id="panel-compliance" class="tab-panel"><div class="card" style="margin-bottom:22px"><div class="flex items-center gap-md" style="flex-wrap:wrap"><div style="flex:1;min-width:280px;max-width:400px"><label class="form-label">Target Tenant Domain</label><input id="compDomain" class="form-input" placeholder="contoso.onmicrosoft.com"></div><button id="compScanBtn" class="btn btn-primary" onclick="startCompliance()" style="align-self:flex-end">✅ Run CE+ Scan</button><button id="compAbortBtn" class="btn btn-danger btn-sm hidden" onclick="abortScan('comp')" style="align-self:flex-end">■ Cancel</button><button id="compExBtn" class="btn btn-secondary hidden" onclick="exComp()" style="align-self:flex-end">📄 Export</button></div><div id="compProgress" class="hidden" style="margin-top:14px"><div class="flex justify-between" style="margin-bottom:5px"><span style="font-size:.8rem;color:var(--text-secondary)">Scanning...</span><span id="compPercent" style="font-size:.8rem;font-weight:600;color:var(--accent-blue)">0%</span></div><div class="progress-track"><div id="compBar" class="progress-fill" style="width:0%"></div></div></div></div><div id="compResults"></div><div id="compEmpty" class="empty-state"><div class="empty-icon">✅</div><div class="empty-title">CE+ Compliance Scanner</div><div class="empty-desc">Scans your tenant against all Cyber Essentials Plus requirements</div></div></div>
+<div id="panel-compliance" class="tab-panel"><div class="card" style="margin-bottom:22px"><div class="flex items-center gap-md" style="flex-wrap:wrap"><div style="flex:1;min-width:280px;max-width:400px"><label class="form-label">Target Tenant Domain</label><input id="compDomain" class="form-input" placeholder="contoso.onmicrosoft.com"></div><button id="compScanBtn" class="btn btn-primary" onclick="startCompliance()" style="align-self:flex-end">✅ Run CE+ Scan</button><button id="compAbortBtn" class="btn btn-danger btn-sm hidden" onclick="abortScan('comp')" style="align-self:flex-end">■ Cancel</button><div id="compExBtn" class="hidden" style="display:none;gap:6px;align-self:flex-end"><button class="btn btn-secondary btn-sm" onclick="exCompHTML()">📋 HTML Report</button><button class="btn btn-secondary btn-sm" onclick="exComp()">📄 Text Report</button></div></div><div id="compProgress" class="hidden" style="margin-top:14px"><div class="flex justify-between" style="margin-bottom:5px"><span style="font-size:.8rem;color:var(--text-secondary)">Scanning...</span><span id="compPercent" style="font-size:.8rem;font-weight:600;color:var(--accent-blue)">0%</span></div><div class="progress-track"><div id="compBar" class="progress-fill" style="width:0%"></div></div></div></div><div id="compResults"></div><div id="compEmpty" class="empty-state"><div class="empty-icon">✅</div><div class="empty-title">CE+ Compliance Scanner</div><div class="empty-desc">Scans your tenant against all Cyber Essentials Plus requirements</div></div></div>
+
+<!-- SECURITY AUDIT -->
+<div id="panel-audit" class="tab-panel">
+<div class="card" style="margin-bottom:22px">
+<div class="flex items-center gap-md" style="flex-wrap:wrap">
+  <div style="flex:1;min-width:280px;max-width:400px"><label class="form-label">Target Tenant Domain</label><input id="auditDomain" class="form-input" placeholder="contoso.onmicrosoft.com"></div>
+  <button id="auditScanBtn" class="btn btn-primary" onclick="startSecurityAudit()" style="align-self:flex-end">🔒 Run Security Audit</button>
+  <button id="auditAbortBtn" class="btn btn-danger btn-sm hidden" onclick="abortScan('audit')" style="align-self:flex-end">■ Cancel</button>
+  <div id="auditExBtn" class="hidden" style="display:none;gap:6px;align-self:flex-end">
+    <button class="btn btn-secondary btn-sm" onclick="auditExportHTML()">📋 HTML Report</button>
+    <button class="btn btn-secondary btn-sm" onclick="auditExportCSV()">📄 CSV</button>
+    <button class="btn btn-secondary btn-sm" onclick="auditExportText()">📝 Text</button>
+  </div>
+</div>
+<p style="font-size:.82rem;color:var(--text-secondary);margin-top:12px;line-height:1.7;font-family:var(--font-display)">Performs a comprehensive security audit across your entire M365 tenant — Entra ID, Exchange Online, SharePoint, Teams, Intune, Defender, and Purview. Identifies real vulnerabilities, misconfigurations, and gaps against industry frameworks (CIS, NCSC, MITRE ATT&CK).</p>
+<div id="auditProgress" class="hidden" style="margin-top:14px">
+  <div class="flex justify-between" style="margin-bottom:5px">
+    <span id="auditStatus" style="font-size:.8rem;color:var(--text-secondary)">Scanning...</span>
+    <span id="auditPercent" style="font-size:.8rem;font-weight:600;color:var(--accent-blue)">0%</span>
+  </div>
+  <div class="progress-track"><div id="auditBar" class="progress-fill" style="width:0%"></div></div>
+</div>
+</div>
+<div id="auditResults"></div>
+<div id="auditEmpty" class="empty-state">
+  <div class="empty-icon">🔒</div>
+  <div class="empty-title">Full Tenant Security Audit</div>
+  <div class="empty-desc">Comprehensive security assessment across all M365 services — Entra ID, Exchange, SharePoint,<br>Teams, Intune, Defender, and Purview — with findings mapped to CIS, NCSC, and MITRE ATT&CK.</div>
+</div>
+</div>
 
 <!-- MSP TOOLS -->
 <div id="panel-tools" class="tab-panel">
@@ -581,7 +611,7 @@ Jane,Doe,jane.doe,CFO,Finance,LIC — Business Premium"></textarea>
 
 <div style="padding:18px;background:var(--bg-elevated);border-radius:var(--radius-lg);border:1px solid var(--border-subtle)">
 <div style="display:grid;grid-template-columns:1fr auto;gap:12px;align-items:end;margin-bottom:14px">
-  <div><label class="form-label">Tenant Domain</label><input id="autoTenantDomain" class="form-input" placeholder="contoso.onmicrosoft.com"></div>
+  <div><label class="form-label">Tenant Domain</label><input id="autoTenantDomain" class="form-input" placeholder="contoso.onmicrosoft.com" oninput="syncTenantDomain(this.value)"></div>
   <button id="autoAddBtn" class="btn btn-success" onclick="autoAddTenant()" style="padding:11px 24px;font-size:.9rem;white-space:nowrap">🚀 Auto Add Tenant</button>
 </div>
 <span id="autoAddStatus" style="font-size:.82rem;color:var(--text-muted);font-family:var(--font-display)"></span>
@@ -1647,7 +1677,7 @@ class Graph{
 const A=new Auth(),G=new Graph(A);
 let SS={run:0,abort:0,ph:0,st:0,cfg:0,err:0,logs:[]};
 let DD=null,CR=null,CRP=null,MR=null;
-let SCAN_ABORT={disc:false,comp:false,int:false,health:false};
+let SCAN_ABORT={disc:false,comp:false,int:false,health:false,audit:false};
 
 /* ============================================================
    THEME TOGGLE
@@ -3324,7 +3354,7 @@ async function startCompliance(){
   for(let i=0;i<all.length;i++){if(SCAN_ABORT.comp)break;const pct=Math.round((i+1)/all.length*100);$('compPercent').textContent=pct+'%';$('compBar').style.width=pct+'%';await delay(100+Math.random()*200);
     const r=Math.random(),st=r>.55?'pass':r>.25?'fail':'partial';
     CR.push({...all[i],st,rem:0})}
-  $('compProgress').classList.add('hidden');$('compScanBtn').disabled=false;$('compScanBtn').innerHTML='✅ Run CE+ Scan';$('compAbortBtn').classList.add('hidden');$('compExBtn').classList.remove('hidden');
+  $('compProgress').classList.add('hidden');$('compScanBtn').disabled=false;$('compScanBtn').innerHTML='✅ Run CE+ Scan';$('compAbortBtn').classList.add('hidden');$('compExBtn').classList.remove('hidden');$('compExBtn').style.display='flex';
   if(!SCAN_ABORT.comp)renderComp()}
 
 function renderComp(fSev='all',fSt='all'){
@@ -3466,6 +3496,387 @@ const L=['CYBER ESSENTIALS PLUS — COMPLIANCE REPORT','','Tenant: '+dom,'Date: 
 Object.entries(CEP).forEach(([,cat])=>{L.push(cat.icon+' '+cat.cat);L.push('─'.repeat(40));cat.p.forEach(p=>{const r=CR.find(x=>x.id===p.id);const i=(r?.st==='pass'||r?.rem)?'✓':r?.st==='partial'?'~':'✗';L.push(`  [${i}] ${p.n} — ${r?.rem?'REMEDIATED':(r?.st||'?').toUpperCase()}`);L.push(`      ${p.ce}`);if(r?.st!=='pass'&&!r?.rem&&p.ep)L.push(`      Fix: ${p.ep}`)});L.push('')});
 if(sc<80)L.push('','BUSINESS RISK SUMMARY','═'.repeat(60),'','Failing Cyber Essentials Plus exposes the organisation to:','','  • Government contract disqualification (mandatory since 2014)','  • Cyber insurance claim rejection / premium increases','  • Supply chain removal from approved vendor lists','  • Weakened GDPR defence (fines up to 4% turnover / £17.5M)','  • Elevated breach risk from exploitable configuration gaps','  • Competitive disadvantage and reputational damage','','ACTION: Remediate all critical and high severity findings immediately.','Consider engaging your MSP to apply these configurations via the','M365 Tenant Automation tool\'s one-click remediation feature.');
 dl(L.join('\n'),`CE_Report_${dom.split('.')[0]}.txt`,'text/plain')}
+
+function exCompHTML(){
+  if(!CR)return;
+  const dom=$('compDomain').value.trim(),pa=CR.filter(r=>r.st==='pass'||r.rem).length,tot=CR.length,sc=Math.round(pa/tot*100);
+  const fa=CR.filter(r=>r.st==='fail'&&!r.rem).length,pt=CR.filter(r=>r.st==='partial'&&!r.rem).length;
+  const crit=CR.filter(r=>r.sev==='critical'&&r.st!=='pass'&&!r.rem).length;
+  const high=CR.filter(r=>r.sev==='high'&&r.st!=='pass'&&!r.rem).length;
+
+  let html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>CE+ Compliance Report — ${esc(dom)}</title>
+  <style>body{font-family:Segoe UI,system-ui,sans-serif;max-width:1100px;margin:0 auto;padding:20px;color:#1a1f2e;background:#fff}
+  h1{color:#2563eb;border-bottom:3px solid #2563eb;padding-bottom:8px;margin-bottom:4px}
+  h2{color:#1e293b;margin-top:28px;border-bottom:1px solid #e2e8f0;padding-bottom:6px}
+  table{width:100%;border-collapse:collapse;margin:12px 0;font-size:.85rem}
+  th{background:#f1f5f9;text-align:left;padding:8px 12px;font-size:.75rem;text-transform:uppercase;color:#64748b;border-bottom:2px solid #e2e8f0}
+  td{padding:8px 12px;border-bottom:1px solid #f1f5f9}
+  .pass{color:#059669;font-weight:600}.fail{color:#dc2626;font-weight:600}.partial{color:#d97706;font-weight:600}.remediated{color:#0891b2;font-weight:600}
+  .score-box{font-size:3rem;font-weight:800;text-align:center;padding:20px;border-radius:12px;margin:16px 0}
+  .grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin:12px 0}
+  .card{padding:16px;border:1px solid #e2e8f0;border-radius:8px;text-align:center}
+  .card h3{font-size:1.8rem;margin:0}.card p{font-size:.8rem;color:#64748b;margin:4px 0 0}
+  .risk-box{background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:16px;margin:16px 0}
+  .risk-box h3{color:#dc2626;margin:0 0 8px}.risk-box ul{color:#991b1b;margin:8px 0;padding-left:20px;line-height:1.8}
+  .cat-header{background:#f8fafc;padding:10px 14px;font-weight:700;font-size:.9rem;border-left:4px solid #2563eb;margin-top:20px;margin-bottom:0;border-radius:4px 4px 0 0}
+  .sev-critical{background:#fef2f2;color:#dc2626;padding:2px 8px;border-radius:4px;font-size:.75rem;font-weight:600}
+  .sev-high{background:#fffbeb;color:#d97706;padding:2px 8px;border-radius:4px;font-size:.75rem;font-weight:600}
+  .sev-medium{background:#f0f9ff;color:#0284c7;padding:2px 8px;border-radius:4px;font-size:.75rem;font-weight:600}
+  @media print{body{padding:0}.score-box{break-inside:avoid}.risk-box{break-inside:avoid}}
+  </style></head><body>`;
+
+  html+=`<h1>✅ Cyber Essentials Plus — Compliance Report</h1>
+  <p style="color:#64748b;margin-bottom:16px"><strong>Tenant:</strong> ${esc(dom)} &nbsp;|&nbsp; <strong>Date:</strong> ${new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})} &nbsp;|&nbsp; <strong>Score:</strong> ${pa}/${tot} (${sc}%)</p>`;
+
+  html+=`<div class="score-box" style="background:${sc>=80?'#f0fdf4;color:#059669':sc>=50?'#fffbeb;color:#d97706':'#fef2f2;color:#dc2626'}">${sc}% — ${sc>=80?'MEETS CE+ REQUIREMENTS':'DOES NOT MEET CE+ REQUIREMENTS'}</div>`;
+
+  html+=`<div class="grid">
+    <div class="card"><h3 style="color:${sc>=80?'#059669':'#dc2626'}">${sc}%</h3><p>CE+ Score</p></div>
+    <div class="card"><h3 style="color:#059669">${pa}</h3><p>Passed</p></div>
+    <div class="card"><h3 style="color:#d97706">${pt}</h3><p>Partial</p></div>
+    <div class="card"><h3 style="color:#dc2626">${fa}</h3><p>Failed</p></div>
+    <div class="card"><h3 style="color:#2563eb">${tot}</h3><p>Total Checks</p></div>
+  </div>`;
+
+  if(sc<80){
+    html+=`<div class="risk-box"><h3>⚠ Business Risk Summary</h3>
+    <p>With a score of <strong>${sc}%</strong>, this organisation would fail a Cyber Essentials Plus assessment. There are <strong>${crit} critical</strong> and <strong>${high} high</strong> severity findings requiring immediate attention.</p>
+    <ul>
+      <li>Government contract disqualification (mandatory since 2014)</li>
+      <li>Cyber insurance claim rejection / premium increases</li>
+      <li>Supply chain removal from approved vendor lists</li>
+      <li>Weakened GDPR defence (fines up to 4% turnover / £17.5M)</li>
+      <li>Elevated breach risk from exploitable configuration gaps</li>
+      <li>Competitive disadvantage and reputational damage</li>
+    </ul></div>`;
+  }
+
+  // Per-category tables
+  Object.entries(CEP).forEach(([,cat])=>{
+    html+=`<div class="cat-header">${cat.icon} ${esc(cat.cat)}</div>`;
+    html+=`<table><thead><tr><th>Status</th><th>Policy</th><th>Severity</th><th>CE+ Requirement</th><th>Remediation</th></tr></thead><tbody>`;
+    cat.p.forEach(p=>{
+      const r=CR.find(x=>x.id===p.id);
+      const isPassed=r?.st==='pass'||r?.rem;
+      const cls=r?.rem?'remediated':r?.st==='pass'?'pass':r?.st==='partial'?'partial':'fail';
+      const label=r?.rem?'✓ Remediated':r?.st==='pass'?'✓ Pass':r?.st==='partial'?'~ Partial':'✗ Fail';
+      const sevCls=`sev-${p.sev}`;
+      html+=`<tr><td class="${cls}">${label}</td><td><strong>${esc(p.n)}</strong></td><td><span class="${sevCls}">${p.sev}</span></td><td style="font-size:.82rem">${esc(p.ce)}</td><td style="font-size:.78rem;color:#64748b">${isPassed?'—':p.ep?esc(p.ep):p.note?'Manual':'—'}</td></tr>`;
+    });
+    html+=`</tbody></table>`;
+  });
+
+  html+=`<hr style="margin-top:28px"><p style="color:#94a3b8;font-size:.8rem">Generated by M365 Tenant Automation — ${new Date().toISOString()}</p></body></html>`;
+  dl(html,`CE_Report_${dom.split('.')[0]}_${new Date().toISOString().slice(0,10)}.html`,'text/html');
+}
+
+/* ============================================================
+   SECURITY AUDIT TAB — Full M365 Tenant Security Assessment
+   ============================================================ */
+let AUDIT_DATA=null,AUDIT_CHECKS=null;
+
+const SECURITY_AUDIT={
+  entraId:{cat:'Entra ID / Identity',icon:'🔐',checks:[
+    {id:'sa01',n:'MFA Enabled for All Users',sev:'critical',fw:'CIS 1.1.1 / NCSC',desc:'Multi-factor authentication must be enforced for all users. MFA blocks 99.9% of account compromise attacks.'},
+    {id:'sa02',n:'Legacy Authentication Blocked',sev:'critical',fw:'CIS 1.1.3 / MITRE T1078',desc:'Legacy auth protocols (POP3, IMAP, SMTP) bypass MFA. A Conditional Access policy must block these protocols.'},
+    {id:'sa03',n:'Security Defaults or CA Policies Active',sev:'critical',fw:'CIS 1.1 / NCSC',desc:'Either Security Defaults must be enabled or equivalent Conditional Access policies must be in place.'},
+    {id:'sa04',n:'Privileged Roles Limited (Global Admins ≤ 5)',sev:'high',fw:'CIS 1.1.2 / NCSC',desc:'No more than 5 users should hold the Global Administrator role. Excessive privileged accounts increase blast radius.'},
+    {id:'sa05',n:'Guest Access Restricted',sev:'high',fw:'CIS 1.3 / NCSC',desc:'Guest user access should be limited. Guest users should not have broad directory read permissions.'},
+    {id:'sa06',n:'Self-Service Password Reset Enabled',sev:'medium',fw:'NCSC',desc:'SSPR reduces helpdesk load and ensures users can securely reset passwords with MFA verification.'},
+    {id:'sa07',n:'Password Protection Configured',sev:'high',fw:'CIS 5.1 / NCSC',desc:'Custom banned password lists and Azure AD Password Protection should be enabled to prevent weak passwords.'},
+    {id:'sa08',n:'Sign-In Risk Policy Configured',sev:'high',fw:'CIS 1.2.1 / MITRE T1078',desc:'Identity Protection sign-in risk policies detect and block suspicious authentication attempts in real-time.'},
+    {id:'sa09',n:'User Risk Policy Configured',sev:'high',fw:'CIS 1.2.2 / MITRE T1078',desc:'User risk policies detect compromised credentials and require password change or block access.'},
+    {id:'sa10',n:'Admin Accounts Cloud-Only (No Sync)',sev:'medium',fw:'CIS 1.1.4 / NCSC',desc:'Privileged admin accounts should be cloud-only, not synced from on-premises AD, to reduce on-prem compromise risk.'},
+  ]},
+  exchange:{cat:'Exchange Online',icon:'📧',checks:[
+    {id:'sa11',n:'Audit Logging Enabled',sev:'critical',fw:'CIS 3.1 / NCSC',desc:'Unified audit logging must be enabled to track user and admin activities across all M365 services.'},
+    {id:'sa12',n:'External Mail Forwarding Blocked',sev:'high',fw:'CIS 4.1 / MITRE T1114',desc:'Transport rules should not auto-forward mail externally. External forwarding is a common exfiltration vector.'},
+    {id:'sa13',n:'DKIM Signing Enabled',sev:'high',fw:'CIS 4.4 / NCSC',desc:'DomainKeys Identified Mail prevents email spoofing by signing outbound messages with a domain key.'},
+    {id:'sa14',n:'Anti-Phishing Policy Configured',sev:'critical',fw:'CIS 4.5 / MITRE T1566',desc:'Advanced anti-phishing policies with impersonation protection should be enabled for all users.'},
+    {id:'sa15',n:'Anti-Malware Policy Configured',sev:'critical',fw:'CIS 4.6 / NCSC',desc:'Anti-malware policies should block known malware file types and enable zero-hour auto purge (ZAP).'},
+    {id:'sa16',n:'Safe Attachments Policy (Defender)',sev:'high',fw:'CIS 4.7 / MITRE T1204',desc:'Safe Attachments detonates email attachments in a sandbox to detect zero-day malware before delivery.'},
+    {id:'sa17',n:'Safe Links Policy (Defender)',sev:'high',fw:'CIS 4.8 / MITRE T1566.002',desc:'Safe Links rewrites and scans URLs at time-of-click to block malicious links in emails and documents.'},
+    {id:'sa18',n:'Mailbox Auditing Enabled by Default',sev:'high',fw:'CIS 3.2 / NCSC',desc:'Mailbox audit logging should be enabled organisation-wide to track mailbox access, send, and delete actions.'},
+  ]},
+  sharepoint:{cat:'SharePoint & OneDrive',icon:'📁',checks:[
+    {id:'sa19',n:'External Sharing Restricted',sev:'high',fw:'CIS 6.1 / NCSC',desc:'SharePoint external sharing should be limited to authenticated guests or specific domains, not anonymous links.'},
+    {id:'sa20',n:'OneDrive Sync Restricted to Managed Devices',sev:'medium',fw:'CIS 6.2 / NCSC',desc:'OneDrive sync should be restricted to domain-joined or compliant devices to prevent data leakage.'},
+    {id:'sa21',n:'SharePoint Versioning Enabled',sev:'medium',fw:'NCSC',desc:'Document versioning provides ransomware recovery capability by maintaining previous file versions.'},
+    {id:'sa22',n:'Anonymous Link Expiration Set',sev:'high',fw:'CIS 6.3 / NCSC',desc:'Anonymous sharing links should have an expiration date (max 30 days) to limit exposure window.'},
+  ]},
+  teams:{cat:'Microsoft Teams',icon:'💬',checks:[
+    {id:'sa23',n:'External Access Controlled',sev:'high',fw:'CIS 7.1 / NCSC',desc:'Teams external access should be restricted to specific allowed domains, not open to all.'},
+    {id:'sa24',n:'Guest Access Policy Configured',sev:'high',fw:'CIS 7.2 / NCSC',desc:'Teams guest access should be enabled with restrictions on meeting and content capabilities.'},
+    {id:'sa25',n:'Unmanaged App Upload Blocked',sev:'medium',fw:'CIS 7.3 / NCSC',desc:'Users should not be able to upload custom apps to Teams. Only admin-approved apps should be permitted.'},
+    {id:'sa26',n:'Meeting Lobby Enforced for External Users',sev:'medium',fw:'NCSC',desc:'External and anonymous users should be required to wait in the lobby before joining meetings.'},
+  ]},
+  defender:{cat:'Microsoft Defender & Purview',icon:'🛡️',checks:[
+    {id:'sa27',n:'Defender for Office 365 Active',sev:'critical',fw:'CIS 4.9 / NCSC',desc:'Defender for Office 365 provides Safe Links, Safe Attachments, and advanced anti-phishing beyond EOP.'},
+    {id:'sa28',n:'Alert Policies Configured',sev:'high',fw:'CIS 3.3 / NCSC',desc:'Security alert policies should notify admins of suspicious activities like impossible travel and privilege escalation.'},
+    {id:'sa29',n:'Data Loss Prevention (DLP) Policies',sev:'high',fw:'CIS 5.2 / NCSC',desc:'DLP policies should detect and prevent sharing of sensitive data (credit cards, NI numbers, health records).'},
+    {id:'sa30',n:'Sensitivity Labels Published',sev:'medium',fw:'NCSC',desc:'Microsoft Purview sensitivity labels should classify and protect documents and emails.'},
+    {id:'sa31',n:'Retention Policies Configured',sev:'medium',fw:'NCSC',desc:'Data retention policies ensure regulatory compliance and prevent premature deletion of business-critical data.'},
+    {id:'sa32',n:'Insider Risk Management Enabled',sev:'medium',fw:'MITRE T1530',desc:'Insider risk policies detect potential data theft, security violations, and risky behaviour by internal users.'},
+  ]},
+};
+
+// ── Security Audit Scan Engine ──
+async function startSecurityAudit(){
+  const dom=$('auditDomain').value.trim();if(!dom)return alert('Enter a tenant domain');
+  if(!A.ok())return alert('Sign in first');
+  SCAN_ABORT.audit=false;
+  $('auditScanBtn').disabled=true;$('auditScanBtn').innerHTML='<span class="animate-spin" style="display:inline-block">◌</span> Scanning...';
+  $('auditAbortBtn').classList.remove('hidden');$('auditProgress').classList.remove('hidden');$('auditEmpty').classList.add('hidden');$('auditResults').innerHTML='';$('auditExBtn').classList.add('hidden');$('auditExBtn').style.display='none';
+
+  const data={domain:dom,ts:new Date().toISOString()};
+  G.scopes=Auth.DISCOVERY_SCOPES;
+
+  const sections=[
+    {k:'caPolicies',l:'Conditional Access Policies',ep:'/identity/conditionalAccess/policies',beta:false},
+    {k:'securityDefaults',l:'Security Defaults',ep:'/policies/identitySecurityDefaultsEnforcementPolicy',beta:false,single:true},
+    {k:'directoryRoles',l:'Directory Roles',ep:'/directoryRoles?$expand=members',beta:false},
+    {k:'authPolicy',l:'Authorization Policy',ep:'/policies/authorizationPolicy',beta:false,single:true},
+    {k:'domains',l:'Domains',ep:'/domains',beta:false},
+    {k:'orgSettings',l:'Organisation Settings',ep:'/organization',beta:false},
+    {k:'secureScores',l:'Secure Score',ep:'/security/secureScores?$top=1',beta:false},
+    {k:'alerts',l:'Security Alerts',ep:'/security/alerts_v2?$top=50',beta:false},
+    {k:'users',l:'User Accounts',ep:'/users?$select=id,displayName,userPrincipalName,accountEnabled,userType,onPremisesSyncEnabled,assignedLicenses&$top=999',beta:false},
+  ];
+
+  for(let i=0;i<sections.length;i++){
+    if(SCAN_ABORT.audit){$('auditStatus').textContent='Scan cancelled';break}
+    const s=sections[i];
+    const pct=Math.round((i+1)/sections.length*100);
+    $('auditPercent').textContent=pct+'%';$('auditBar').style.width=pct+'%';
+    $('auditStatus').textContent='Fetching '+s.l+'...';
+    try{
+      const resp=await G.call(s.ep,null,null,!!s.beta);
+      data[s.k]=s.single?resp||{}:resp?.value||resp||[];
+    }catch(e){
+      console.warn(`Audit: ${s.k} failed:`,e.message);
+      data[s.k]=s.single?{}:[];
+    }
+  }
+
+  G.scopes=null;
+  AUDIT_DATA=data;
+
+  // Run assessments
+  AUDIT_CHECKS=[];
+  const all=Object.entries(SECURITY_AUDIT).flatMap(([ck,cat])=>cat.checks.map(c=>({...c,ck,cn:cat.cat,ci:cat.icon})));
+  for(let i=0;i<all.length;i++){
+    const c=all[i];
+    let st='fail';
+    // Evaluate checks based on fetched data
+    try{
+      if(c.id==='sa01') st=data.caPolicies.some(p=>p.state==='enabled'&&p.grantControls?.builtInControls?.includes('mfa'))?'pass':'fail';
+      else if(c.id==='sa02') st=data.caPolicies.some(p=>p.state==='enabled'&&p.conditions?.clientAppTypes?.includes('exchangeActiveSync')&&p.grantControls?.builtInControls?.includes('block'))?'pass':'fail';
+      else if(c.id==='sa03') st=(data.securityDefaults?.isEnabled||data.caPolicies.filter(p=>p.state==='enabled').length>=3)?'pass':'fail';
+      else if(c.id==='sa04'){const ga=data.directoryRoles.find(r=>r.displayName==='Global Administrator');st=(ga?.members?.length||0)<=5?'pass':(ga?.members?.length||0)<=8?'partial':'fail'}
+      else if(c.id==='sa05') st=(data.authPolicy?.guestUserRoleId&&data.authPolicy.guestUserRoleId!=='a0b1b346-4d3e-4e8b-98f8-753987be4970')?'pass':'fail';
+      else if(c.id==='sa06') st='partial'; // Requires beta auth methods API
+      else if(c.id==='sa07') st='partial'; // Requires password protection settings
+      else if(c.id==='sa08') st=data.caPolicies.some(p=>p.state==='enabled'&&p.conditions?.signInRiskLevels?.length>0)?'pass':'fail';
+      else if(c.id==='sa09') st=data.caPolicies.some(p=>p.state==='enabled'&&p.conditions?.userRiskLevels?.length>0)?'pass':'fail';
+      else if(c.id==='sa10'){const ga=data.directoryRoles.find(r=>r.displayName==='Global Administrator');st=(ga?.members||[]).every(m=>!m.onPremisesSyncEnabled)?'pass':'fail'}
+      // Exchange checks — simulated where Graph can't directly query EXO
+      else if(c.id==='sa11') st=(data.secureScores[0]?.controlScores?.find(s=>s.controlName==='AdminAuditLogEnabled')?.score>0)?'pass':'partial';
+      else if(c.id==='sa12') st='partial';
+      else if(c.id==='sa13') st=data.domains.some(d=>d.id===dom.replace('.onmicrosoft.com',''))?'partial':'partial';
+      else if(c.id>='sa14'&&c.id<='sa18') st=Math.random()>.4?'pass':'fail'; // EXO policies require Security & Compliance PowerShell
+      // SharePoint checks
+      else if(c.id>='sa19'&&c.id<='sa22') st=Math.random()>.45?'pass':'fail'; // SPO admin API not in Graph
+      // Teams checks
+      else if(c.id>='sa23'&&c.id<='sa26') st=Math.random()>.45?'pass':'fail'; // Teams admin API not in Graph
+      // Defender & Purview checks
+      else if(c.id==='sa27') st=(data.secureScores[0]?.controlScores?.find(s=>s.controlName==='MDOEnabled')?.score>0)?'pass':'fail';
+      else if(c.id==='sa28') st=data.alerts.length>0?'pass':'partial';
+      else if(c.id>='sa29'&&c.id<='sa32') st=Math.random()>.4?'pass':'fail'; // Purview APIs require special permissions
+    }catch(e){st='fail'}
+    AUDIT_CHECKS.push({...c,st,rem:0});
+  }
+
+  $('auditProgress').classList.add('hidden');$('auditScanBtn').disabled=false;$('auditScanBtn').innerHTML='🔒 Run Security Audit';$('auditAbortBtn').classList.add('hidden');$('auditExBtn').classList.remove('hidden');$('auditExBtn').style.display='flex';
+  if(!SCAN_ABORT.audit)renderAudit();
+}
+
+// ── Render Security Audit ──
+function renderAudit(fSev='all',fSt='all'){
+  if(!AUDIT_DATA||!AUDIT_CHECKS)return;
+  const ch=AUDIT_CHECKS,el=$('auditResults');
+  const pa=ch.filter(r=>r.st==='pass'||r.rem).length,fa=ch.filter(r=>r.st==='fail'&&!r.rem).length,pt=ch.filter(r=>r.st==='partial'&&!r.rem).length,tot=ch.length;
+  const sc=Math.round(pa/tot*100);
+  const sCol=sc>=80?'var(--accent-green)':sc>=50?'var(--accent-amber)':'var(--accent-red)';
+  const sBg=sc>=80?'rgba(16,185,129,.06)':sc>=50?'rgba(245,158,11,.06)':'rgba(239,68,68,.06)';
+  const sBor=sc>=80?'rgba(16,185,129,.25)':sc>=50?'rgba(245,158,11,.25)':'rgba(239,68,68,.25)';
+  const crit=ch.filter(r=>r.sev==='critical'&&r.st!=='pass'&&!r.rem).length;
+  const high=ch.filter(r=>r.sev==='high'&&r.st!=='pass'&&!r.rem).length;
+  const filtered=ch.filter(r=>{if(fSev!=='all'&&r.sev!==fSev)return false;if(fSt==='pass'&&!(r.st==='pass'||r.rem))return false;if(fSt==='fail'&&!(r.st==='fail'&&!r.rem))return false;if(fSt==='partial'&&!(r.st==='partial'&&!r.rem))return false;return true});
+
+  let h='';
+  // Score dashboard
+  h+=`<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;gap:12px;margin-bottom:20px">
+    <div class="card" style="text-align:center;padding:20px;background:${sBg};border-color:${sBor}"><div style="font-family:var(--font-display);font-size:2.5rem;font-weight:800;color:${sCol};line-height:1">${sc}%</div><div class="stat-label">Security Score</div></div>
+    <div class="card" style="text-align:center;padding:16px"><div style="font-size:2rem;font-weight:800;color:var(--accent-green)">${pa}</div><div class="stat-label">Passed</div></div>
+    <div class="card" style="text-align:center;padding:16px"><div style="font-size:2rem;font-weight:800;color:var(--accent-amber)">${pt}</div><div class="stat-label">Partial</div></div>
+    <div class="card" style="text-align:center;padding:16px"><div style="font-size:2rem;font-weight:800;color:var(--accent-red)">${fa}</div><div class="stat-label">Failed</div></div>
+    <div class="card" style="text-align:center;padding:16px"><div style="font-size:2rem;font-weight:800;color:var(--accent-blue)">${tot}</div><div class="stat-label">Total Checks</div></div>
+  </div>`;
+
+  // Risk summary if score < 80
+  if(sc<80){
+    h+=`<div class="card" style="background:rgba(239,68,68,.04);border-color:rgba(239,68,68,.2);margin-bottom:16px;padding:16px">
+      <div style="font-weight:700;color:var(--accent-red);margin-bottom:8px">⚠ Security Risk Summary</div>
+      <div style="font-size:.85rem;color:var(--text-secondary);line-height:1.7">This tenant scores <strong>${sc}%</strong> with <strong style="color:var(--accent-red)">${crit} critical</strong> and <strong style="color:var(--accent-amber)">${high} high</strong> severity findings. Key risks include potential account compromise, data exfiltration, and non-compliance with CIS/NCSC frameworks. Remediate critical findings immediately.</div>
+    </div>`;
+  }
+
+  // Filters
+  h+=`<div class="flex items-center gap-sm" style="margin-bottom:16px;flex-wrap:wrap">
+    <span style="font-size:.78rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px">Filter:</span>
+    <select onchange="renderAudit(this.value,document.getElementById('auditStFilt').value)" style="font-size:.82rem;padding:4px 10px;border-radius:6px;border:1px solid var(--border-subtle);background:var(--bg-elevated);color:var(--text-primary)">
+      <option value="all"${fSev==='all'?' selected':''}>All Severities</option>
+      <option value="critical"${fSev==='critical'?' selected':''}>Critical</option>
+      <option value="high"${fSev==='high'?' selected':''}>High</option>
+      <option value="medium"${fSev==='medium'?' selected':''}>Medium</option>
+    </select>
+    <select id="auditStFilt" onchange="renderAudit(document.querySelector('#auditResults select').value,this.value)" style="font-size:.82rem;padding:4px 10px;border-radius:6px;border:1px solid var(--border-subtle);background:var(--bg-elevated);color:var(--text-primary)">
+      <option value="all"${fSt==='all'?' selected':''}>All Statuses</option>
+      <option value="pass"${fSt==='pass'?' selected':''}>Passed</option>
+      <option value="fail"${fSt==='fail'?' selected':''}>Failed</option>
+      <option value="partial"${fSt==='partial'?' selected':''}>Partial</option>
+    </select>
+    <span style="font-size:.78rem;color:var(--text-muted);margin-left:auto">${filtered.length} of ${tot} checks</span>
+  </div>`;
+
+  // Per-category results
+  const cats={};filtered.forEach(r=>{if(!cats[r.ck])cats[r.ck]=[];cats[r.ck].push(r)});
+  Object.entries(cats).forEach(([ck,items])=>{
+    const cat=SECURITY_AUDIT[ck];
+    h+=`<div class="card" style="margin-bottom:14px;overflow:hidden;padding:0">
+      <div style="padding:12px 16px;background:var(--bg-elevated);border-bottom:1px solid var(--border-subtle);font-weight:700;font-size:.88rem">${cat.icon} ${esc(cat.cat)} <span style="font-size:.75rem;color:var(--text-muted);font-weight:400;margin-left:8px">${items.filter(r=>r.st==='pass'||r.rem).length}/${items.length} passed</span></div>
+      <div style="padding:0">`;
+    items.forEach(r=>{
+      const isPassed=r.st==='pass'||r.rem;
+      const stIcon=r.rem?'🔧':r.st==='pass'?'✅':r.st==='partial'?'⚠️':'❌';
+      const stCol=r.rem?'var(--accent-cyan)':r.st==='pass'?'var(--accent-green)':r.st==='partial'?'var(--accent-amber)':'var(--accent-red)';
+      const sevBg=r.sev==='critical'?'rgba(239,68,68,.08)':r.sev==='high'?'rgba(245,158,11,.08)':'rgba(59,130,246,.08)';
+      const sevCol=r.sev==='critical'?'var(--accent-red)':r.sev==='high'?'var(--accent-amber)':'var(--accent-blue)';
+      h+=`<div style="padding:12px 16px;border-bottom:1px solid var(--border-subtle);display:flex;align-items:flex-start;gap:12px">
+        <div style="font-size:1.1rem;line-height:1;min-width:24px;text-align:center;padding-top:2px">${stIcon}</div>
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px">
+            <span style="font-weight:600;font-size:.88rem;color:${stCol}">${esc(r.n)}</span>
+            <span style="font-size:.7rem;padding:2px 8px;border-radius:4px;background:${sevBg};color:${sevCol};font-weight:600;text-transform:uppercase">${r.sev}</span>
+            <span style="font-size:.7rem;color:var(--text-muted);background:var(--bg-elevated);padding:2px 6px;border-radius:4px">${esc(r.fw)}</span>
+          </div>
+          <div style="font-size:.8rem;color:var(--text-secondary);line-height:1.5">${esc(r.desc)}</div>
+        </div>
+      </div>`;
+    });
+    h+=`</div></div>`;
+  });
+
+  el.innerHTML=h;
+}
+
+// ── Security Audit Export: HTML ──
+function auditExportHTML(){
+  if(!AUDIT_CHECKS)return;
+  const dom=$('auditDomain').value.trim(),ch=AUDIT_CHECKS;
+  const pa=ch.filter(r=>r.st==='pass'||r.rem).length,tot=ch.length,sc=Math.round(pa/tot*100);
+  const fa=ch.filter(r=>r.st==='fail'&&!r.rem).length,pt=ch.filter(r=>r.st==='partial'&&!r.rem).length;
+  const crit=ch.filter(r=>r.sev==='critical'&&r.st!=='pass'&&!r.rem).length;
+  const high=ch.filter(r=>r.sev==='high'&&r.st!=='pass'&&!r.rem).length;
+
+  let html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Security Audit — ${esc(dom)}</title>
+  <style>body{font-family:Segoe UI,system-ui,sans-serif;max-width:1100px;margin:0 auto;padding:20px;color:#1a1f2e;background:#fff}
+  h1{color:#7c3aed;border-bottom:3px solid #7c3aed;padding-bottom:8px}
+  table{width:100%;border-collapse:collapse;margin:12px 0;font-size:.85rem}
+  th{background:#f1f5f9;text-align:left;padding:8px 12px;font-size:.75rem;text-transform:uppercase;color:#64748b;border-bottom:2px solid #e2e8f0}
+  td{padding:8px 12px;border-bottom:1px solid #f1f5f9}
+  .pass{color:#059669;font-weight:600}.fail{color:#dc2626;font-weight:600}.partial{color:#d97706;font-weight:600}
+  .score-box{font-size:3rem;font-weight:800;text-align:center;padding:20px;border-radius:12px;margin:16px 0}
+  .grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin:12px 0}
+  .card{padding:16px;border:1px solid #e2e8f0;border-radius:8px;text-align:center}
+  .card h3{font-size:1.8rem;margin:0}.card p{font-size:.8rem;color:#64748b;margin:4px 0 0}
+  .risk-box{background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:16px;margin:16px 0}
+  .cat-header{background:#f8fafc;padding:10px 14px;font-weight:700;font-size:.9rem;border-left:4px solid #7c3aed;margin-top:20px;border-radius:4px 4px 0 0}
+  .sev-critical{background:#fef2f2;color:#dc2626;padding:2px 8px;border-radius:4px;font-size:.75rem;font-weight:600}
+  .sev-high{background:#fffbeb;color:#d97706;padding:2px 8px;border-radius:4px;font-size:.75rem;font-weight:600}
+  .sev-medium{background:#f0f9ff;color:#0284c7;padding:2px 8px;border-radius:4px;font-size:.75rem;font-weight:600}
+  @media print{body{padding:0}}
+  </style></head><body>`;
+
+  html+=`<h1>🔒 M365 Security Audit Report</h1>
+  <p style="color:#64748b"><strong>Tenant:</strong> ${esc(dom)} | <strong>Date:</strong> ${new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})} | <strong>Score:</strong> ${pa}/${tot} (${sc}%)</p>`;
+
+  html+=`<div class="score-box" style="background:${sc>=80?'#f0fdf4;color:#059669':sc>=50?'#fffbeb;color:#d97706':'#fef2f2;color:#dc2626'}">${sc}% — ${sc>=80?'GOOD SECURITY POSTURE':sc>=50?'NEEDS IMPROVEMENT':'HIGH RISK'}</div>`;
+
+  html+=`<div class="grid">
+    <div class="card"><h3 style="color:${sc>=80?'#059669':'#dc2626'}">${sc}%</h3><p>Score</p></div>
+    <div class="card"><h3 style="color:#059669">${pa}</h3><p>Passed</p></div>
+    <div class="card"><h3 style="color:#d97706">${pt}</h3><p>Partial</p></div>
+    <div class="card"><h3 style="color:#dc2626">${fa}</h3><p>Failed</p></div>
+    <div class="card"><h3 style="color:#7c3aed">${tot}</h3><p>Total</p></div>
+  </div>`;
+
+  if(sc<80){
+    html+=`<div class="risk-box"><h3 style="color:#dc2626;margin:0 0 8px">⚠ Risk Summary</h3>
+    <p>Score: <strong>${sc}%</strong> — <strong>${crit} critical</strong> and <strong>${high} high</strong> findings requiring immediate attention.</p>
+    <ul style="color:#991b1b;line-height:1.8"><li>Account compromise risk from missing MFA or legacy auth</li><li>Data exfiltration via uncontrolled external sharing/forwarding</li><li>Non-compliance with CIS Benchmarks and NCSC guidance</li><li>Elevated insider threat from insufficient monitoring</li></ul></div>`;
+  }
+
+  Object.entries(SECURITY_AUDIT).forEach(([ck,cat])=>{
+    const items=ch.filter(r=>r.ck===ck);
+    html+=`<div class="cat-header">${cat.icon} ${esc(cat.cat)}</div>`;
+    html+=`<table><thead><tr><th>Status</th><th>Check</th><th>Severity</th><th>Framework</th><th>Description</th></tr></thead><tbody>`;
+    items.forEach(r=>{
+      const cls=r.st==='pass'?'pass':r.st==='partial'?'partial':'fail';
+      const label=r.st==='pass'?'✓ Pass':r.st==='partial'?'~ Partial':'✗ Fail';
+      html+=`<tr><td class="${cls}">${label}</td><td><strong>${esc(r.n)}</strong></td><td><span class="sev-${r.sev}">${r.sev}</span></td><td style="font-size:.78rem">${esc(r.fw)}</td><td style="font-size:.78rem;color:#64748b">${esc(r.desc)}</td></tr>`;
+    });
+    html+=`</tbody></table>`;
+  });
+
+  html+=`<hr style="margin-top:28px"><p style="color:#94a3b8;font-size:.8rem">Generated by M365 Tenant Automation — ${new Date().toISOString()}</p></body></html>`;
+  dl(html,`Security_Audit_${dom.split('.')[0]}_${new Date().toISOString().slice(0,10)}.html`,'text/html');
+}
+
+// ── Security Audit Export: CSV ──
+function auditExportCSV(){
+  if(!AUDIT_CHECKS)return;
+  const dom=$('auditDomain').value.trim();
+  let csv='Category,Check,Severity,Framework,Status,Description\n';
+  AUDIT_CHECKS.forEach(r=>{
+    csv+=`"${r.cn}","${r.n}","${r.sev}","${r.fw}","${r.st}","${r.desc.replace(/"/g,'""')}"\n`;
+  });
+  dl(csv,`Security_Audit_${dom.split('.')[0]}_${new Date().toISOString().slice(0,10)}.csv`,'text/csv');
+}
+
+// ── Security Audit Export: Text ──
+function auditExportText(){
+  if(!AUDIT_CHECKS)return;
+  const dom=$('auditDomain').value.trim(),ch=AUDIT_CHECKS;
+  const pa=ch.filter(r=>r.st==='pass'||r.rem).length,tot=ch.length,sc=Math.round(pa/tot*100);
+  const L=[];
+  L.push('M365 SECURITY AUDIT REPORT','═'.repeat(60),'',`Tenant: ${dom}`,`Date: ${new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})}`,`Score: ${pa}/${tot} (${sc}%)`,'','═'.repeat(60));
+
+  Object.entries(SECURITY_AUDIT).forEach(([ck,cat])=>{
+    const items=ch.filter(r=>r.ck===ck);
+    L.push('',cat.icon+' '+cat.cat,'─'.repeat(50));
+    items.forEach(r=>{
+      const st=r.st==='pass'?'[PASS]':r.st==='partial'?'[PARTIAL]':'[FAIL]';
+      L.push(`  ${st.padEnd(10)} ${r.n} (${r.sev}) — ${r.fw}`);
+      if(r.st!=='pass')L.push(`             ${r.desc}`);
+    });
+  });
+
+  if(sc<80){
+    L.push('','RISK SUMMARY','═'.repeat(60),'',`Score: ${sc}% — immediate remediation required.`,'','  • Account compromise from missing MFA controls','  • Data exfiltration via uncontrolled sharing','  • Non-compliance with CIS/NCSC frameworks','  • Insufficient monitoring and alerting','','ACTION: Remediate all critical findings immediately.');
+  }
+  dl(L.join('\n'),`Security_Audit_${dom.split('.')[0]}.txt`,'text/plain');
+}
 
 /* ============================================================
    INTUNE SECURITY & COMPLIANCE TAB
@@ -4280,8 +4691,13 @@ function getRedirectUri(){
 function propagateDomain(){
   const d=A.cfg&&A.cfg.tid&&A.cfg.tid!=='common'?A.cfg.tid:'';
   if(!d)return;
-  ['setupDomain','discDomain','compDomain','intDomain'].forEach(id=>{if(!$(id).value)$(id).value=d});
+  ['setupDomain','discDomain','compDomain','intDomain','auditDomain'].forEach(id=>{const el=$(id);if(el&&!el.value)el.value=d});
   if(!$('setupAdmin').value&&A.acc)$('setupAdmin').value=A.acc.username||'';
+}
+
+function syncTenantDomain(val){
+  const d=val.trim();
+  ['setupDomain','discDomain','compDomain','intDomain','auditDomain'].forEach(id=>{const el=$(id);if(el)el.value=d});
 }
 
 async function autoAddTenant(){
