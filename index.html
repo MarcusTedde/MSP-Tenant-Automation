@@ -198,7 +198,20 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 <div style="margin-bottom:10px"><label class="form-label">Privacy URL</label><input id="setupPrivacyUrl" class="form-input" placeholder="https://contoso.com/privacy"></div>
 <div style="margin-bottom:10px"><label class="form-label">Brand Colour</label><div class="flex gap-sm"><input id="setupColour" class="form-input" placeholder="#0078D4" style="flex:1"><input type="color" id="setupColourPick" value="#0078D4" style="width:38px;height:38px;border:none;cursor:pointer;border-radius:var(--radius-sm)" onchange="$('setupColour').value=this.value"></div></div>
 <div style="margin-bottom:10px"><label class="form-label">Usage Location (ISO)</label><input id="setupUsageLoc" class="form-input" value="GB" placeholder="GB" style="max-width:80px"></div>
-</div><div class="card"><div class="flex justify-between items-center" style="margin-bottom:12px"><div class="card-header" style="margin-bottom:0">Progress</div><span id="setupPercent" style="font-family:var(--font-display);font-size:1.5rem;font-weight:800;color:var(--accent-blue)">0%</span></div><div class="progress-track" style="margin-bottom:14px"><div id="setupProgressBar" class="progress-fill" style="width:0%"></div></div><div class="flex gap-lg"><div><div class="stat-label">Configured</div><div id="setupConfigured" style="font-family:var(--font-display);font-size:1.2rem;font-weight:800;color:var(--accent-green)">0</div></div><div><div class="stat-label">Total</div><div id="setupTotal" style="font-family:var(--font-display);font-size:1.2rem;font-weight:800">0</div></div><div><div class="stat-label">Errors</div><div id="setupErrors" style="font-family:var(--font-display);font-size:1.2rem;font-weight:800;color:var(--accent-green)">0</div></div></div></div><div class="card" style="flex:1;overflow:auto;max-height:600px"><div class="card-header">Phases</div><div id="phaseList" class="flex flex-col gap-sm"></div></div></div><div class="card flex flex-col" style="flex:1;min-height:620px"><div class="flex justify-between items-center" style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--border-subtle)"><div class="card-header" style="margin-bottom:0"><span id="logLive" class="hidden" style="width:7px;height:7px;border-radius:50%;background:var(--accent-green)"></span>Configuration Log</div><button class="btn btn-ghost btn-sm" onclick="copyLog()">Copy</button></div><div id="logContainer" class="log-container"><div class="empty-state" id="logEmpty"><div class="empty-icon">⚡</div><div class="empty-title">Ready to configure</div><div class="empty-desc">Enter tenant details and click Start</div></div></div></div></div></div>
+</div>
+
+<!-- Custom Configuration Selector -->
+<div class="card"><div class="card-header"><span class="dot" style="background:var(--accent-amber)"></span> Configuration Components</div>
+<p style="font-size:.76rem;color:var(--text-muted);margin-bottom:10px;line-height:1.5">Select which components to configure. Uncheck any you want to skip.</p>
+<div style="margin-bottom:8px;display:flex;gap:6px">
+  <button class="btn btn-ghost btn-sm" onclick="setupToggleAll(true)" style="font-size:.72rem;padding:3px 8px">Select All</button>
+  <button class="btn btn-ghost btn-sm" onclick="setupToggleAll(false)" style="font-size:.72rem;padding:3px 8px">Deselect All</button>
+</div>
+<div id="setupComponentList" style="max-height:320px;overflow-y:auto;padding:2px">
+</div>
+</div>
+
+<div class="card"><div class="flex justify-between items-center" style="margin-bottom:12px"><div class="card-header" style="margin-bottom:0">Progress</div><span id="setupPercent" style="font-family:var(--font-display);font-size:1.5rem;font-weight:800;color:var(--accent-blue)">0%</span></div><div class="progress-track" style="margin-bottom:14px"><div id="setupProgressBar" class="progress-fill" style="width:0%"></div></div><div class="flex gap-lg"><div><div class="stat-label">Configured</div><div id="setupConfigured" style="font-family:var(--font-display);font-size:1.2rem;font-weight:800;color:var(--accent-green)">0</div></div><div><div class="stat-label">Total</div><div id="setupTotal" style="font-family:var(--font-display);font-size:1.2rem;font-weight:800">0</div></div><div><div class="stat-label">Errors</div><div id="setupErrors" style="font-family:var(--font-display);font-size:1.2rem;font-weight:800;color:var(--accent-green)">0</div></div></div></div><div class="card" style="flex:1;overflow:auto;max-height:600px"><div class="card-header">Phases</div><div id="phaseList" class="flex flex-col gap-sm"></div></div></div><div class="card flex flex-col" style="flex:1;min-height:620px"><div class="flex justify-between items-center" style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--border-subtle)"><div class="card-header" style="margin-bottom:0"><span id="logLive" class="hidden" style="width:7px;height:7px;border-radius:50%;background:var(--accent-green)"></span>Configuration Log</div><button class="btn btn-ghost btn-sm" onclick="copyLog()">Copy</button></div><div id="logContainer" class="log-container"><div class="empty-state" id="logEmpty"><div class="empty-icon">⚡</div><div class="empty-title">Ready to configure</div><div class="empty-desc">Enter tenant details and click Start</div></div></div></div></div></div>
 
 <!-- DISCOVERY -->
 <div id="panel-discovery" class="tab-panel"><div class="card" style="margin-bottom:22px"><div class="flex items-center gap-md" style="flex-wrap:wrap"><div style="flex:1;min-width:280px;max-width:400px"><label class="form-label">Target Tenant Domain</label><input id="discDomain" class="form-input" placeholder="contoso.onmicrosoft.com"></div><button id="discScanBtn" class="btn btn-primary" onclick="startDiscovery()" style="align-self:flex-end">🔍 Run Discovery</button><button id="discAbortBtn" class="btn btn-danger btn-sm hidden" onclick="abortScan('disc')" style="align-self:flex-end">■ Cancel</button><button class="btn btn-secondary btn-sm" onclick="refreshDiscToken()" style="align-self:flex-end" title="Force a fresh token with all admin-consented permissions">🔄 Refresh Token</button><div id="discExBtns" class="flex gap-sm hidden" style="align-self:flex-end"><button class="btn btn-secondary btn-sm" onclick="exDiscJSON()">📄 JSON</button><button class="btn btn-secondary btn-sm" onclick="exDiscHTML()">📋 HTML Report</button><button class="btn btn-sm" style="background:rgba(236,91,44,.12);color:var(--accent-orange);border:1px solid rgba(236,91,44,.25)" onclick="exITGlue()">🔶 ITGlue HTML</button></div></div><div id="discProgress" class="hidden" style="margin-top:14px"><div class="flex justify-between" style="margin-bottom:5px"><span id="discStatus" style="font-size:.8rem;color:var(--text-secondary)"></span><span id="discPercent" style="font-size:.8rem;font-weight:600;color:var(--accent-blue)">0%</span></div><div class="progress-track"><div id="discBar" class="progress-fill" style="width:0%"></div></div></div></div><div id="discResults"></div><div id="discEmpty" class="empty-state"><div class="empty-icon">🔍</div><div class="empty-title">No scan results</div><div class="empty-desc">Enter a tenant domain and run a discovery scan</div></div></div>
@@ -1076,7 +1089,7 @@ const ONBOARD=[
     const org=await G.call('/organization');const orgId=org.value[0].id;
     const pay={};
     if(ctx.company)pay.signInPageText=`Welcome to ${ctx.company}. Please sign in with your company account.`;
-    if(ctx.colour)pay.customAccountResetCredentialsUrl=ctx.supportUrl||undefined;
+    if(ctx.supportUrl)pay.customAccountResetUrl=ctx.supportUrl;
     if(ctx.company)pay.usernameHintText=`Use your ${ctx.company} email address`;
     try{await G.call(`/organization/${orgId}/branding/localizations/default`,'PATCH',pay)}
     catch{await G.call(`/organization/${orgId}/branding/localizations/default`,'PUT',pay)}
@@ -1327,7 +1340,6 @@ const ONBOARD=[
       const existing=(resp.value||[]).find(p=>p.priority===0)||null;
       if(existing){
         await G.call(`/deviceManagement/deviceEnrollmentConfigurations/${existing.id}`,'PATCH',{
-          '@odata.type':'#microsoft.graph.windows10EnrollmentCompletionPageConfiguration',
           displayName:'[MSP] Enrollment Status Page',showInstallationProgress:true,
           blockDeviceSetupRetryByUser:false,allowDeviceResetOnInstallFailure:true,
           installProgressTimeoutInMinutes:60,allowLogCollectionOnInstallFailure:true});
@@ -1434,9 +1446,7 @@ const ONBOARD=[
         scheduledInstallDay:'everyDay',
         scheduledInstallTime:'03:00:00',
         deliveryOptimizationMode:'httpWithPeeringNat',
-        qualityUpdatesPauseExpiryDateTime:'0001-01-01T00:00:00Z',
-        featureUpdatesPauseExpiryDateTime:'0001-01-01T00:00:00Z',
-        businessReadyUpdatesOnly:'businessReadyOnly',
+        businessReadyUpdatesOnly:'all',
         engagedRestartDeadlineInDays:3,
         deadlineForQualityUpdatesInDays:3,
         deadlineForFeatureUpdatesInDays:7});
@@ -1447,6 +1457,7 @@ const ONBOARD=[
   {n:'Create iOS App Protection Policy',fn:async(ctx)=>{
     try{
       await G.call('/deviceAppManagement/iosManagedAppProtections','POST',{
+        '@odata.type':'#microsoft.graph.iosManagedAppProtection',
         displayName:'[MSP] CE+ iOS App Protection',description:'CE+ MAM policy: prevent data leakage, require PIN, block jailbroken, encrypt app data',
         periodOfflineBeforeAccessCheck:'PT12H',
         periodOnlineBeforeAccessCheck:'PT30M',
@@ -1461,20 +1472,22 @@ const ONBOARD=[
         printBlocked:true,
         fingerprintBlocked:false,
         disableAppPinIfDevicePinIsSet:true,
-        maximumAllowedDeviceThreatLevel:'secured',
+        maximumAllowedDeviceThreatLevel:'secure',
         appActionIfDeviceComplianceRequired:'block',
         appActionIfMaximumPinRetriesExceeded:'resetAccount',
         maximumPinRetries:5,
         minimumRequiredOsVersion:'16.0',
-        appDataEncryptionType:'afterDeviceRestart'
+        encryptAppData:true
       });
       return'iOS app protection policy created — PIN, save-as blocked, print blocked, backup blocked, jailbreak=block, OS 16+, encryption enabled'
     }catch(e){return'⚠ '+e.message}}},
   {n:'Create Android App Protection Policy',fn:async(ctx)=>{
     try{
       await G.call('/deviceAppManagement/androidManagedAppProtections','POST',{
+        '@odata.type':'#microsoft.graph.androidManagedAppProtection',
         displayName:'[MSP] CE+ Android App Protection',description:'CE+ MAM policy for Android: prevent data leakage, require PIN, block rooted, encrypt app data',
         periodOfflineBeforeAccessCheck:'PT12H',
+        periodOnlineBeforeAccessCheck:'PT30M',
         screenCaptureBlocked:true,
         dataBackupBlocked:true,
         deviceComplianceRequired:false,
@@ -1484,7 +1497,7 @@ const ONBOARD=[
         printBlocked:true,
         fingerprintBlocked:false,
         disableAppPinIfDevicePinIsSet:true,
-        maximumAllowedDeviceThreatLevel:'secured',
+        maximumAllowedDeviceThreatLevel:'secure',
         appActionIfDeviceComplianceRequired:'block',
         appActionIfMaximumPinRetriesExceeded:'resetAccount',
         maximumPinRetries:5,
@@ -1512,7 +1525,7 @@ const ONBOARD=[
         cortanaBlocked:false,
         microsoftAccountBlocked:true,
         copyPasteBlocked:false,
-        diagnosticsDataSubmissionMode:'basic',
+        diagnosticDataSubmissionMode:'basic',
         passwordBlockSimple:true,
         passwordExpirationDays:0,
         lockScreenBlockToastNotifications:true,
@@ -1915,7 +1928,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   // Auto-populate tenant domain across tabs from saved config
   propagateDomain();
   if(c.cid){$('step1Badge').className='badge badge-green';$('step1Badge').textContent='Done'}
-  renderPhases();$('setupTotal').textContent=TOTAL_P;
+  setupInitComponents();renderPhases();$('setupTotal').textContent=TOTAL_P;
   $('permList').innerHTML=PERMS.map(p=>`<div style="padding:3px 0"><span class="badge badge-violet" style="margin-right:8px">Role</span> ${p.n}</div>`).join('');
   guideAddHeaderBtn();
   guideInit();
@@ -1938,6 +1951,50 @@ function upProg(){const tot=PHASES.reduce((s,p)=>s+p.s.length,0),done=PHASES.sli
 function showModal(pol,prompt,dv){$('mPol').innerHTML='Configuring: <strong style="color:var(--text-primary)">'+esc(pol)+'</strong>';$('mPrompt').textContent=prompt;const i=$('mInput');i.value='';i.placeholder=dv||'';$('inputModal').classList.remove('hidden');i.focus();i.onkeydown=e=>{if(e.key==='Enter')mSubmit()};return new Promise(r=>{MR=r})}
 function mSubmit(){$('inputModal').classList.add('hidden');if(MR){MR({skip:0,v:$('mInput').value});MR=null}}
 function mSkip(){$('inputModal').classList.add('hidden');if(MR){MR({skip:1,v:''});MR=null}}
+
+// ── Setup Component Selector ──
+let SETUP_COMPONENTS={};
+
+function setupInitComponents(){
+  const el=$('setupComponentList');if(!el)return;
+  let h='';
+  // Bootstrap is always required — not shown
+  // ONBOARD categories
+  h+='<div style="font-size:.7rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin:6px 0 4px;font-family:var(--font-display)">Onboarding</div>';
+  ONBOARD.forEach(o=>{
+    SETUP_COMPONENTS[o.id]=true;
+    h+=`<label style="display:flex;align-items:flex-start;gap:8px;padding:5px 6px;border-radius:var(--radius-sm);cursor:pointer;font-size:.8rem;line-height:1.4" onmouseover="this.style.background='var(--bg-elevated)'" onmouseout="this.style.background=''">
+      <input type="checkbox" id="sc_${o.id}" checked onchange="SETUP_COMPONENTS['${o.id}']=this.checked;setupUpdatePhases()" style="margin-top:2px;flex-shrink:0">
+      <span>${o.icon} <strong>${o.cat}</strong><br><span style="font-size:.72rem;color:var(--text-muted)">${o.steps.length} step${o.steps.length>1?'s':''}</span></span>
+    </label>`;
+  });
+  // CE+ categories
+  h+='<div style="font-size:.7rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin:10px 0 4px;font-family:var(--font-display)">CE+ Policies</div>';
+  Object.entries(CEP).forEach(([k,v])=>{
+    SETUP_COMPONENTS[k]=true;
+    h+=`<label style="display:flex;align-items:flex-start;gap:8px;padding:5px 6px;border-radius:var(--radius-sm);cursor:pointer;font-size:.8rem;line-height:1.4" onmouseover="this.style.background='var(--bg-elevated)'" onmouseout="this.style.background=''">
+      <input type="checkbox" id="sc_${k}" checked onchange="SETUP_COMPONENTS['${k}']=this.checked;setupUpdatePhases()" style="margin-top:2px;flex-shrink:0">
+      <span>${v.icon} <strong>${v.cat}</strong><br><span style="font-size:.72rem;color:var(--text-muted)">${v.p.length} polic${v.p.length>1?'ies':'y'}</span></span>
+    </label>`;
+  });
+  el.innerHTML=h;
+}
+
+function setupToggleAll(state){
+  Object.keys(SETUP_COMPONENTS).forEach(k=>{
+    SETUP_COMPONENTS[k]=state;
+    const cb=$('sc_'+k);if(cb)cb.checked=state;
+  });
+  setupUpdatePhases();
+}
+
+function setupUpdatePhases(){
+  // Update the total count shown in sidebar
+  let total=PHASES[0].s.length; // bootstrap always runs
+  ONBOARD.forEach(o=>{if(SETUP_COMPONENTS[o.id])total+=o.steps.length});
+  Object.entries(CEP).forEach(([k,v])=>{if(SETUP_COMPONENTS[k])total+=v.p.length});
+  $('setupTotal').textContent=total;
+}
 
 async function startSetup(){
   const dom=$('setupDomain').value.trim(),adm=$('setupAdmin').value.trim();if(!dom||!adm)return alert('Enter domain and admin UPN.');
@@ -1966,7 +2023,15 @@ async function startSetup(){
     // Phase 0: Authentication & Bootstrap
     SS.ph=0;const as=PHASES[0].s;
     for(let i=0;i<as.length;i++){if(SS.abort)return cleanup();SS.st=i;upProg();addLog(as[i]+'...','info');
-      if(live&&i===1){try{const app=await G.call('/applications','POST',{displayName:'MSP Tenant Automation',signInAudience:'AzureADMyOrg',requiredResourceAccess:[{resourceAppId:'00000003-0000-0000-c000-000000000000',resourceAccess:PERMS.map(p=>({id:p.id,type:'Role'}))}]});addLog('  ✓ App created: '+app.appId,'success')}catch(e){addLog('  ⚠ '+e.message,'warning')}}
+      if(live&&i===1){try{
+        // Resolve real permission GUIDs from the Graph service principal catalogue
+        const graphSp=await G.call("/servicePrincipals?$filter=appId eq '00000003-0000-0000-c000-000000000000'&$select=id,appRoles,oauth2PermissionScopes");
+        const appRoles=graphSp.value[0]?.appRoles||[];
+        const roleMap={};appRoles.forEach(r=>{if(r.value)roleMap[r.value]=r.id});
+        const resourceAccess=PERMS.map(p=>roleMap[p.n]?{id:roleMap[p.n],type:'Role'}:null).filter(Boolean);
+        const app=await G.call('/applications','POST',{displayName:'MSP Tenant Automation',signInAudience:'AzureADMyOrg',requiredResourceAccess:[{resourceAppId:'00000003-0000-0000-c000-000000000000',resourceAccess}]});
+        addLog('  ✓ App created: '+app.appId+' ('+resourceAccess.length+' permissions)','success');
+      }catch(e){addLog('  ⚠ '+e.message+' — use App Config bootstrap instead','warning')}}
       else{await delay(450+Math.random()*400);if(i===1)addLog('  ✓ App created: '+uid(),'success');else if(i===4)addLog('  ✓ Secret generated (stored securely)','success');else addLog('  ✓ '+as[i],'success')}}
     SS.st=as.length;upProg();addLog('','info');addLog('═══════════════════════════════════════════','info');addLog('  Bootstrap complete. Running onboarding...','info');addLog('═══════════════════════════════════════════','info');
 
@@ -1977,6 +2042,7 @@ async function startSetup(){
     for(let oi=0;oi<ONBOARD.length;oi++){
       if(SS.abort)return cleanup();
       const ob=ONBOARD[oi];SS.ph=oi+1;SS.st=0;upProg();
+      if(!SETUP_COMPONENTS[ob.id]){addLog('','info');addLog(ob.icon+' '+ob.cat+' — SKIPPED','info');SS.st=ob.steps.length;upProg();continue}
       addLog('','info');addLog(ob.icon+' '+ob.cat,'info');addLog('─'.repeat(40),'info');
 
       for(let si=0;si<ob.steps.length;si++){
@@ -2010,7 +2076,9 @@ async function startSetup(){
     // CEP phases (existing compliance policies)
     const cats=Object.entries(CEP);
     const obLen=ONBOARD.length;
-    for(let ci=0;ci<cats.length;ci++){if(SS.abort)return cleanup();const[,cat]=cats[ci];SS.ph=obLen+ci+1;SS.st=0;upProg();addLog('','info');addLog(cat.icon+' '+cat.cat,'info');addLog('─'.repeat(40),'info');
+    for(let ci=0;ci<cats.length;ci++){if(SS.abort)return cleanup();const[ck,cat]=cats[ci];SS.ph=obLen+ci+1;SS.st=0;upProg();
+      if(!SETUP_COMPONENTS[ck]){addLog('','info');addLog(cat.icon+' '+cat.cat+' — SKIPPED','info');SS.st=cat.p.length;upProg();continue}
+      addLog('','info');addLog(cat.icon+' '+cat.cat,'info');addLog('─'.repeat(40),'info');
       for(let pi=0;pi<cat.p.length;pi++){if(SS.abort)return cleanup();SS.st=pi;upProg();const p=cat.p[pi];
         if(p.ni){addLog('  ⏸ Input: '+p.n,'warning');const r=await showModal(p.n,p.ip,p.dv);addLog(r.skip?'  → Skipped':'  → '+p.ifl+': '+(r.v||'(empty)'),'info')}
         addLog('  Configuring: '+p.n+'...','pending');if(p.ep)addLog('    → '+p.ep,'info');
