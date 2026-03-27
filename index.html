@@ -640,7 +640,7 @@ Jane,Doe,jane.doe,CFO,Finance,LIC — Business Premium"></textarea>
 <div class="card" style="margin-bottom:22px;border-color:rgba(139,92,246,.25);position:relative;overflow:hidden">
 <div style="position:absolute;top:0;right:0;padding:6px 14px;background:rgba(139,92,246,.1);border-radius:0 0 0 var(--radius-md);font-family:var(--font-display);font-size:.68rem;font-weight:600;color:var(--accent-violet);text-transform:uppercase;letter-spacing:.06em">Recommended</div>
 <div class="card-header"><span class="dot" style="background:var(--accent-violet)"></span> One-Click Tenant Setup</div>
-<p style="font-size:.85rem;color:var(--text-secondary);margin-bottom:14px;line-height:1.7;font-family:var(--font-display)">Automatically creates the app registration, configures all <strong style="color:var(--text-primary)">28 Graph API permissions</strong>, grants admin consent, and generates a client secret — all in one click. Just enter the tenant domain and sign in as Global Admin.</p>
+<p style="font-size:.85rem;color:var(--text-secondary);margin-bottom:14px;line-height:1.7;font-family:var(--font-display)">Automatically creates the app registration, configures all <strong style="color:var(--text-primary)" id="permCountTop"></strong>, grants admin consent, and generates a client secret — all in one click. Just enter the tenant domain and sign in as Global Admin.</p>
 
 <div style="padding:18px;background:var(--bg-elevated);border-radius:var(--radius-lg);border:1px solid var(--border-subtle)">
 <div style="display:grid;grid-template-columns:1fr auto;gap:12px;align-items:end;margin-bottom:14px">
@@ -666,22 +666,8 @@ Jane,Doe,jane.doe,CFO,Finance,LIC — Business Premium"></textarea>
 </div>
 
 <details style="margin-top:14px">
-<summary style="cursor:pointer;font-size:.82rem;color:var(--text-muted);font-family:var(--font-display)">What permissions will be granted? (28 Graph API permissions)</summary>
-<div style="margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:.78rem;color:var(--text-secondary)">
-<div>✓ Directory.ReadWrite.All</div><div>✓ Domain.ReadWrite.All</div>
-<div>✓ Policy.Read.All</div><div>✓ Policy.ReadWrite.ConditionalAccess</div>
-<div>✓ Policy.ReadWrite.AuthenticationMethod</div><div>✓ Application.ReadWrite.All</div>
-<div>✓ AppRoleAssignment.ReadWrite.All</div><div>✓ DeviceManagementConfiguration.ReadWrite.All</div>
-<div>✓ DeviceManagementManagedDevices.ReadWrite.All</div><div>✓ DeviceManagementApps.ReadWrite.All</div>
-<div>✓ DeviceManagementServiceConfig.ReadWrite.All</div><div>✓ SecurityEvents.ReadWrite.All</div>
-<div>✓ AuditLog.Read.All</div><div>✓ SharePointTenantSettings.ReadWrite.All</div>
-<div>✓ Sites.Read.All</div><div>✓ Sites.ReadWrite.All</div>
-<div>✓ RoleManagement.ReadWrite.Directory</div><div>✓ Organization.ReadWrite.All</div>
-<div>✓ User.ReadWrite.All</div><div>✓ Group.ReadWrite.All</div>
-<div>✓ Mail.ReadWrite</div><div>✓ MailboxSettings.ReadWrite</div>
-<div>✓ InformationProtectionPolicy.Read.All</div><div>✓ RecordsManagement.Read.All</div>
-<div>✓ DelegatedPermissionGrant.ReadWrite.All</div><div>✓ IdentityRiskyUser.Read.All</div>
-<div>✓ IdentityRiskEvent.Read.All</div><div>✓ Reports.Read.All</div>
+<summary style="cursor:pointer;font-size:.82rem;color:var(--text-muted);font-family:var(--font-display)" id="permSummary"></summary>
+<div id="permGrid" style="margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:.78rem;color:var(--text-secondary)">
 </div>
 </details>
 </div>
@@ -1936,16 +1922,68 @@ document.addEventListener('DOMContentLoaded',()=>{
   if(c.cid){$('step1Badge').className='badge badge-green';$('step1Badge').textContent='Done'}
   setupInitComponents();renderPhases();$('setupTotal').textContent=TOTAL_P;
   $('permList').innerHTML=PERMS.map(p=>`<div style="padding:3px 0"><span class="badge badge-violet" style="margin-right:8px">Role</span> ${p.n}</div>`).join('');
+  // Dynamic permission count + grid in App Config one-click section
+  const pc=PERMS.length;
+  $('permCountTop').textContent=pc+' Graph API permissions';
+  $('permSummary').textContent='What permissions will be granted? ('+pc+' Graph API permissions)';
+  $('permGrid').innerHTML=PERMS.map(p=>'<div>✓ '+esc(p.n)+'</div>').join('');
   guideAddHeaderBtn();
   guideInit();
 });
 
 function switchTab(t,b){document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));$('panel-'+t).classList.add('active');b.classList.add('active');if(t==='users'&&A.ok())nuLoadGroups()}
-function authUI(c,u){const e=$('authStatus'),t=$('authStatusText'),b=$('authBtn');if(c){e.className='auth-status connected';t.textContent=u;b.textContent='Sign Out';b.onclick=()=>A.logout().then(()=>authUI(0))}else{e.className='auth-status disconnected';t.textContent='Not connected';b.textContent='Sign In';b.onclick=handleAuth}}
-function handleAuth(){if(!A.cfg.cid){switchTab('config',document.querySelector('[data-tab="config"]'));$('cfgClientId').focus();return}if(!A.inst)A.init();if(A.ok()){A.logout()}else{A.login().then(()=>{$('step2Badge').className='badge badge-green';$('step2Badge').textContent='Signed In';propagateDomain()}).catch(e=>{
-  let msg='Auth failed: '+e.message;
-  if(e.message.includes('AADSTS700051')||e.message.includes('redirect')){msg+='\n\nThe redirect URI doesn\'t match your app registration.\nExpected: '+getRedirectUri()+'\n\nGo to Azure Portal → App Registration → Authentication and add this as a SPA redirect URI.'}
-  alert(msg)})}}
+function authUI(c,u){
+  const e=$('authStatus'),t=$('authStatusText'),b=$('authBtn');
+  if(c){
+    e.className='auth-status connected';
+    // Show account switcher if multiple accounts
+    const allAccounts=A.inst?A.inst.getAllAccounts():[];
+    if(allAccounts.length>1){
+      t.innerHTML='';
+      const sel=document.createElement('select');
+      sel.style.cssText='background:transparent;border:none;color:var(--accent-green);font-size:.78rem;font-family:var(--font-display);cursor:pointer;padding:0;outline:none';
+      allAccounts.forEach(acc=>{const opt=document.createElement('option');opt.value=acc.username;opt.textContent=acc.username;opt.style.cssText='background:var(--bg-elevated);color:var(--text-primary)';if(acc.username===u)opt.selected=true;sel.appendChild(opt)});
+      sel.onchange=async function(){const newAcc=allAccounts.find(a=>a.username===this.value);if(newAcc){A.acc=newAcc;try{await A.token()}catch{}authUI(1,newAcc.username);propagateDomain()}};
+      t.appendChild(sel);
+    }else{t.textContent=u}
+    b.textContent='Sign Out';b.onclick=()=>A.logout().then(()=>authUI(0));
+  }else{
+    e.className='auth-status disconnected';t.textContent='Not connected';b.textContent='Sign In';b.onclick=handleAuth;
+  }
+}
+async function handleAuth(){
+  if(!A.cfg.cid){switchTab('config',document.querySelector('[data-tab="config"]'));$('cfgClientId').focus();return}
+  if(!A.inst)A.init();
+  if(A.ok()){A.logout();return}
+  try{
+    await A.login();
+    $('step2Badge').className='badge badge-green';$('step2Badge').textContent='Signed In';
+    propagateDomain();
+    // Check for existing app registration and permissions
+    checkAppRegistration();
+  }catch(e){
+    let msg='Auth failed: '+e.message;
+    if(e.message&&(e.message.includes('AADSTS700051')||e.message.includes('redirect'))){msg+='\n\nThe redirect URI doesn\'t match your app registration.\nExpected: '+getRedirectUri()+'\n\nGo to Azure Portal → App Registration → Authentication and add this as a SPA redirect URI.'}
+    if(e.message&&(e.message.includes('AADSTS700016'))){msg+='\n\nThe app registration was not found in this tenant. Check that the Client ID in App Config matches your Azure app registration, and that the app is registered in the correct tenant.'}
+    if(!e.message?.includes('popup_window_error'))alert(msg);
+  }
+}
+async function checkAppRegistration(){
+  if(!A.ok())return;
+  try{
+    G.scopes=Auth.DISCOVERY_SCOPES;
+    const apps=await G.call(`/applications?$filter=appId eq '${A.cfg.cid}'&$select=id,appId,displayName,requiredResourceAccess`);
+    if(apps.value&&apps.value.length>0){
+      const app=apps.value[0];
+      const permsOnApp=(app.requiredResourceAccess||[]).flatMap(r=>r.resourceAccess||[]).length;
+      if(permsOnApp<PERMS.length){
+        const el=$('autoAddStatus');
+        if(el)el.innerHTML='<span style="color:var(--accent-amber);font-size:.82rem">⚠ App has '+permsOnApp+'/'+PERMS.length+' permissions — <button class="btn btn-sm btn-secondary" onclick="bootstrap()" style="padding:2px 10px;font-size:.76rem">Update Permissions</button></span>';
+      }
+    }
+    G.scopes=null;
+  }catch{G.scopes=null}
+}
 
 /* ============================================================
    SETUP TAB
@@ -5249,37 +5287,48 @@ async function autoAddTenant(){
     // 2. After sign-in, use the token to create an app registration
     // 3. Then re-auth with the new app
 
-    // First: create a temporary MSAL using the Microsoft Azure CLI well-known client (04b07795-a71b-4346-935f-02f9a1efa4ce)
-    // This is Microsoft's official public client for Azure CLI — works for any tenant
-    const azCliClientId='04b07795-a71b-4346-935f-02f9a1efa4ce';
-    const tempMsal=new msal.PublicClientApplication({
-      auth:{clientId:azCliClientId,authority:`https://login.microsoftonline.com/${domain}`,redirectUri:ru},
-      cache:{cacheLocation:'sessionStorage',storeAuthStateInCookie:false}
-    });
-
+    // Use existing MSAL session if signed in, otherwise create a temporary instance
     let tempToken;
-    try{
-      const loginResp=await tempMsal.loginPopup({
-        scopes:['https://graph.microsoft.com/Application.ReadWrite.All','https://graph.microsoft.com/AppRoleAssignment.ReadWrite.All','https://graph.microsoft.com/Directory.ReadWrite.All','https://graph.microsoft.com/DelegatedPermissionGrant.ReadWrite.All'],
-        prompt:'select_account'
-      });
-      tempToken=loginResp.accessToken;
-      aLog('✓ Signed in as '+loginResp.account.username,'success');
-    }catch(e){
-      if(e.message?.includes('cancelled')||e.message?.includes('user_cancelled')){
-        aLog('✗ Login was cancelled. You must sign in and accept the permissions.','error');throw new Error('Login cancelled');
-      }
-      aLog('⚠ Login popup failed: '+e.message,'warning');
-      aLog('Trying alternative approach...','info');
-      // Fallback: use acquireTokenPopup with consent
+    const bootstrapScopes=['https://graph.microsoft.com/Application.ReadWrite.All','https://graph.microsoft.com/AppRoleAssignment.ReadWrite.All','https://graph.microsoft.com/Directory.ReadWrite.All','https://graph.microsoft.com/DelegatedPermissionGrant.ReadWrite.All'];
+
+    if(A.ok()&&A.inst){
+      // Already signed in — use existing session
+      aLog('Using existing sign-in session...','info');
       try{
-        const tokenResp=await tempMsal.acquireTokenPopup({
-          scopes:['https://graph.microsoft.com/Application.ReadWrite.All','https://graph.microsoft.com/AppRoleAssignment.ReadWrite.All','https://graph.microsoft.com/Directory.ReadWrite.All','https://graph.microsoft.com/DelegatedPermissionGrant.ReadWrite.All'],
-          prompt:'consent'
-        });
+        const tokenResp=await A.inst.acquireTokenPopup({scopes:bootstrapScopes,account:A.acc,prompt:'consent'});
         tempToken=tokenResp.accessToken;
-        aLog('✓ Token acquired via fallback flow','success');
-      }catch(e2){aLog('✗ Authentication failed: '+e2.message,'error');throw e2}
+        aLog('✓ Using signed-in account: '+A.acc.username,'success');
+      }catch(e){
+        aLog('⚠ Could not get token from existing session: '+e.message,'warning');
+        aLog('Please sign in with the header Sign In button first, then retry.','warning');
+        throw new Error('Token acquisition failed — sign in first via the header Sign In button');
+      }
+    } else {
+      // Not signed in — need to authenticate first
+      // Use the configured client ID if available, otherwise prompt user to sign in first
+      const cid=A.cfg?.cid;
+      if(!cid){
+        aLog('✗ No app registration configured. Please either:','error');
+        aLog('  1. Sign in with the header Sign In button first, OR','error');
+        aLog('  2. Enter your Client ID in the Manual Setup section below, then sign in','error');
+        throw new Error('No app configured — sign in first');
+      }
+      const tempMsal=new msal.PublicClientApplication({
+        auth:{clientId:cid,authority:`https://login.microsoftonline.com/${domain}`,redirectUri:ru},
+        cache:{cacheLocation:'sessionStorage',storeAuthStateInCookie:false}
+      });
+      try{
+        const loginResp=await tempMsal.loginPopup({scopes:bootstrapScopes,prompt:'select_account'});
+        tempToken=loginResp.accessToken;
+        aLog('✓ Signed in as '+loginResp.account.username,'success');
+      }catch(e){
+        if(e.message?.includes('cancelled')||e.message?.includes('user_cancelled')){
+          aLog('✗ Login was cancelled. You must sign in and accept the permissions.','error');throw new Error('Login cancelled');
+        }
+        aLog('✗ Authentication failed: '+e.message,'error');
+        aLog('Sign in with the header Sign In button first, then retry Auto Add Tenant.','warning');
+        throw e;
+      }
     }
 
     // Phase 2: Create app registration
