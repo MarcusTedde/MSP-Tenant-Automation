@@ -26,7 +26,10 @@ if(typeof msal==='undefined'){
 <script>
 // Second fallback: try unpkg
 if(typeof msal==='undefined'){
-  document.write('<scr'+'ipt src="https://unpkg.com/@azure/msal-browser@2.38.3/lib/msal-browser.min.js"><\/scr'+'ipt>');
+  var s2=document.createElement('script');
+  s2.src='https://unpkg.com/@azure/msal-browser@2.38.3/lib/msal-browser.min.js';
+  s2.async=false;
+  document.head.appendChild(s2);
 }
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1679,8 +1682,8 @@ class Auth{
   // Request specific delegated scopes — .default on a new app with no permissions returns an empty token
   static BOOTSTRAP_SCOPES=['https://graph.microsoft.com/Application.ReadWrite.All','https://graph.microsoft.com/AppRoleAssignment.ReadWrite.All','https://graph.microsoft.com/Directory.ReadWrite.All','https://graph.microsoft.com/DelegatedPermissionGrant.ReadWrite.All'];
   static DISCOVERY_SCOPES=['https://graph.microsoft.com/.default'];
-  async login(tid){const r=await this.inst.loginPopup({scopes:Auth.BOOTSTRAP_SCOPES,prompt:'select_account',...(tid?{authority:`https://login.microsoftonline.com/${tid}`}:{})});this.acc=r.account;this.tok=r.accessToken;authUI(1,r.account.username);return r}
-  async token(sc){if(!this.acc)throw new Error('Not authenticated — sign in first via App Config tab');const scopes=sc||Auth.BOOTSTRAP_SCOPES;const isDefault=scopes.length===1&&scopes[0].endsWith('/.default');try{const r=await this.inst.acquireTokenSilent({scopes,account:this.acc,forceRefresh:isDefault});this.tok=r.accessToken;return r.accessToken}catch{try{const r=await this.inst.acquireTokenPopup({scopes,prompt:'consent'});this.tok=r.accessToken;this.acc=r.account;return r.accessToken}catch(e2){throw new Error('Token acquisition failed: '+e2.message+'. Sign out, sign back in, and re-run bootstrap.')}}}
+  async login(tid){try{const r=await this.inst.loginPopup({scopes:Auth.BOOTSTRAP_SCOPES,prompt:'select_account',...(tid?{authority:`https://login.microsoftonline.com/${tid}`}:{})});this.acc=r.account;this.tok=r.accessToken;authUI(1,r.account.username);return r}catch(e){if(e.message&&(e.message.includes('popup_window_error')||e.message.includes('empty_window_error'))){await this.inst.loginRedirect({scopes:Auth.BOOTSTRAP_SCOPES,prompt:'select_account',...(tid?{authority:`https://login.microsoftonline.com/${tid}`}:{})});return}throw e}}
+  async token(sc){if(!this.acc)throw new Error('Not authenticated — sign in first via App Config tab');const scopes=sc||Auth.BOOTSTRAP_SCOPES;const isDefault=scopes.length===1&&scopes[0].endsWith('/.default');try{const r=await this.inst.acquireTokenSilent({scopes,account:this.acc,forceRefresh:isDefault});this.tok=r.accessToken;return r.accessToken}catch{try{const r=await this.inst.acquireTokenPopup({scopes,prompt:'consent'});this.tok=r.accessToken;this.acc=r.account;return r.accessToken}catch(e2){if(e2.message&&(e2.message.includes('popup_window_error')||e2.message.includes('empty_window_error'))){throw new Error('Popup blocked by browser. Allow popups for this site in browser settings (Edge: Settings → Cookies and site permissions → Pop-ups and redirects → add this site to Allow).')}throw new Error('Token acquisition failed: '+e2.message+'. Sign out, sign back in, and re-run bootstrap.')}}}
   async logout(){if(this.inst){await this.inst.logoutPopup();this.acc=null;this.tok=null;authUI(0)}}
   ok(){return!!this.acc}
 }
@@ -2143,7 +2146,11 @@ async function refreshDiscToken(){
       const sc=(pl.scp||'').split(' ').filter(Boolean);
       alert('Token refreshed — '+sc.length+' delegated scopes active.\n\nScopes:\n'+sc.join('\n'));
     }catch{alert('Token refreshed successfully.')}
-  }catch(e){alert('Token refresh failed: '+e.message)}
+  }catch(e){
+    if(e.message&&(e.message.includes('popup_window_error')||e.message.includes('empty_window_error'))){
+      alert('Popup blocked by browser. Please allow popups for this site, or try Edge/Chrome with popups enabled.');
+    }else{alert('Token refresh failed: '+e.message+' — sign out and back in before running discovery.')}
+  }
 }
 async function startDiscovery(){
   console.log('🚀 startDiscovery v3.5 — scanning 33 sections');
@@ -5546,6 +5553,16 @@ async function bootstrap(){
       if(e.message&&(e.message.includes('cancelled')||e.message.includes('user_cancelled'))){
         bsLog('✗ Consent popup was cancelled. You must accept the permissions to continue.','error');
         throw new Error('Consent cancelled by user');
+      }
+      // Popup was blocked — try redirect flow instead
+      if(e.message&&(e.message.includes('popup_window_error')||e.message.includes('empty_window_error'))){
+        bsLog('⚠ Popup blocked by browser. Trying redirect flow — you will be redirected and returned here.','warning');
+        try{
+          await A.inst.acquireTokenRedirect({scopes:neededScopes,account:A.acc,prompt:'consent'});
+          return; // page will redirect
+        }catch(e2){
+          bsLog('⚠ Redirect also failed: '+e2.message+'. Please allow popups for this site in your browser settings, or try a different browser.','error');
+        }
       }
       bsLog('⚠ Interactive consent failed: '+e.message,'warning');
       bsLog('Falling back to existing token — this may fail if permissions are insufficient.','warning');
