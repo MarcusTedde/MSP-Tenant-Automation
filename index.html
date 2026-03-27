@@ -3479,49 +3479,52 @@ async function startCompliance(){
       const r=Math.random();st=r>.55?'pass':r>.25?'fail':'partial';
     } else {
       try{
+        let detail='';
         switch(p.id){
           // Access Control
-          case 'ac-001': st=caP.some(c=>c.state==='enabled'&&c.grantControls?.builtInControls?.includes('mfa'))?'pass':caP.some(c=>c.state==='enabledForReportingButNotEnforced'&&c.grantControls?.builtInControls?.includes('mfa'))?'partial':'fail';break;
-          case 'ac-002': st=caP.some(c=>c.state==='enabled'&&c.conditions?.clientAppTypes?.includes('exchangeActiveSync')&&c.grantControls?.builtInControls?.includes('block'))?'pass':caP.some(c=>c.state==='enabledForReportingButNotEnforced'&&c.conditions?.clientAppTypes?.includes('exchangeActiveSync'))?'partial':'fail';break;
-          case 'ac-003': st=caP.some(c=>c.state==='enabled'&&c.grantControls?.builtInControls?.includes('compliantDevice'))?'pass':caP.some(c=>c.state==='enabledForReportingButNotEnforced'&&c.grantControls?.builtInControls?.includes('compliantDevice'))?'partial':'fail';break;
-          case 'ac-004': st=caP.some(c=>c.state==='enabled'&&c.conditions?.signInRiskLevels?.includes('high')&&c.grantControls?.builtInControls?.includes('block'))?'pass':'fail';break;
-          case 'ac-005': st=caP.some(c=>c.state==='enabled'&&c.conditions?.users?.includeRoles?.length>0&&c.grantControls?.builtInControls?.includes('mfa'))?'pass':'fail';break;
-          case 'ac-006': st=caP.some(c=>c.state==='enabled'&&c.sessionControls?.signInFrequency?.isEnabled)?'pass':caP.some(c=>c.state==='enabledForReportingButNotEnforced'&&c.sessionControls?.signInFrequency?.isEnabled)?'partial':'fail';break;
+          case 'ac-001': {const en=caP.find(c=>c.state==='enabled'&&c.grantControls?.builtInControls?.includes('mfa'));const ro=caP.find(c=>c.state==='enabledForReportingButNotEnforced'&&c.grantControls?.builtInControls?.includes('mfa'));if(en){st='pass';detail='✓ MFA enforced via CA policy: '+en.displayName}else if(ro){st='partial';detail='⚠ MFA policy exists in Report-Only mode ('+ro.displayName+') — switch to Enabled after reviewing sign-in logs'}else{st='fail';detail='✗ No Conditional Access policy requiring MFA found'}break}
+          case 'ac-002': {const en=caP.find(c=>c.state==='enabled'&&c.conditions?.clientAppTypes?.includes('exchangeActiveSync')&&c.grantControls?.builtInControls?.includes('block'));const ro=caP.find(c=>c.state==='enabledForReportingButNotEnforced'&&c.conditions?.clientAppTypes?.includes('exchangeActiveSync'));if(en){st='pass';detail='✓ Legacy auth blocked via: '+en.displayName}else if(ro){st='partial';detail='⚠ Legacy auth block in Report-Only mode ('+ro.displayName+') — switch to Enabled'}else{st='fail';detail='✗ No CA policy blocking legacy authentication (POP3, IMAP, SMTP)'}break}
+          case 'ac-003': {const en=caP.find(c=>c.state==='enabled'&&c.grantControls?.builtInControls?.includes('compliantDevice'));const ro=caP.find(c=>c.state==='enabledForReportingButNotEnforced'&&c.grantControls?.builtInControls?.includes('compliantDevice'));if(en){st='pass';detail='✓ Device compliance required via: '+en.displayName}else if(ro){st='partial';detail='⚠ Compliant device policy in Report-Only ('+ro.displayName+') — requires Intune enrollment before enabling'}else{st='fail';detail='✗ No CA policy requiring device compliance'}break}
+          case 'ac-004': {const en=caP.find(c=>c.state==='enabled'&&c.conditions?.signInRiskLevels?.includes('high'));if(en){st='pass';detail='✓ High-risk sign-ins blocked via: '+en.displayName}else{st='fail';detail='✗ No CA policy blocking high-risk sign-ins — requires Entra ID P2'}break}
+          case 'ac-005': {const en=caP.find(c=>c.state==='enabled'&&c.conditions?.users?.includeRoles?.length>0&&c.grantControls?.builtInControls?.includes('mfa'));if(en){st='pass';detail='✓ Admin portal restricted via: '+en.displayName}else{st='fail';detail='✗ No CA policy restricting admin portal access with MFA + device compliance'}break}
+          case 'ac-006': {const en=caP.find(c=>c.state==='enabled'&&c.sessionControls?.signInFrequency?.isEnabled);const ro=caP.find(c=>c.state==='enabledForReportingButNotEnforced'&&c.sessionControls?.signInFrequency?.isEnabled);if(en){st='pass';detail='✓ Session timeout configured: '+en.displayName+' ('+en.sessionControls.signInFrequency.value+' '+en.sessionControls.signInFrequency.type+')'}else if(ro){st='partial';detail='⚠ Session timeout in Report-Only ('+ro.displayName+') — switch to Enabled'}else{st='fail';detail='✗ No session timeout policy configured'}break}
           // Secure Configuration
-          case 'sc-001': st='partial';break; // Password protection can't be fully checked via Graph v1.0
-          case 'sc-002': st='partial';break; // SSPR campaign status requires beta API
-          case 'sc-003': st=(cd.securityDefaults?.isEnabled===false&&caP.filter(c=>c.state==='enabled').length>=3)?'pass':cd.securityDefaults?.isEnabled?'partial':'fail';break;
-          case 'sc-004': st='partial';break; // Requires Exchange PowerShell
-          case 'sc-005': {const ap=cd.authPolicy;st=(ap?.defaultUserRolePermissions?.permissionGrantPoliciesAssigned?.length===0)?'pass':'fail';break}
-          case 'sc-006': {const ap=cd.authPolicy;st=(ap?.defaultUserRolePermissions?.allowedToReadOtherUsers===false)?'pass':'fail';break}
+          case 'sc-001': st='partial';detail='⚠ Password protection settings cannot be fully verified via Graph API — verify manually in Entra ID → Security → Authentication methods → Password protection';break;
+          case 'sc-002': st='partial';detail='⚠ SSPR registration campaign status requires beta API — verify in Entra ID → Password reset → Registration';break;
+          case 'sc-003': {const sdOn=cd.securityDefaults?.isEnabled;const caCount=caP.filter(c=>c.state==='enabled').length;if(!sdOn&&caCount>=3){st='pass';detail='✓ Security Defaults disabled, superseded by '+caCount+' active CA policies'}else if(sdOn){st='partial';detail='⚠ Security Defaults enabled — provides baseline protection but should be replaced with CA policies for granular control'}else{st='fail';detail='✗ Security Defaults disabled and only '+caCount+' CA policies active (need ≥3)'}break}
+          case 'sc-004': st='partial';detail='⚠ Audit logging is enabled by default since Jan 2019 — verify by running a search in Microsoft Purview → Audit';break;
+          case 'sc-005': {const ap=cd.authPolicy;const assigned=ap?.defaultUserRolePermissions?.permissionGrantPoliciesAssigned||[];if(assigned.length===0){st='pass';detail='✓ User consent to apps is disabled'}else{st='fail';detail='✗ User consent still allowed — '+assigned.length+' grant policy/ies assigned: '+assigned.join(', ')}break}
+          case 'sc-006': {const ap=cd.authPolicy;if(ap?.defaultUserRolePermissions?.allowedToReadOtherUsers===false){st='pass';detail='✓ Non-admin users blocked from reading directory'}else{st='fail';detail='✗ Non-admin users can still read other users in the directory'}break}
           // Malware Protection
-          case 'mp-001': st='partial';break; // Requires Defender portal
-          case 'mp-002': st='partial';break; // Requires Defender P1
-          case 'mp-003': st='partial';break; // Requires Defender P1
-          case 'mp-004': st=compP.some(c=>c['@odata.type']?.includes('windows10')&&(c.defenderEnabled||c.antivirusRequired))?'pass':'fail';break;
+          case 'mp-001': st='partial';detail='⚠ Anti-malware policy requires manual verification — check Security Admin Center → Policies → Anti-malware';break;
+          case 'mp-002': st='partial';detail='⚠ Safe Attachments requires Defender for Office 365 P1 — verify in Security Admin Center → Policies → Safe Attachments';break;
+          case 'mp-003': st='partial';detail='⚠ Safe Links requires Defender for Office 365 P1 — verify in Security Admin Center → Policies → Safe Links';break;
+          case 'mp-004': {const pol=compP.find(c=>c['@odata.type']?.includes('windows10')&&(c.defenderEnabled||c.antivirusRequired));if(pol){st='pass';detail='✓ Defender AV compliance enforced via: '+pol.displayName}else{st='fail';detail='✗ No Windows compliance policy requiring Defender/antivirus found'}break}
           // Patch Management
-          case 'pm-001': st=devC.some(c=>c['@odata.type']?.includes('windowsUpdateForBusiness'))?'pass':'fail';break;
-          case 'pm-002': st=compP.some(c=>c['@odata.type']?.includes('windows10')&&c.osMinimumVersion)?'pass':'fail';break;
-          case 'pm-003': st='partial';break; // Read-only audit
+          case 'pm-001': {const ring=devC.find(c=>c['@odata.type']?.includes('windowsUpdateForBusiness'));if(ring){st='pass';detail='✓ Update ring configured: '+ring.displayName+' (quality deferral: '+(ring.qualityUpdatesDeferralPeriodInDays||0)+' days, feature deferral: '+(ring.featureUpdatesDeferralPeriodInDays||0)+' days)'}else{st='fail';detail='✗ No Windows Update for Business ring configured'}break}
+          case 'pm-002': {const pol=compP.find(c=>c['@odata.type']?.includes('windows10')&&c.osMinimumVersion);if(pol){st='pass';detail='✓ OS version compliance via: '+pol.displayName+' (minimum: '+pol.osMinimumVersion+')'}else{st='fail';detail='✗ No compliance policy enforcing minimum OS version'}break}
+          case 'pm-003': st='partial';detail='⚠ Detected apps audit is read-only — review in Intune → Apps → Discovered apps';break;
           // Firewalls & Network
-          case 'fw-001': st=compP.some(c=>c['@odata.type']?.includes('windows10')&&(c.activeFirewallRequired||c.firewallEnabled))?'pass':'fail';break;
-          case 'fw-002': st='partial';break; // Requires Endpoint Security template
-          case 'fw-003': st=nLoc.some(l=>l.isTrusted)?'pass':'fail';break;
+          case 'fw-001': {const pol=compP.find(c=>c['@odata.type']?.includes('windows10')&&(c.activeFirewallRequired||c.firewallEnabled));if(pol){st='pass';detail='✓ Firewall compliance enforced via: '+pol.displayName}else{st='fail';detail='✗ No compliance policy requiring active firewall'}break}
+          case 'fw-002': st='partial';detail='⚠ Firewall configuration profiles use Endpoint Security templates — verify in Intune → Endpoint Security → Firewall';break;
+          case 'fw-003': {const trusted=nLoc.filter(l=>l.isTrusted);if(trusted.length>0){st='pass';detail='✓ '+trusted.length+' trusted named location(s) configured: '+trusted.map(l=>l.displayName).join(', ')}else{st='fail';detail='✗ No trusted named locations (corporate IP ranges) defined'}break}
           // Data Protection
-          case 'dp-001': st=(spS.sharingCapability&&spS.sharingCapability!=='externalUserAndGuestSharing')?'pass':'fail';break;
-          case 'dp-002': st=spS.isUnmanagedSyncAppForTenantRestricted?'pass':'fail';break;
-          case 'dp-003': st='partial';break; // Requires Teams PowerShell
+          case 'dp-001': {const cap=spS.sharingCapability;if(cap&&cap!=='externalUserAndGuestSharing'){st='pass';detail='✓ SharePoint sharing restricted to: '+cap}else{st='fail';detail='✗ SharePoint allows unrestricted external sharing (externalUserAndGuestSharing)'}break}
+          case 'dp-002': {if(spS.isUnmanagedSyncAppForTenantRestricted){st='pass';detail='✓ OneDrive sync restricted to managed/domain-joined devices'}else{st='fail';detail='✗ OneDrive sync allowed from unmanaged devices'}break}
+          case 'dp-003': st='partial';detail='⚠ Teams external access requires Teams Admin Center — verify in Teams Admin Center → External access';break;
           // Admin Account Protection
-          case 'ap-001': {const bgAccts=(cd.users||[]).filter(u=>u.displayName?.includes('Emergency Access')||u.userPrincipalName?.includes('svc-resilience')||u.userPrincipalName?.includes('svc-continuity'));st=bgAccts.length>=2?'pass':bgAccts.length===1?'partial':'fail';break}
-          case 'ap-002': {const excGrp=(cd.groups||[]).find(g=>g.displayName?.includes('CA-Exclude'));st=excGrp?'pass':'fail';break}
-          case 'ap-003': st='partial';break; // Requires P2 / PIM API
-          case 'ap-004': st='partial';break; // Audit-only, requires auth methods report
-          case 'ap-005': {const rag=(cd.groups||[]).some(g=>g.isAssignableToRole);st=rag?'pass':'fail';break}
-          default: st='partial';
+          case 'ap-001': {const bgAccts=(cd.users||[]).filter(u=>u.displayName?.includes('Emergency Access')||u.userPrincipalName?.includes('svc-resilience')||u.userPrincipalName?.includes('svc-continuity'));if(bgAccts.length>=2){st='pass';detail='✓ '+bgAccts.length+' break glass accounts found: '+bgAccts.map(u=>u.userPrincipalName).join(', ')}else if(bgAccts.length===1){st='partial';detail='⚠ Only 1 break glass account found ('+bgAccts[0].userPrincipalName+') — NCSC recommends at least 2'}else{st='fail';detail='✗ No emergency access (break glass) accounts detected'}break}
+          case 'ap-002': {const excGrp=(cd.groups||[]).find(g=>g.displayName?.includes('CA-Exclude'));if(excGrp){st='pass';detail='✓ CA exclusion group exists: '+excGrp.displayName}else{st='fail';detail='✗ No [CA-Exclude] security group for break glass accounts'}break}
+          case 'ap-003': st='partial';detail='⚠ PIM/JIT access requires Entra ID P2 licence — verify in Entra ID → Identity Governance → Privileged Identity Management';break;
+          case 'ap-004': st='partial';detail='⚠ Admin MFA registration status requires authentication methods report — verify in Entra ID → Security → Authentication methods → User registration details';break;
+          case 'ap-005': {const rag=(cd.groups||[]).filter(g=>g.isAssignableToRole);if(rag.length>0){st='pass';detail='✓ '+rag.length+' role-assignable group(s) found: '+rag.map(g=>g.displayName).join(', ')}else{st='fail';detail='✗ No role-assignable security groups configured — admin roles assigned directly to users'}break}
+          default: st='partial';detail='⚠ Check requires manual verification';
         }
-      }catch(e){st='fail'}
+        p._detail=detail;
+      }catch(e){st='fail';p._detail='✗ Evaluation error: '+e.message}
     }
-    CR.push({...p,st,rem:0});
+    CR.push({...p,st,rem:0,detail:p._detail||''});
+    delete p._detail;
   }
   $('compProgress').classList.add('hidden');
   if(!SCAN_ABORT.comp)renderComp()}
@@ -3593,7 +3596,7 @@ function renderComp(fSev='all',fSt='all'){
       <td style="text-align:center"><span class="badge ${licBadge}" style="font-size:.7rem">${licText}</span></td>
       <td class="ep-col">${r.ep?esc(r.ep):'—'}</td>
       <td style="text-align:center">${isPassed?'<span class="btn-fix applied btn-sm">✓ Compliant</span>':canFix?`<button class="btn-fix btn" onclick="openRem('${r.id}')">🔧 Fix This</button>`:'—'}</td>
-    </tr>`});
+    </tr>${r.detail?`<tr><td colspan="9" style="padding:4px 16px 10px;font-size:.74rem;line-height:1.5;color:${r.st==='pass'?'var(--accent-green)':r.st==='partial'?'var(--accent-amber)':'var(--accent-red)'};background:${r.st==='pass'?'rgba(16,185,129,.03)':r.st==='partial'?'rgba(245,158,11,.03)':'rgba(239,68,68,.03)'};border-bottom:1px solid var(--border-subtle)">${esc(r.detail)}</td></tr>`:''}`});
   h+=`</tbody></table></div>`;
   c.innerHTML=h}
 
@@ -4147,49 +4150,50 @@ async function startSecurityAudit(){
     const c=all[i];
     let st='fail';
     // Evaluate checks based on fetched data
-    // Helper: check Secure Score control by name
+    // Helper: check Secure Score control by name with detail
     const ssCtrl=(name)=>{try{return(data.secureScores[0]?.controlScores||[]).find(s=>s.controlName===name)}catch{return null}};
-    const ssPass=(name)=>{const c2=ssCtrl(name);return c2?(c2.score>=c2.maxScore?'pass':c2.score>0?'partial':'fail'):'partial'};
+    const ssEval=(name,label)=>{const sc=ssCtrl(name);if(!sc)return{st:'partial',detail:'⚠ '+label+' — Secure Score control "'+name+'" not found; verify manually'};if(sc.score>=sc.maxScore)return{st:'pass',detail:'✓ '+label+' (Secure Score: '+sc.score+'/'+sc.maxScore+')'};if(sc.score>0)return{st:'partial',detail:'⚠ '+label+' partially configured (Secure Score: '+sc.score+'/'+sc.maxScore+') — additional configuration needed'};return{st:'fail',detail:'✗ '+label+' not configured (Secure Score: 0/'+sc.maxScore+')'}};
     const sps=data.spSettings||{};
+    let detail='';
     try{
-      if(c.id==='sa01') st=data.caPolicies.some(p=>p.state==='enabled'&&p.grantControls?.builtInControls?.includes('mfa'))?'pass':data.caPolicies.some(p=>p.state==='enabledForReportingButNotEnforced'&&p.grantControls?.builtInControls?.includes('mfa'))?'partial':'fail';
-      else if(c.id==='sa02') st=data.caPolicies.some(p=>p.state==='enabled'&&p.conditions?.clientAppTypes?.includes('exchangeActiveSync')&&p.grantControls?.builtInControls?.includes('block'))?'pass':'fail';
-      else if(c.id==='sa03') st=(data.securityDefaults?.isEnabled||data.caPolicies.filter(p=>p.state==='enabled').length>=3)?'pass':'fail';
-      else if(c.id==='sa04'){const ga=data.directoryRoles.find(r=>r.displayName==='Global Administrator');st=(ga?.members?.length||0)<=5?'pass':(ga?.members?.length||0)<=8?'partial':'fail'}
-      else if(c.id==='sa05') st=(data.authPolicy?.guestUserRoleId&&data.authPolicy.guestUserRoleId!=='a0b1b346-4d3e-4e8b-98f8-753987be4970')?'pass':'fail';
-      else if(c.id==='sa06') st=ssPass('SelfServicePasswordResetEnabled');
-      else if(c.id==='sa07') st=ssPass('BannedPasswordCheckEnabled');
-      else if(c.id==='sa08') st=data.caPolicies.some(p=>p.state==='enabled'&&p.conditions?.signInRiskLevels?.length>0)?'pass':'fail';
-      else if(c.id==='sa09') st=data.caPolicies.some(p=>p.state==='enabled'&&p.conditions?.userRiskLevels?.length>0)?'pass':'fail';
-      else if(c.id==='sa10'){const ga=data.directoryRoles.find(r=>r.displayName==='Global Administrator');st=(ga?.members||[]).every(m=>!m.onPremisesSyncEnabled)?'pass':'fail'}
-      // Exchange checks — use Secure Score control scores
-      else if(c.id==='sa11') st=ssPass('AdminAuditLogEnabled');
-      else if(c.id==='sa12') st=ssPass('BlockForwardToExternalDomain');
-      else if(c.id==='sa13') st=ssPass('DKIMEnabled');
-      else if(c.id==='sa14') st=ssPass('AntiPhishingEnabled');
-      else if(c.id==='sa15') st=ssPass('MalwareFilterPolicy');
-      else if(c.id==='sa16') st=ssPass('SafeAttachmentPolicy');
-      else if(c.id==='sa17') st=ssPass('SafeLinksPolicy');
-      else if(c.id==='sa18') st=ssPass('MailboxAuditingEnabled');
-      // SharePoint checks — use tenant settings + Secure Score
-      else if(c.id==='sa19') st=(sps.sharingCapability&&sps.sharingCapability!=='externalUserAndGuestSharing')?'pass':'fail';
-      else if(c.id==='sa20') st=sps.isUnmanagedSyncAppForTenantRestricted?'pass':'fail';
-      else if(c.id==='sa21') st='pass'; // Versioning is enabled by default in SharePoint Online
-      else if(c.id==='sa22') st=(sps.sharingCapability==='disabled'||sps.sharingCapability==='existingExternalUserSharingOnly'||sps.sharingCapability==='externalUserSharingOnly')?'pass':'fail';
-      // Teams checks — use Secure Score
-      else if(c.id==='sa23') st=ssPass('TeamsExternalAccessRestricted');
-      else if(c.id==='sa24') st=ssPass('TeamsGuestAccessEnabled');
-      else if(c.id==='sa25') st=ssPass('BlockCustomAppsInTeams');
-      else if(c.id==='sa26') st=ssPass('TeamsLobbyForExternal');
-      // Defender & Purview checks — use Secure Score
-      else if(c.id==='sa27') st=(ssCtrl('MDOEnabled')?.score>0)?'pass':'fail';
-      else if(c.id==='sa28') st=data.alerts.length>0?'pass':ssPass('AlertPoliciesConfigured');
-      else if(c.id==='sa29') st=ssPass('DLPEnabled');
-      else if(c.id==='sa30') st=ssPass('SensitivityLabelsPublished');
-      else if(c.id==='sa31') st=ssPass('RetentionPoliciesConfigured');
-      else if(c.id==='sa32') st=ssPass('InsiderRiskManagementEnabled');
-    }catch(e){st='fail'}
-    AUDIT_CHECKS.push({...c,st,rem:0});
+      if(c.id==='sa01'){const en=data.caPolicies.find(p=>p.state==='enabled'&&p.grantControls?.builtInControls?.includes('mfa'));const ro=data.caPolicies.find(p=>p.state==='enabledForReportingButNotEnforced'&&p.grantControls?.builtInControls?.includes('mfa'));if(en){st='pass';detail='✓ MFA enforced via: '+en.displayName}else if(ro){st='partial';detail='⚠ MFA policy in Report-Only mode ('+ro.displayName+') — switch to Enabled after reviewing sign-in logs'}else{st='fail';detail='✗ No CA policy requiring MFA found'}}
+      else if(c.id==='sa02'){const en=data.caPolicies.find(p=>p.state==='enabled'&&p.conditions?.clientAppTypes?.includes('exchangeActiveSync')&&p.grantControls?.builtInControls?.includes('block'));if(en){st='pass';detail='✓ Legacy auth blocked via: '+en.displayName}else{st='fail';detail='✗ No CA policy blocking legacy auth protocols'}}
+      else if(c.id==='sa03'){const sdOn=data.securityDefaults?.isEnabled;const caCount=data.caPolicies.filter(p=>p.state==='enabled').length;if(sdOn||caCount>=3){st='pass';detail=sdOn?'✓ Security Defaults enabled':'✓ '+caCount+' active CA policies (Security Defaults superseded)'}else{st='fail';detail='✗ Security Defaults off and only '+caCount+' CA policies active'}}
+      else if(c.id==='sa04'){const ga=data.directoryRoles.find(r=>r.displayName==='Global Administrator');const cnt=ga?.members?.length||0;const names=(ga?.members||[]).map(m=>m.displayName||m.userPrincipalName).join(', ');if(cnt<=5){st='pass';detail='✓ '+cnt+' Global Admin(s): '+names}else if(cnt<=8){st='partial';detail='⚠ '+cnt+' Global Admins (recommended ≤5): '+names}else{st='fail';detail='✗ '+cnt+' Global Admins (maximum 5 recommended): '+names}}
+      else if(c.id==='sa05'){const gid=data.authPolicy?.guestUserRoleId;if(gid&&gid!=='a0b1b346-4d3e-4e8b-98f8-753987be4970'){st='pass';detail='✓ Guest access restricted (role: '+gid+')'}else{st='fail';detail='✗ Guest users have default directory read permissions'}}
+      else if(c.id==='sa06'){const r=ssEval('SelfServicePasswordResetEnabled','Self-Service Password Reset');st=r.st;detail=r.detail}
+      else if(c.id==='sa07'){const r=ssEval('BannedPasswordCheckEnabled','Password Protection / Banned Passwords');st=r.st;detail=r.detail}
+      else if(c.id==='sa08'){const en=data.caPolicies.find(p=>p.state==='enabled'&&p.conditions?.signInRiskLevels?.length>0);if(en){st='pass';detail='✓ Sign-in risk policy active: '+en.displayName+' (levels: '+en.conditions.signInRiskLevels.join(', ')+')'}else{st='fail';detail='✗ No CA policy configured for sign-in risk levels'}}
+      else if(c.id==='sa09'){const en=data.caPolicies.find(p=>p.state==='enabled'&&p.conditions?.userRiskLevels?.length>0);if(en){st='pass';detail='✓ User risk policy active: '+en.displayName+' (levels: '+en.conditions.userRiskLevels.join(', ')+')'}else{st='fail';detail='✗ No CA policy configured for user risk levels'}}
+      else if(c.id==='sa10'){const ga=data.directoryRoles.find(r=>r.displayName==='Global Administrator');const synced=(ga?.members||[]).filter(m=>m.onPremisesSyncEnabled);if(synced.length===0){st='pass';detail='✓ All admin accounts are cloud-only'}else{st='fail';detail='✗ '+synced.length+' synced admin account(s): '+synced.map(m=>m.userPrincipalName||m.displayName).join(', ')}}
+      // Exchange checks — Secure Score with detail
+      else if(c.id==='sa11'){const r=ssEval('AdminAuditLogEnabled','Unified Audit Logging');st=r.st;detail=r.detail}
+      else if(c.id==='sa12'){const r=ssEval('BlockForwardToExternalDomain','External Mail Forwarding Block');st=r.st;detail=r.detail}
+      else if(c.id==='sa13'){const r=ssEval('DKIMEnabled','DKIM Signing');st=r.st;detail=r.detail}
+      else if(c.id==='sa14'){const r=ssEval('AntiPhishingEnabled','Anti-Phishing Policy');st=r.st;detail=r.detail}
+      else if(c.id==='sa15'){const r=ssEval('MalwareFilterPolicy','Anti-Malware Policy');st=r.st;detail=r.detail}
+      else if(c.id==='sa16'){const r=ssEval('SafeAttachmentPolicy','Safe Attachments');st=r.st;detail=r.detail}
+      else if(c.id==='sa17'){const r=ssEval('SafeLinksPolicy','Safe Links');st=r.st;detail=r.detail}
+      else if(c.id==='sa18'){const r=ssEval('MailboxAuditingEnabled','Mailbox Auditing');st=r.st;detail=r.detail}
+      // SharePoint — real settings with detail
+      else if(c.id==='sa19'){const cap=sps.sharingCapability;if(cap&&cap!=='externalUserAndGuestSharing'){st='pass';detail='✓ SharePoint sharing restricted: '+cap}else{st='fail';detail='✗ SharePoint allows unrestricted external sharing'}}
+      else if(c.id==='sa20'){if(sps.isUnmanagedSyncAppForTenantRestricted){st='pass';detail='✓ OneDrive sync restricted to managed devices'}else{st='fail';detail='✗ OneDrive sync allowed from unmanaged devices'}}
+      else if(c.id==='sa21'){st='pass';detail='✓ SharePoint versioning is enabled by default in SharePoint Online'}
+      else if(c.id==='sa22'){const cap=sps.sharingCapability;if(cap==='disabled'||cap==='existingExternalUserSharingOnly'||cap==='externalUserSharingOnly'){st='pass';detail='✓ Anonymous sharing links restricted (sharing: '+cap+')'}else{st='fail';detail='✗ Anonymous sharing links may be unrestricted (sharing: '+(cap||'unknown')+')'}}
+      // Teams — Secure Score with detail
+      else if(c.id==='sa23'){const r=ssEval('TeamsExternalAccessRestricted','Teams External Access');st=r.st;detail=r.detail}
+      else if(c.id==='sa24'){const r=ssEval('TeamsGuestAccessEnabled','Teams Guest Access');st=r.st;detail=r.detail}
+      else if(c.id==='sa25'){const r=ssEval('BlockCustomAppsInTeams','Block Custom App Upload');st=r.st;detail=r.detail}
+      else if(c.id==='sa26'){const r=ssEval('TeamsLobbyForExternal','Meeting Lobby for External Users');st=r.st;detail=r.detail}
+      // Defender & Purview — Secure Score with detail
+      else if(c.id==='sa27'){const sc=ssCtrl('MDOEnabled');if(sc?.score>0){st='pass';detail='✓ Defender for Office 365 active (Secure Score: '+sc.score+'/'+sc.maxScore+')'}else{st='fail';detail='✗ Defender for Office 365 not detected — requires P1 licence'}}
+      else if(c.id==='sa28'){if(data.alerts.length>0){st='pass';detail='✓ '+data.alerts.length+' security alert(s) detected — alert policies active'}else{const r=ssEval('AlertPoliciesConfigured','Alert Policies');st=r.st;detail=r.detail}}
+      else if(c.id==='sa29'){const r=ssEval('DLPEnabled','Data Loss Prevention');st=r.st;detail=r.detail}
+      else if(c.id==='sa30'){const r=ssEval('SensitivityLabelsPublished','Sensitivity Labels');st=r.st;detail=r.detail}
+      else if(c.id==='sa31'){const r=ssEval('RetentionPoliciesConfigured','Retention Policies');st=r.st;detail=r.detail}
+      else if(c.id==='sa32'){const r=ssEval('InsiderRiskManagementEnabled','Insider Risk Management');st=r.st;detail=r.detail}
+    }catch(e){st='fail';detail='✗ Evaluation error: '+e.message}
+    AUDIT_CHECKS.push({...c,st,rem:0,detail});
   }
 
   $('auditProgress').classList.add('hidden');
@@ -4271,6 +4275,7 @@ function renderAudit(fSev='all',fSt='all'){
             <span style="font-size:.7rem;color:var(--text-muted);background:var(--bg-elevated);padding:2px 6px;border-radius:4px">${esc(r.fw)}</span>
           </div>
           <div style="font-size:.8rem;color:var(--text-secondary);line-height:1.5">${esc(r.desc)}</div>
+          ${r.detail?`<div style="font-size:.74rem;color:${stCol};margin-top:4px;padding:4px 8px;background:${r.st==='pass'?'rgba(16,185,129,.04)':r.st==='partial'?'rgba(245,158,11,.04)':'rgba(239,68,68,.04)'};border-radius:4px;line-height:1.5">${esc(r.detail)}</div>`:''}
           <div style="display:flex;align-items:center;gap:10px;margin-top:6px">
             <span style="font-size:.72rem;color:var(--text-muted)">Licence: <strong style="color:var(--text-secondary)">${esc(r.lic||'—')}</strong></span>
             <span class="badge ${licBadge}" style="font-size:.65rem">${licText}</span>
