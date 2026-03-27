@@ -3577,7 +3577,7 @@ function renderComp(fSev='all',fSt='all'){
 
   // Results table
   h+=`<div class="card" style="padding:0;overflow:auto;max-height:600px"><table class="comp-table"><thead><tr><th>Status</th><th>Category</th><th>Policy</th><th>Severity</th><th>CE+ Requirement</th><th>Licence Required</th><th>Licenced?</th><th>Graph API</th><th style="text-align:center">Action</th></tr></thead><tbody>`;
-  filtered.forEach(r=>{
+  filtered.forEach((r,idx)=>{
     const isPassed=r.st==='pass'||r.rem;
     const stBadge=r.rem?'badge-cyan':r.st==='pass'?'badge-green':r.st==='partial'?'badge-amber':'badge-red';
     const stText=r.rem?'✓ Fixed':r.st==='pass'?'✓ Pass':r.st==='partial'?'~ Partial':'✗ Fail';
@@ -3586,17 +3586,13 @@ function renderComp(fSev='all',fSt='all'){
     const licHas=r.licOk;
     const licBadge=licHas===true?'badge-green':licHas===false?'badge-red':'badge-muted';
     const licText=licHas===true?'Yes':licHas===false?'No':'Unknown';
-    h+=`<tr>
-      <td><span class="badge ${stBadge}">${stText}</span></td>
-      <td style="font-size:.8rem;color:var(--text-secondary)">${r.ci} ${esc(r.cn)}</td>
-      <td style="font-weight:500">${esc(r.n)}</td>
-      <td><span class="badge ${sevBadge}">${r.sev}</span></td>
-      <td style="font-size:.78rem;color:var(--text-secondary);max-width:220px">${esc(r.ce)}</td>
-      <td style="font-size:.75rem;color:var(--text-secondary);max-width:180px">${esc(r.lic||'—')}</td>
-      <td style="text-align:center"><span class="badge ${licBadge}" style="font-size:.7rem">${licText}</span></td>
-      <td class="ep-col">${r.ep?esc(r.ep):'—'}</td>
-      <td style="text-align:center">${isPassed?'<span class="btn-fix applied btn-sm">✓ Compliant</span>':canFix?`<button class="btn-fix btn" onclick="openRem('${r.id}')">🔧 Fix This</button>`:'—'}</td>
-    </tr>${r.detail?`<tr><td colspan="9" style="padding:4px 16px 10px;font-size:.74rem;line-height:1.5;color:${r.st==='pass'?'var(--accent-green)':r.st==='partial'?'var(--accent-amber)':'var(--accent-red)'};background:${r.st==='pass'?'rgba(16,185,129,.03)':r.st==='partial'?'rgba(245,158,11,.03)':'rgba(239,68,68,.03)'};border-bottom:1px solid var(--border-subtle)">${esc(r.detail)}</td></tr>`:''}`});
+    const hasDetail=!!r.detail;
+    const detailCol=r.st==='pass'?'var(--accent-green)':r.st==='partial'?'var(--accent-amber)':'var(--accent-red)';
+    const detailBg=r.st==='pass'?'rgba(16,185,129,.03)':r.st==='partial'?'rgba(245,158,11,.03)':'rgba(239,68,68,.03)';
+    const rowClick=hasDetail?` style="cursor:pointer" onclick="document.getElementById('compDetail${idx}').classList.toggle('hidden')" title="Click to expand details"`:'';
+    const fixBtn=isPassed?'<span class="btn-fix applied btn-sm">✓ Compliant</span>':canFix?`<button class="btn-fix btn" onclick="event.stopPropagation();openRem('${r.id}')">🔧 Fix This</button>`:'—';
+    h+=`<tr${rowClick}><td><span class="badge ${stBadge}">${stText}</span>${hasDetail?' <span style="font-size:.6rem;color:var(--text-muted)">▶</span>':''}</td><td style="font-size:.8rem;color:var(--text-secondary)">${r.ci} ${esc(r.cn)}</td><td style="font-weight:500">${esc(r.n)}</td><td><span class="badge ${sevBadge}">${r.sev}</span></td><td style="font-size:.78rem;color:var(--text-secondary);max-width:220px">${esc(r.ce)}</td><td style="font-size:.75rem;color:var(--text-secondary);max-width:180px">${esc(r.lic||'—')}</td><td style="text-align:center"><span class="badge ${licBadge}" style="font-size:.7rem">${licText}</span></td><td class="ep-col">${r.ep?esc(r.ep):'—'}</td><td style="text-align:center">${fixBtn}</td></tr>`;
+    if(hasDetail)h+=`<tr id="compDetail${idx}" class="hidden"><td colspan="9" style="padding:6px 16px 10px 40px;font-size:.76rem;line-height:1.6;color:${detailCol};background:${detailBg};border-bottom:1px solid var(--border-subtle)"><strong>Finding:</strong> ${esc(r.detail)}${r.note?'<br><strong>Resolution:</strong> '+esc(r.note):''}</td></tr>`;});
   h+=`</tbody></table></div>`;
   c.innerHTML=h}
 
@@ -4256,7 +4252,7 @@ function renderAudit(fSev='all',fSt='all'){
     h+=`<div class="card" style="margin-bottom:14px;overflow:hidden;padding:0">
       <div style="padding:12px 16px;background:var(--bg-elevated);border-bottom:1px solid var(--border-subtle);font-weight:700;font-size:.88rem">${cat.icon} ${esc(cat.cat)} <span style="font-size:.75rem;color:var(--text-muted);font-weight:400;margin-left:8px">${items.filter(r=>r.st==='pass'||r.rem).length}/${items.length} passed</span></div>
       <div style="padding:0">`;
-    items.forEach(r=>{
+    items.forEach((r,ri)=>{
       const isPassed=r.st==='pass'||r.rem;
       const stIcon=r.rem?'🔧':r.st==='pass'?'✅':r.st==='partial'?'⚠️':'❌';
       const stCol=r.rem?'var(--accent-cyan)':r.st==='pass'?'var(--accent-green)':r.st==='partial'?'var(--accent-amber)':'var(--accent-red)';
@@ -4266,23 +4262,23 @@ function renderAudit(fSev='all',fSt='all'){
       const licBadge=licHas===true?'badge-green':licHas===false?'badge-red':'badge-muted';
       const licText=licHas===true?'Yes':licHas===false?'No':'Unknown';
       const canFix=!isPassed&&(r.ep||r.note);
-      h+=`<div style="padding:12px 16px;border-bottom:1px solid var(--border-subtle);display:flex;align-items:flex-start;gap:12px">
-        <div style="font-size:1.1rem;line-height:1;min-width:24px;text-align:center;padding-top:2px">${stIcon}</div>
-        <div style="flex:1;min-width:0">
-          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px">
-            <span style="font-weight:600;font-size:.88rem;color:${stCol}">${esc(r.n)}</span>
-            <span style="font-size:.7rem;padding:2px 8px;border-radius:4px;background:${sevBg};color:${sevCol};font-weight:600;text-transform:uppercase">${r.sev}</span>
-            <span style="font-size:.7rem;color:var(--text-muted);background:var(--bg-elevated);padding:2px 6px;border-radius:4px">${esc(r.fw)}</span>
-          </div>
-          <div style="font-size:.8rem;color:var(--text-secondary);line-height:1.5">${esc(r.desc)}</div>
-          ${r.detail?`<div style="font-size:.74rem;color:${stCol};margin-top:4px;padding:4px 8px;background:${r.st==='pass'?'rgba(16,185,129,.04)':r.st==='partial'?'rgba(245,158,11,.04)':'rgba(239,68,68,.04)'};border-radius:4px;line-height:1.5">${esc(r.detail)}</div>`:''}
-          <div style="display:flex;align-items:center;gap:10px;margin-top:6px">
-            <span style="font-size:.72rem;color:var(--text-muted)">Licence: <strong style="color:var(--text-secondary)">${esc(r.lic||'—')}</strong></span>
-            <span class="badge ${licBadge}" style="font-size:.65rem">${licText}</span>
-            ${isPassed?'<span class="badge badge-green" style="font-size:.65rem;margin-left:auto">✓ Compliant</span>':canFix?`<button class="btn-fix btn" style="font-size:.72rem;padding:3px 10px;margin-left:auto" onclick="openAuditRem('${r.id}')">🔧 Fix Now</button>`:''}
-          </div>
-        </div>
-      </div>`;
+      const hasDetail=!!(r.detail||r.note);
+      const detailId='auditDetail_'+ck+'_'+ri;
+      const detailBg2=r.st==='pass'?'rgba(16,185,129,.04)':r.st==='partial'?'rgba(245,158,11,.04)':'rgba(239,68,68,.04)';
+      const divClick=hasDetail?'cursor:pointer':'';
+      const divOnclick=hasDetail?` onclick="var d=document.getElementById('${detailId}');d.classList.toggle('hidden');this.querySelector('.expand-arrow').textContent=d.classList.contains('hidden')?'▶':'▼'" title="Click to expand details"`:'';
+      const fixBtn2=isPassed?'<span class="badge badge-green" style="font-size:.65rem;margin-left:auto">✓ Compliant</span>':canFix?`<button class="btn-fix btn" style="font-size:.72rem;padding:3px 10px;margin-left:auto" onclick="event.stopPropagation();openAuditRem('${r.id}')">🔧 Fix Now</button>`:'';
+      let detailHtml='';
+      if(r.detail)detailHtml+=`<div style="font-size:.76rem;color:${stCol};line-height:1.6;margin-bottom:${r.note?'6px':'0'}"><strong>Finding:</strong> ${esc(r.detail)}</div>`;
+      if(r.note)detailHtml+=`<div style="font-size:.74rem;color:var(--text-secondary);line-height:1.6"><strong>Resolution:</strong> ${esc(r.note)}</div>`;
+      h+=`<div style="padding:12px 16px;border-bottom:1px solid var(--border-subtle);display:flex;align-items:flex-start;gap:12px;${divClick}"${divOnclick}>`;
+      h+=`<div style="font-size:1.1rem;line-height:1;min-width:24px;text-align:center;padding-top:2px">${stIcon}</div>`;
+      h+=`<div style="flex:1;min-width:0">`;
+      h+=`<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px"><span style="font-weight:600;font-size:.88rem;color:${stCol}">${esc(r.n)}</span><span style="font-size:.7rem;padding:2px 8px;border-radius:4px;background:${sevBg};color:${sevCol};font-weight:600;text-transform:uppercase">${r.sev}</span><span style="font-size:.7rem;color:var(--text-muted);background:var(--bg-elevated);padding:2px 6px;border-radius:4px">${esc(r.fw)}</span>${hasDetail?'<span class="expand-arrow" style="font-size:.6rem;color:var(--text-muted)">▶</span>':''}</div>`;
+      h+=`<div style="font-size:.8rem;color:var(--text-secondary);line-height:1.5">${esc(r.desc)}</div>`;
+      if(hasDetail)h+=`<div id="${detailId}" class="hidden" style="margin-top:6px;padding:8px 10px;border-radius:var(--radius-sm);background:${detailBg2};border-left:3px solid ${stCol}">${detailHtml}</div>`;
+      h+=`<div style="display:flex;align-items:center;gap:10px;margin-top:6px"><span style="font-size:.72rem;color:var(--text-muted)">Licence: <strong style="color:var(--text-secondary)">${esc(r.lic||'—')}</strong></span><span class="badge ${licBadge}" style="font-size:.65rem">${licText}</span>${fixBtn2}</div>`;
+      h+=`</div></div>`;
     });
     h+=`</div></div>`;
   });
